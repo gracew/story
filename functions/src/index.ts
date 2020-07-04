@@ -1,14 +1,16 @@
-import * as functions from "firebase-functions";
-
 // // Start writing Firebase Functions
 // // https://firebase.google.com/docs/functions/typescript
-const admin = require("firebase-admin");
+import * as admin from "firebase-admin";
+import * as functions from "firebase-functions";
+
 admin.initializeApp();
 
-export const registerUser = functions.https.onRequest(
-  async (request, response) => {
-    const { blob, ...other } = request.body;
-    await admin.firestore().collection("users").doc().set(other);
-    response.send("Done");
+export const registerUser = functions.https.onCall(
+  async (request) => {
+    // TODO(gracew): normalize phone number, make sure it hasn't already been registered
+    const ref = admin.firestore().collection("users").doc();
+    const user = { ...request, id: ref.id };
+    await ref.set(user);
+    return user;
   }
 );
