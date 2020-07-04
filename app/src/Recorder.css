@@ -1,0 +1,13 @@
+.se-react-mic {
+  width: 100%;
+}
+
+.se-button-group {
+  text-align: center;
+}
+
+.se-recording-playback {
+  width: 100%;
+  display: inline-block;
+  margin: 10px auto;
+}

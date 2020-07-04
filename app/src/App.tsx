@@ -1,8 +1,10 @@
 import * as firebase from "firebase/app";
 import React from "react";
-import { BrowserRouter as Router, Route } from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.css";
+import Listener from "./Listener";
 import Recorder from "./Recorder";
+import RegisterComplete from "./RegisterComplete";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBLr4SMn_GwfA6AJFHCqSPrZSfORK3w91I",
@@ -19,11 +21,19 @@ function App() {
   firebase.initializeApp(firebaseConfig);
   return (
     <Router>
-      <Route path="/record">
-        <div className="App">
-          <Recorder />
-        </div>
-      </Route>
+      <div className="App">
+        <Switch>
+          <Route path="/record">
+            <Recorder />
+          </Route>
+          <Route path="/register/complete">
+            <RegisterComplete />
+          </Route>
+          <Route path="/listen/:bioId">
+            <Listener />
+          </Route>
+        </Switch>
+      </div>
     </Router>
   );
 }
