@@ -2,19 +2,32 @@
 // // https://firebase.google.com/docs/functions/typescript
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import { getConferenceTwimlForPhone, callNumberWithTwiml } from "./twilio";
+import { callNumberWithTwiml, getConferenceTwimlForPhone } from "./twilio";
 
 admin.initializeApp();
 
-export const registerUser = functions.https.onCall(
-  async (request) => {
-    // TODO(gracew): normalize phone number, make sure it hasn't already been registered
+export const registerUser = functions.https.onCall(async (request) => {
+    const { phone, ...other } = request;
+    const normalizedPhone = phone.split(" ").join("");
+
+    // make sure the phone number hasn't already been registered
+    const existingUser = await admin
+        .firestore()
+        .collection("users")
+        .where("phone", "==", normalizedPhone)
+        .get();
+    if (!existingUser.empty) {
+        throw new functions.https.HttpsError(
+            "already-exists",
+            "phone number has already been registered"
+        );
+    }
+
     const ref = admin.firestore().collection("users").doc();
-    const user = { ...request, id: ref.id };
+    const user = { ...other, phone: normalizedPhone, id: ref.id };
     await ref.set(user);
     return user;
-  }
-);
+});
 
 export const callUser = functions.https.onCall(
     async (request) => {
@@ -22,16 +35,16 @@ export const callUser = functions.https.onCall(
         const user_doc = await ref.get();
         const user_doc_data = user_doc.data()
         if (!user_doc.exists || !user_doc_data) {
-            return { "error": "User does not exist!"};
+            return { "error": "User does not exist!" };
         }
         const phone = user_doc_data.phone_number;
         const twiml = await getConferenceTwimlForPhone(phone, true);
         if (!twiml) {
-            return { "error": "User has no current matches!"};
+            return { "error": "User has no current matches!" };
         }
         await callNumberWithTwiml(phone, twiml);
-        return {"success": "Calling " + phone};
-      }
+        return { "success": "Calling " + phone };
+    }
 );
 
 export const optIn = functions.https.onRequest(
@@ -42,7 +55,7 @@ export const optIn = functions.https.onRequest(
 
         if (result.empty) {
             console.log("ERROR | No user with phone number " + phone_number);
-            response.send({success: false, message: "User does not exist"});
+            response.send({ success: false, message: "User does not exist" });
         } else {
             console.log("Opting in user with phone number " + phone_number);
             const user_id = result.docs[0].id;
@@ -51,7 +64,7 @@ export const optIn = functions.https.onRequest(
                 user_id: user_id,
                 created_at: Date.now()
             })
-            response.send({success: true});
+            response.send({ success: true });
         }
     }
 );
@@ -66,7 +79,7 @@ export const reveal = functions.https.onRequest(
         const match_doc_data = match_doc.data();
         if (!match_doc.exists || !match_doc_data) {
             console.log("ERROR | No match with id " + match_id);
-            response.send({success: false, message: "Match does not exist"});
+            response.send({ success: false, message: "Match does not exist" });
         } else {
             const users = await admin.firestore().collection("users");
 
@@ -76,7 +89,7 @@ export const reveal = functions.https.onRequest(
             // check if user exists in table
             if (user_a_query.empty) {
                 console.log("ERROR | User does not exist");
-                response.send({success: false, message: "User does not exist"});
+                response.send({ success: false, message: "User does not exist" });
             }
 
             const user_a_id = user_a_query.docs[0].id;
@@ -84,15 +97,15 @@ export const reveal = functions.https.onRequest(
 
 
             if (match_doc_data.user_a_id === user_a_id) {
-                await match_doc_ref.update({user_a_revealed: true});
-                response.send({success: true});
+                await match_doc_ref.update({ user_a_revealed: true });
+                response.send({ success: true });
             } else if (match_doc_data.user_b_id === user_a_id) {
-                await match_doc_ref.update({user_b_revealed: true});
-                response.send({success: true});
+                await match_doc_ref.update({ user_b_revealed: true });
+                response.send({ success: true });
             } else {
                 // match doesn't have the users in request
                 console.log("ERROR | Requested match doesnt have the requested users ");
-                response.send({success: false, message: "Requested match doesnt have the requested users"});
+                response.send({ success: false, message: "Requested match doesnt have the requested users" });
             }
         }
     }
@@ -111,9 +124,9 @@ export const addUserToCall = functions.https.onRequest(
 
 
 export const getUsers = functions.https.onRequest(
-  async (request, response) => {
-    const users = await admin.firestore().collection("users").get();
+    async (request, response) => {
+        const users = await admin.firestore().collection("users").get();
 
-    response.send(users.docs.map((user) => user.id ));
-  }
+        response.send(users.docs.map((user) => user.id));
+    }
 );

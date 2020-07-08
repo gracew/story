@@ -3,7 +3,6 @@ import "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import "./Listener.css";
-const uuid = require("uuid");
 
 function Listener() {
   const [bioUrl, setBioUrl] = useState();
