@@ -2,6 +2,9 @@
 // // https://firebase.google.com/docs/functions/typescript
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { callNumberWithTwiml, getConferenceTwimlForPhone } from "./twilio";
 
 admin.initializeApp();
@@ -24,9 +27,48 @@ export const registerUser = functions.https.onCall(async (request) => {
     }
 
     const ref = admin.firestore().collection("users").doc();
-    const user = { ...other, phone: normalizedPhone, id: ref.id };
+    const user = { ...other, phone: normalizedPhone, registeredAt: admin.firestore.FieldValue.serverTimestamp(), id: ref.id };
     await ref.set(user);
     return user;
+});
+
+/**
+ * The file is expected to be in CSV format where the first line is the header (skipped in processing). Each subsequent
+ * row is expected to have the user ID in the first column and an allowed boolean in the second column. Subsequent
+ * columns are ignored. Example:
+ *
+ * id,allowed,firstName,lastName
+ * 1,TRUE,Grace,Wang
+ * 2,FALSE,Minh,Pham
+ */
+export const markAllowed = functions.storage.object().onFinalize(async (object) => {
+    if (object.name !== "allowedUsers.csv") {
+        return;
+    }
+    const tempFilePath = path.join(os.tmpdir(), object.name);
+    await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
+    const contents = fs.readFileSync(tempFilePath).toString();
+    const rows = contents.split("\n").slice(1);
+    rows.forEach(async row => {
+        const cols = row.split(",");
+        if (cols.length > 2) {
+            const id = cols[0];
+            const allowed = cols[1] === "TRUE" ? true : false;
+            await admin.firestore().collection("users").doc(id).update({ allowed })
+        }
+    });
+});
+
+// Runs every day at 7pm GMT or noon PT
+export const sendOptInText = functions.pubsub.schedule('every day 19:00').onRun(async (context) => {
+    const allowedUsers = await admin
+        .firestore()
+        .collection("users")
+        .where("allowed", "==", true)
+        .get();
+    allowedUsers.docs.forEach(doc => {
+        // TODO(gracew): call messagebird
+    })
 });
 
 export const callUser = functions.https.onCall(
