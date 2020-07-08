@@ -20,11 +20,15 @@ function Recorder() {
   async function onSubmit() {
     const ref = firebase.storage().ref(`/bios/${uuid.v4()}`);
     await ref.put(bio!.blob);
-    await firebase.functions().httpsCallable("registerUser")({
-      ...request,
-      bio: ref.fullPath,
-    });
-    history.push("/register/complete");
+    try {
+      await firebase.functions().httpsCallable("registerUser")({
+        ...request,
+        bio: ref.fullPath,
+      });
+      history.push("/register/complete");
+    } catch (err) {
+      history.push("/register/error");
+    }
   }
 
   return (
