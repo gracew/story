@@ -9,6 +9,7 @@ function Listener() {
   const [bioUrl, setBioUrl] = useState();
   const { bioId } = useParams();
   const query = new URLSearchParams(useLocation().search);
+  const name = query.get("name");
 
   useEffect(() => {
     firebase
@@ -21,10 +22,10 @@ function Listener() {
   return (
     <div>
       <h2>Lucky you!</h2>
-      <p>Tonight, you'll be talking to {query.get("name")}.</p>
+      <p>Tonight, you'll be talking to {name}.</p>
       <audio className="se-audio-bio" controls src={bioUrl} />
       <p>
-        After your call, you can choose to share your phone number with Minh.
+        After your call, you can choose to share your phone number with {name}.
       </p>
       <p>Happy chatting!</p>
     </div>
