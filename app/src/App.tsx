@@ -5,6 +5,7 @@ import "./App.css";
 import Listener from "./Listener";
 import Recorder from "./Recorder";
 import RegisterComplete from "./RegisterComplete";
+import PhoneAlreadyExists from './PhoneAlreadyExists';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBLr4SMn_GwfA6AJFHCqSPrZSfORK3w91I",
@@ -28,6 +29,9 @@ function App() {
           </Route>
           <Route path="/register/complete">
             <RegisterComplete />
+          </Route>
+          <Route path="/register/error">
+            <PhoneAlreadyExists />
           </Route>
           <Route path="/listen/:bioId">
             <Listener />

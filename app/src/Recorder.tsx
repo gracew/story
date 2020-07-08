@@ -3,7 +3,7 @@ import "firebase/functions";
 import "firebase/storage";
 import React, { useState } from "react";
 import { ReactMic, ReactMicStopEvent } from "react-mic";
-import { useLocation, useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import "./Recorder.css";
 const uuid = require("uuid");
 
@@ -12,20 +12,23 @@ function Recorder() {
   const [record, setRecord] = useState(false);
   const [bio, setBio] = useState<ReactMicStopEvent>();
   const query = new URLSearchParams(useLocation().search);
-  const request = {
-    firstName: query.get("name"),
-    gender: "female",
-    phone: query.get("phone"),
-  };
+  const request: Record<string, string> = {};
+  query.forEach((value, key) => {
+    request[key] = value;
+  });
 
   async function onSubmit() {
     const ref = firebase.storage().ref(`/bios/${uuid.v4()}`);
     await ref.put(bio!.blob);
-    await firebase.functions().httpsCallable("registerUser")({
-      ...request,
-      bio: ref.fullPath,
-    });
-    history.push("/register/complete");
+    try {
+      await firebase.functions().httpsCallable("registerUser")({
+        ...request,
+        bio: ref.fullPath,
+      });
+      history.push("/register/complete");
+    } catch (err) {
+      history.push("/register/error");
+    }
   }
 
   return (

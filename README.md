@@ -2,7 +2,7 @@
 
 ## Dev setup
 
-### Prerequisits
+### Prerequisites
 
 - Node 10 (recommend using NVM) + Yarn
 - Install firebase cli globally: `npm install -g firebase-tools`
