@@ -117,38 +117,97 @@ export const reveal = functions.https.onRequest(
         const phone_number = request.body.phone_number;
 
         const match_doc_ref = admin.firestore().collection("matches").doc(match_id);
-        const match_doc = await match_doc_ref.get();
-        const match_doc_data = match_doc.data();
-        if (!match_doc.exists || !match_doc_data) {
+        let match_doc = await match_doc_ref.get();
+        if (!match_doc.exists || match_doc.data() === undefined) {
             console.log("ERROR | No match with id " + match_id);
             response.send({ success: false, message: "Match does not exist" });
         } else {
             const users = await admin.firestore().collection("users");
 
             const user_a_query = await users.where("phone_number", "==", phone_number).get();
-            console.log(user_a_query);
 
             // check if user exists in table
             if (user_a_query.empty) {
                 console.log("ERROR | User does not exist");
-                response.send({ success: false, message: "User does not exist" });
+                response.send({success: false, message: "User does not exist"});
+                return;
             }
 
-            const user_a_id = user_a_query.docs[0].id;
-            console.log("Reveailing user id " + user_a_id);
+            const user_a = user_a_query.docs[0];
+            console.log("Reveailing user id " + user_a.id);
 
+            var user_b;
 
-            if (match_doc_data.user_a_id === user_a_id) {
-                await match_doc_ref.update({ user_a_revealed: true });
-                response.send({ success: true });
-            } else if (match_doc_data.user_b_id === user_a_id) {
-                await match_doc_ref.update({ user_b_revealed: true });
-                response.send({ success: true });
+            if (match_doc.data()!.user_a_id === user_a.id) {
+                user_b = await users.doc(match_doc.data()!.user_b_id).get();
+                await match_doc_ref.update({user_a_revealed: true});
+
+            } else if (match_doc.data()!.user_b_id === user_a.id) {
+                user_b = await users.doc(match_doc.data()!.user_a_id).get();
+                await match_doc_ref.update({user_b_revealed: true});
             } else {
-                // match doesn't have the users in request
                 console.log("ERROR | Requested match doesnt have the requested users ");
                 response.send({ success: false, message: "Requested match doesnt have the requested users" });
             }
+
+            if (user_b === undefined) {
+                console.log("ERROR | User b does not exist");
+                response.send({success: false, message: "User B does not exist"});
+                return;
+            }
+
+            match_doc = await match_doc_ref.get();
+
+            if (match_doc.data()!.user_a_revealed === true && match_doc.data()!.user_b_revealed === true) {
+                const requestLib = require('request');
+                
+                // TODO fix pronouns
+                const formData = {
+                    "mode": "reveal",
+                    "name": user_a.data()!.first_name,
+                    "phone_number": user_a.data()!.phone_number,
+                    "match_name": user_b.data()!.first_name,
+                    "match_phone_number": user_b.data()!.phone_number, 
+                    "match_gender_pronoun": "they", 
+                    "match_gender_pronoun_possessive": "their", 
+                }
+
+                console.log("Revealing phone number 1");
+                requestLib.post({url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData}, function (error: any, r: any, body: any) {
+                    if (r.statusCode === 204) {
+                        console.log("successfully revealed first phone number");
+                    } else {
+                        console.error('error:', error); // Print the error if one occurred
+                        console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
+                        response.send({success: false})
+                    }                      
+                });
+
+                const formData2 = {
+                    "mode": "reveal",
+                    "name": user_b.data()!.first_name,
+                    "phone_number": user_b.data()!.phone_number,
+                    "match_name": user_a.data()!.first_name,
+                    "match_phone_number": user_a.data()!.phone_number, 
+                    "match_gender_pronoun": "they", 
+                    "match_gender_pronoun_possessive": "their", 
+                }
+
+                console.log("Revealing phone number 2");
+                requestLib.post({url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData2}, function (error:any, r:any, body:any) {
+                    if (r.statusCode === 204) {
+                        console.log("successfully revealed second phone number");
+                    } else {
+                        console.error('error:', error); // Print the error if one occurred
+                        console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
+                        response.send({success: false});
+                    }                      
+                });
+                
+            }
+
+            response.send({success: true});
+
         }
     }
 );
