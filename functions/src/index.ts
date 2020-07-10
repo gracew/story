@@ -136,7 +136,7 @@ export const reveal = functions.https.onRequest(
             const user_a = user_a_query.docs[0];
             console.log("Reveailing user id " + user_a.id);
 
-            var user_b;
+            let user_b;
 
             if (match_doc.data()!.user_a_id === user_a.id) {
                 user_b = await users.doc(match_doc.data()!.user_b_id).get();
@@ -164,8 +164,8 @@ export const reveal = functions.https.onRequest(
                 // TODO fix pronouns
                 const formData = {
                     "mode": "reveal",
-                    "name": user_a.data()!.first_name,
-                    "phone_number": user_a.data()!.phone_number,
+                    "name": user_a.data().first_name,
+                    "phone_number": user_a.data().phone_number.substring(1),
                     "match_name": user_b.data()!.first_name,
                     "match_phone_number": user_b.data()!.phone_number, 
                     "match_gender_pronoun": "they", 
@@ -186,8 +186,8 @@ export const reveal = functions.https.onRequest(
                 const formData2 = {
                     "mode": "reveal",
                     "name": user_b.data()!.first_name,
-                    "phone_number": user_b.data()!.phone_number,
-                    "match_name": user_a.data()!.first_name,
+                    "phone_number": user_b.data()!.phone_number.substring(1),
+                    "match_name": user_a.data().first_name,
                     "match_phone_number": user_a.data()!.phone_number, 
                     "match_gender_pronoun": "they", 
                     "match_gender_pronoun_possessive": "their", 
