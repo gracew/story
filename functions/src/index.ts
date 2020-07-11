@@ -9,6 +9,8 @@ import { callNumberWithTwiml, getConferenceTwimlForPhone } from "./twilio";
 
 admin.initializeApp();
 
+const requestLib = require('request');
+
 export const registerUser = functions.https.onCall(async (request) => {
     const { phone, ...other } = request;
     const normalizedPhone = phone.split(" ").join("");
@@ -71,6 +73,94 @@ export const sendOptInText = functions.pubsub.schedule('every day 19:00').onRun(
     })
 });
 
+/**
+format
+
+user_a_id, user_b_id
+ */
+export const createMatches = functions.storage.object().onFinalize(async (object) => {
+    if (object.name !== "matches.csv") {
+        return;
+    }
+    const tempFilePath = path.join(os.tmpdir(), object.name);
+    await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
+    const contents = fs.readFileSync(tempFilePath).toString();
+    const rows = contents.split("\n").slice(1);
+    rows.forEach(async row => {
+        const cols = row.split(",");
+        if (cols.length == 2) {
+            const user_a_id: string = cols[0];
+            const user_b_id: string = cols[1];
+
+            const user_a = await admin.firestore().collection("users").doc(user_a_id).get();
+            const user_b = await admin.firestore().collection("users").doc(user_b_id).get();
+
+            if (!user_a.exists) {
+                console.error("ERROR | cannot find user with id " + user_a_id);
+                return;
+            }
+            if (!user_b.exists) {
+                console.error("ERROR | cannot find user with id " + user_b_id);
+                return;
+            }
+
+            console.log(" about to create match for " + user_a.data()!.firstName + "-" + user_b.data()!.firstName);
+
+            const match = admin.firestore().collection("matches").doc(user_a.data()!.firstName + "-" + user_b.data()!.firstName + "-" + Date.now());
+            await match.set({
+                user_a_id: user_a_id,
+                user_b_id: user_b_id,
+                user_a_revealed: false,
+                user_b_revealed: false,
+                created_at: Date.now()
+            })
+
+            console.log("creating match for " + user_a.data()!.firstName + "-" + user_b.data()!.firstName);
+
+            const formData = {
+                "mode": "voice_bio",
+                "name": user_a.data()!.firstName,
+                "phone_number": user_a.data()!.phone,
+                "match_name": user_b.data()!.firstName,
+                "match_gender_pronoun": user_b.data()!.gender == 'male' ? "he" : "she", 
+                "match_gender_pronoun_possessive": user_b.data()!.gender == 'male' ? "his" : "her",
+                "match_voice_bio_url": user_b.data()!.bio,
+                "match_id": match.id
+            }
+
+            requestLib.post({url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData}, function (error:any, r:any, body:any) {
+                    if (r.statusCode === 204) {
+                        console.log("successfully revealed sent voice bio 1");
+                    } else {
+                        console.error('error:', error); // Print the error if one occurred
+                        console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
+                    }                      
+                });
+            
+            const formData2 = {
+                "mode": "voice_bio",
+                "name": user_b.data()!.firstName,
+                "phone_number": user_b.data()!.phone,
+                "match_name": user_a.data()!.firstName,
+                "match_gender_pronoun": user_a.data()!.gender == 'male' ? "he" : "she", 
+                "match_gender_pronoun_possessive": user_a.data()!.gender == 'male' ? "his" : "her",
+                "match_voice_bio_url": user_a.data()!.bio,
+                "match_id": match.id
+            }
+
+            requestLib.post({url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData2}, function (error:any, r:any, body:any) {
+                    if (r.statusCode === 204) {
+                        console.log("successfully sent voice bio 2");
+                    } else {
+                        console.error('error:', error); // Print the error if one occurred
+                        console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
+                    }                      
+                });
+
+        }
+    });
+});
+
 export const callUser = functions.https.onCall(
     async (request) => {
         const ref = admin.firestore().collection("users").doc(request.user_id);
@@ -79,13 +169,13 @@ export const callUser = functions.https.onCall(
         if (!user_doc.exists || !user_doc_data) {
             return { "error": "User does not exist!" };
         }
-        const phone = user_doc_data.phone_number;
+        const phone = user_doc_data.phone;
         const twiml = await getConferenceTwimlForPhone(phone, true);
         if (!twiml) {
             return { "error": "User has no current matches!" };
         }
         await callNumberWithTwiml(phone, twiml);
-        return { "success": "Calling " + phone };
+        return { "success": "Calling " + phone};
     }
 );
 
@@ -93,7 +183,7 @@ export const optIn = functions.https.onRequest(
     async (request, response) => {
         const phone_number = request.body.phone_number;
         const users = admin.firestore().collection("users");
-        const result = await users.where("phone_number", "==", phone_number).get();
+        const result = await users.where("phone", "==", phone_number).get();
 
         if (result.empty) {
             console.log("ERROR | No user with phone number " + phone_number);
@@ -124,8 +214,9 @@ export const reveal = functions.https.onRequest(
         } else {
             const users = await admin.firestore().collection("users");
 
-            const user_a_query = await users.where("phone_number", "==", phone_number).get();
+            const user_a_query = await users.where("phone", "==", phone_number).get();
 
+            console.log("user is revealing " + phone_number);
             // check if user exists in table
             if (user_a_query.empty) {
                 console.log("ERROR | User does not exist");
@@ -159,15 +250,14 @@ export const reveal = functions.https.onRequest(
             match_doc = await match_doc_ref.get();
 
             if (match_doc.data()!.user_a_revealed === true && match_doc.data()!.user_b_revealed === true) {
-                const requestLib = require('request');
                 
                 // TODO fix pronouns
                 const formData = {
                     "mode": "reveal",
-                    "name": user_a.data().first_name,
-                    "phone_number": user_a.data().phone_number.substring(1),
-                    "match_name": user_b.data()!.first_name,
-                    "match_phone_number": user_b.data()!.phone_number, 
+                    "name": user_a.data().firstName,
+                    "phone_number": user_a.data().phone,
+                    "match_name": user_b.data()!.firstName,
+                    "match_phone_number": user_b.data()!.phone.substring(1), 
                     "match_gender_pronoun": "they", 
                     "match_gender_pronoun_possessive": "their", 
                 }
@@ -185,10 +275,10 @@ export const reveal = functions.https.onRequest(
 
                 const formData2 = {
                     "mode": "reveal",
-                    "name": user_b.data()!.first_name,
-                    "phone_number": user_b.data()!.phone_number.substring(1),
-                    "match_name": user_a.data().first_name,
-                    "match_phone_number": user_a.data()!.phone_number, 
+                    "name": user_b.data()!.firstName,
+                    "phone_number": user_b.data()!.phone,
+                    "match_name": user_a.data().firstName,
+                    "match_phone_number": user_a.data().phone.substring(1), 
                     "match_gender_pronoun": "they", 
                     "match_gender_pronoun_possessive": "their", 
                 }
