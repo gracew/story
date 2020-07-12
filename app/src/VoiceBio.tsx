@@ -41,7 +41,7 @@ function VoiceBio() {
           </button>
           {specificCta && (
             <ReactTypeformEmbed
-              url={`https://voicebio.typeform.com/to/BzkJGytE?referralUsername=${username}&referralGender=${user.gender}`}
+              url={`https://voicebio.typeform.com/to/BzkJGytE?referralUsername=${username}&referralGender=${user.gender}&referralFirstname=${user.firstName}`}
             />
           )}
         </div>
