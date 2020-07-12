@@ -1,4 +1,4 @@
-import { Button } from "antd";
+import { Button, Spin } from "antd";
 import "firebase/analytics";
 import * as firebase from "firebase/app";
 import "firebase/functions";
@@ -12,7 +12,8 @@ const uuid = require("uuid");
 function Recorder() {
   const history = useHistory();
   const [referrer, setReferrer] = useState<any>();
-  const [record, setRecord] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [bio, setBio] = useState<ReactMicStopEvent>();
   const query = new URLSearchParams(useLocation().search);
   const request: Record<string, string> = {};
@@ -32,6 +33,7 @@ function Recorder() {
   }, []);
 
   async function onSubmit() {
+    setSubmitting(true);
     const ref = firebase.storage().ref(`/bios/${uuid.v4()}`);
     await ref.put(bio!.blob);
     try {
@@ -50,15 +52,20 @@ function Recorder() {
   firebase
     .analytics()
     .logEvent("recorder", { referring_username: request.referrerUsername });
-  let text = referrer ? `We'll share it with ${referrer.firstName}` : "";
+
+  const recordText = recording ? "Stop" : bio ? "Record again" : "Record";
+  const buttonType = recording ? "primary" : bio ? "default" : "primary";
+
+  if (!referrer) {
+    return <Spin size="large" />;
+  }
+
+  let text = `We'll share it with ${referrer.firstName}`;
   if (request.otherMen === "Yes") {
     text += " and other men";
   } else if (request.otherWomen === "Yes") {
     text += " and other women";
   }
-
-  const recordText = record ? "Stop" : bio ? "Record again" : "Record";
-  const buttonType = record ? "primary" : bio ? "default" : "primary";
 
   return (
     <div>
@@ -73,17 +80,17 @@ function Recorder() {
 
       <Button
         className="record-stop"
-        onClick={() => setRecord(!record)}
+        onClick={() => setRecording(!recording)}
         type={buttonType}
       >
         {recordText}
       </Button>
       <ReactMic
-        className={record ? "se-react-mic" : "se-react-mic-hide"}
-        record={record}
+        className={recording ? "se-react-mic" : "se-react-mic-hide"}
+        record={recording}
         onStop={(blob) => setBio(blob)}
       />
-      {bio && !record && (
+      {bio && !recording && (
         <audio
           className="se-recording-playback"
           controls
@@ -94,11 +101,16 @@ function Recorder() {
       {bio && (
         <Button
           className="se-submit-bio"
-          disabled={bio === undefined || record}
+          disabled={bio === undefined || recording || submitting}
           onClick={onSubmit}
           type="primary"
         >
-          Submit
+          {!submitting && <div>Submit</div>}
+          {submitting && (
+            <div>
+              Submitting... <Spin size="small" />
+            </div>
+          )}
         </Button>
       )}
     </div>
