@@ -1,8 +1,9 @@
+import { Button } from "antd";
+import "firebase/analytics";
 import * as firebase from "firebase/app";
 import "firebase/functions";
 import "firebase/storage";
-import "firebase/analytics";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ReactMic, ReactMicStopEvent } from "react-mic";
 import { useHistory, useLocation } from "react-router-dom";
 import "./Recorder.css";
@@ -10,6 +11,7 @@ const uuid = require("uuid");
 
 function Recorder() {
   const history = useHistory();
+  const [referrer, setReferrer] = useState<any>();
   const [record, setRecord] = useState(false);
   const [bio, setBio] = useState<ReactMicStopEvent>();
   const query = new URLSearchParams(useLocation().search);
@@ -17,6 +19,17 @@ function Recorder() {
   query.forEach((value, key) => {
     request[key] = value;
   });
+
+  useEffect(() => {
+    firebase
+      .functions()
+      .httpsCallable("getUserByUsername")({
+        username: request.referrerUsername,
+      })
+      .then((res) => {
+        setReferrer(res.data);
+      });
+  }, []);
 
   async function onSubmit() {
     const ref = firebase.storage().ref(`/bios/${uuid.v4()}`);
@@ -26,58 +39,68 @@ function Recorder() {
         ...request,
         bio: ref.fullPath,
       });
-      history.push("/register/complete?username=" + res.data.username + "&referralUsername=" + request.referralUsername);
+      history.push(
+        `/register/complete?username=${res.data.username}&referrerUsername=${request.referrerUsername}`
+      );
     } catch (err) {
       history.push("/register/error");
     }
   }
 
-  firebase.analytics().logEvent('recorder', { referring_username: request.referralUsername});
+  firebase
+    .analytics()
+    .logEvent("recorder", { referring_username: request.referrerUsername });
+  let text = referrer ? `We'll share it with ${referrer.firstName}` : "";
+  if (request.otherMen) {
+    text += " and other men";
+  } else if (request.otherWomen) {
+    text += " and other women";
+  }
+
+  const recordText = record ? "Stop" : bio ? "Record again" : "Record";
+  const buttonType = record ? "primary" : bio ? "default" : "primary";
 
   return (
     <div>
-      <h2>Tell us about yourself!</h2>
-      <p>
-        No picture, no text, just you and what you want to say. Your matches
-        want to hear from you.
-      </p>
-      <p>
-        How would your friends describe you? What are your aspirations? What
-        can't you live without? Or tell us anything on your mind!
-      </p>
+      <h2>Record your own voice bio</h2>
+      <p>{text}.</p>
+      <div className="record-prompts">
+        <div>Your best travel story?</div>
+        <div>The most spontaneous thing you’ve ever done?</div>
+        <div>Something that surprises people about you?</div>
+        <div>Or say anything on your mind!</div>
+      </div>
+
+      <Button
+        className="record-stop"
+        onClick={() => setRecord(!record)}
+        type={buttonType}
+      >
+        {recordText}
+      </Button>
       <ReactMic
-        className="se-react-mic"
+        className={record ? "se-react-mic" : "se-react-mic-hide"}
         record={record}
         onStop={(blob) => setBio(blob)}
       />
-      <div className="se-button-group">
-        <button disabled={record} onClick={() => setRecord(true)} type="button">
-          Record
-        </button>
-        <button
-          disabled={!record}
-          onClick={() => setRecord(false)}
-          type="button"
-        >
-          Stop
-        </button>
-      </div>
-      <audio
-        className="se-recording-playback"
-        controls
-        src={bio && bio.blobURL}
-      />
+      {bio && !record && (
+        <audio
+          className="se-recording-playback"
+          controls
+          src={bio && bio.blobURL}
+        />
+      )}
 
-      <div className="se-button-group">
-        <button
+      {bio && (
+        <Button
           className="se-submit-bio"
-          disabled={bio === undefined}
+          disabled={bio === undefined || record}
           onClick={onSubmit}
-          type="button"
+          type="primary"
         >
           Submit
-        </button>
-      </div>
+        </Button>
+      )}
     </div>
   );
 }
