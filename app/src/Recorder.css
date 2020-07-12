@@ -2,11 +2,29 @@
   width: 100%;
 }
 
+.se-react-mic-hide {
+  display: none;
+}
+
 .se-button-group {
   text-align: center;
+}
+
+.record-stop {
+  width: 100%;
+  margin-top: 30px;
+}
+
+.se-submit-bio {
+  width: 100%;
 }
 
 .se-recording-playback {
   width: 100%;
   margin: 10px auto;
+}
+
+.record-prompts div {
+  margin-bottom: 4px;
+  font-style: italic;
 }

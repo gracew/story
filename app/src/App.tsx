@@ -1,8 +1,8 @@
-import * as firebase from "firebase/app";
 import "firebase/analytics";
+import * as firebase from "firebase/app";
 import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import "./App.css";
+import "./App.less";
 import Listener from "./Listener";
 import PhoneAlreadyExists from "./PhoneAlreadyExists";
 import Recorder from "./Recorder";
@@ -25,6 +25,7 @@ function App() {
   firebase.analytics();
   return (
     <Router>
+      <div className="App-header">Voicebar</div>
       <div className="App">
         <Switch>
           <Route path="/record">
@@ -47,6 +48,5 @@ function App() {
     </Router>
   );
 }
-
 
 export default App;
