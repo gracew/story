@@ -25,7 +25,7 @@ function Recorder() {
         ...request,
         bio: ref.fullPath,
       });
-      history.push("/register/complete?username=" + res.data.username);
+      history.push("/register/complete?username=" + res.data.username + "&referralUsername=" + request.referralUsername);
     } catch (err) {
       history.push("/register/error");
     }

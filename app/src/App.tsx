@@ -1,4 +1,5 @@
 import * as firebase from "firebase/app";
+import "firebase/analytics";
 import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.css";
@@ -21,6 +22,7 @@ const firebaseConfig = {
 
 function App() {
   firebase.initializeApp(firebaseConfig);
+  firebase.analytics();
   return (
     <Router>
       <div className="App">
@@ -45,5 +47,6 @@ function App() {
     </Router>
   );
 }
+
 
 export default App;
