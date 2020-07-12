@@ -3,9 +3,10 @@ import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.css";
 import Listener from "./Listener";
+import PhoneAlreadyExists from "./PhoneAlreadyExists";
 import Recorder from "./Recorder";
 import RegisterComplete from "./RegisterComplete";
-import PhoneAlreadyExists from './PhoneAlreadyExists';
+import VoiceBio from "./VoiceBio";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBLr4SMn_GwfA6AJFHCqSPrZSfORK3w91I",
@@ -35,6 +36,9 @@ function App() {
           </Route>
           <Route path="/listen/:bioId">
             <Listener />
+          </Route>
+          <Route path="/:username">
+            <VoiceBio />
           </Route>
         </Switch>
       </div>

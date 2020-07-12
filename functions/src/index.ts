@@ -3,6 +3,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as fs from 'fs';
+import * as moment from 'moment';
 import * as os from 'os';
 import * as path from 'path';
 import { callNumberWithTwiml, getConferenceTwimlForPhone } from "./twilio";
@@ -26,8 +27,37 @@ export const registerUser = functions.https.onCall(async (request) => {
         );
     }
 
+    async function usernameAvailable(proposed: string) {
+        const existingUsername = await admin
+            .firestore()
+            .collection("users")
+            .where("username", "==", proposed)
+            .get();
+        console.log(existingUsername)
+        return existingUsername.docs.length === 0;
+    }
+    function randomBetween1and100() {
+        return Math.floor(Math.random() * 100);
+    }
+
+    // generate unique username/link
+    let username = request.firstName.toLowerCase();
+    while (!(await usernameAvailable(username))) {
+        username = username + randomBetween1and100();
+        // NOTE(gracew): this might go on forever if there are more than 100 people with this first name
+    }
+
+    const gender = request.referralGender === "m" ? "f" : "m";
+
     const ref = admin.firestore().collection("users").doc();
-    const user = { ...other, phone: normalizedPhone, registeredAt: admin.firestore.FieldValue.serverTimestamp(), id: ref.id };
+    const user = {
+        id: ref.id,
+        username,
+        phone: normalizedPhone,
+        registeredAt: admin.firestore.FieldValue.serverTimestamp(),
+        gender,
+        ...other,
+    };
     await ref.set(user);
     return user;
 });
@@ -162,13 +192,21 @@ export const addUserToCall = functions.https.onRequest(
     }
 );
 
-
-
-
-export const getUsers = functions.https.onRequest(
-    async (request, response) => {
-        const users = await admin.firestore().collection("users").get();
-
-        response.send(users.docs.map((user) => user.id));
+export const getUserByUsername = functions.https.onCall(
+    async (request) => {
+        const user = await admin
+            .firestore()
+            .collection("users")
+            .where("username", "==", request.username)
+            .get();
+        if (user.empty) {
+            throw new functions.https.HttpsError(
+                "not-found",
+                "unknown username"
+            );
+        }
+        const { firstName, dob, bio, gender } = user.docs[0].data();
+        const age = moment().diff(moment(dob), "years")
+        return { firstName, age, bio, gender };
     }
 );
