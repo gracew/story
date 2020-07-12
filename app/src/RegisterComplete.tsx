@@ -1,4 +1,4 @@
-import { Typography, Spin } from "antd";
+import { Spin, Typography } from "antd";
 import "firebase/analytics";
 import * as firebase from "firebase/app";
 import "firebase/functions";
@@ -40,7 +40,7 @@ function RegisterComplete() {
         We'll send you an SMS as soon {referrer.firstName} is available to call.
       </p>
       <p>In the meantime, share your voice bio in your dating profiles.</p>
-      <Text copyable={{ text: personalLink }}>{personalLink}</Text>
+      <Text copyable={{ text: "https://" + personalLink }}>{personalLink}</Text>
     </div>
   );
 }
