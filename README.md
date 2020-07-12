@@ -19,6 +19,10 @@ cd app
 yarn
 ```
 
+Note that we are using the Ant design component library. Information on theme customization:
+- https://ant.design/docs/react/use-with-create-react-app#Customize-Theme
+- https://ant.design/docs/react/customize-theme
+
 ### Running the app locally
 
 ```
