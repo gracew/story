@@ -20,6 +20,7 @@ yarn
 ```
 
 ### Running the app locally
+
 ```
 cd app
 yarn start
@@ -30,4 +31,11 @@ yarn start
 ```
 cd functions
 yarn deploy
+```
+
+## Deploying app
+
+```
+PUBLIC_URL=https://voicebar.co yarn build
+firebase deploy --only hosting
 ```

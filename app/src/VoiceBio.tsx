@@ -1,3 +1,4 @@
+import { Button } from "antd";
 import * as firebase from "firebase/app";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
@@ -32,13 +33,13 @@ function VoiceBio() {
       {!user && <p>Loading</p>}
       {user && (
         <div>
-          <h2>
+          <h1>
             {user.firstName}, {user.age}
-          </h2>
+          </h1>
           <audio className="se-audio-bio" controls src={bioUrl} />
-          <button onClick={() => setSpecificCta(true)}>
+          <Button type="primary" onClick={() => setSpecificCta(true)}>
             Voice chat with {user.firstName}
-          </button>
+          </Button>
           {specificCta && (
             <ReactTypeformEmbed
               url={`https://voicebio.typeform.com/to/BzkJGytE?referralUsername=${username}&referralGender=${user.gender}&referralFirstname=${user.firstName}`}

@@ -1,6 +1,8 @@
+@import "~antd/dist/antd.css";
+
 .App {
   margin: auto;
-  max-width: 500px;
+  max-width: 300px;
 }
 
 .App-logo {
