@@ -1,7 +1,7 @@
-import * as firebase from "firebase/app";
-import "firebase/analytics";
-import "firebase/functions";
 import { Typography } from "antd";
+import "firebase/analytics";
+import * as firebase from "firebase/app";
+import "firebase/functions";
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -11,7 +11,9 @@ function RegisterComplete() {
   const query = new URLSearchParams(useLocation().search);
   const username = query.get("username");
   const referrerUsername = query.get("referrerUsername");
-  firebase.analytics().logEvent('register_complete', { referring_username: referrerUsername});
+  firebase
+    .analytics()
+    .logEvent("register_complete", { referring_username: referrerUsername });
 
   const [referrer, setReferrer] = useState<any>();
 
@@ -27,15 +29,18 @@ function RegisterComplete() {
   }, []);
 
   if (!referrer) {
-    return <p>Loading</p>
+    return <p>Loading</p>;
   }
 
+  const personalLink = "voicebar.co/" + username;
   return (
     <div>
       <h2>You're in!</h2>
-      <p>We'll send you an SMS as soon {referrer.firstName} is available to call.</p>
+      <p>
+        We'll send you an SMS as soon {referrer.firstName} is available to call.
+      </p>
       <p>In the meantime, share your voice bio in your dating profiles.</p>
-      <Text copyable>voicebar.co/{username}</Text>
+      <Text copyable={{ text: personalLink }}>{personalLink}</Text>
     </div>
   );
 }
