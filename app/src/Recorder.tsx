@@ -51,9 +51,9 @@ function Recorder() {
     .analytics()
     .logEvent("recorder", { referring_username: request.referrerUsername });
   let text = referrer ? `We'll share it with ${referrer.firstName}` : "";
-  if (request.otherMen) {
+  if (request.otherMen === "Yes") {
     text += " and other men";
-  } else if (request.otherWomen) {
+  } else if (request.otherWomen === "Yes") {
     text += " and other women";
   }
 
