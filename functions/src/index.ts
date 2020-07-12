@@ -35,7 +35,6 @@ export const registerUser = functions.https.onCall(async (request) => {
             .collection("users")
             .where("username", "==", proposed)
             .get();
-        console.log(existingUsername)
         return existingUsername.docs.length === 0;
     }
     function randomBetween1and100() {
@@ -49,7 +48,7 @@ export const registerUser = functions.https.onCall(async (request) => {
         // NOTE(gracew): this might go on forever if there are more than 100 people with this first name
     }
 
-    const gender = request.referralGender === "m" ? "f" : "m";
+    const gender = request.referrerGender === "m" ? "f" : "m";
 
     const ref = admin.firestore().collection("users").doc();
     const user = {
@@ -152,40 +151,40 @@ export const createMatches = functions.storage.object().onFinalize(async (object
                 "name": user_a.data()!.firstName,
                 "phone_number": user_a.data()!.phone,
                 "match_name": user_b.data()!.firstName,
-                "match_gender_pronoun": user_b.data()!.gender == 'male' ? "he" : "she", 
+                "match_gender_pronoun": user_b.data()!.gender == 'male' ? "he" : "she",
                 "match_gender_pronoun_possessive": user_b.data()!.gender == 'male' ? "his" : "her",
                 "match_voice_bio_url": user_b.data()!.bio,
                 "match_id": match.id
             }
 
-            requestLib.post({url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData}, function (error:any, r:any, body:any) {
-                    if (r.statusCode === 204) {
-                        console.log("successfully revealed sent voice bio 1");
-                    } else {
-                        console.error('error:', error); // Print the error if one occurred
-                        console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
-                    }                      
-                });
-            
+            requestLib.post({ url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData }, function (error: any, r: any, body: any) {
+                if (r.statusCode === 204) {
+                    console.log("successfully revealed sent voice bio 1");
+                } else {
+                    console.error('error:', error); // Print the error if one occurred
+                    console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
+                }
+            });
+
             const formData2 = {
                 "mode": "voice_bio",
                 "name": user_b.data()!.firstName,
                 "phone_number": user_b.data()!.phone,
                 "match_name": user_a.data()!.firstName,
-                "match_gender_pronoun": user_a.data()!.gender == 'male' ? "he" : "she", 
+                "match_gender_pronoun": user_a.data()!.gender == 'male' ? "he" : "she",
                 "match_gender_pronoun_possessive": user_a.data()!.gender == 'male' ? "his" : "her",
                 "match_voice_bio_url": user_a.data()!.bio,
                 "match_id": match.id
             }
 
-            requestLib.post({url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData2}, function (error:any, r:any, body:any) {
-                    if (r.statusCode === 204) {
-                        console.log("successfully sent voice bio 2");
-                    } else {
-                        console.error('error:', error); // Print the error if one occurred
-                        console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
-                    }                      
-                });
+            requestLib.post({ url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData2 }, function (error: any, r: any, body: any) {
+                if (r.statusCode === 204) {
+                    console.log("successfully sent voice bio 2");
+                } else {
+                    console.error('error:', error); // Print the error if one occurred
+                    console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
+                }
+            });
 
         }
     });
@@ -205,7 +204,7 @@ export const callUser = functions.https.onCall(
             return { "error": "User has no current matches!" };
         }
         await callNumberWithTwiml(phone, twiml);
-        return { "success": "Calling " + phone};
+        return { "success": "Calling " + phone };
     }
 );
 
@@ -250,7 +249,7 @@ export const reveal = functions.https.onRequest(
             // check if user exists in table
             if (user_a_query.empty) {
                 console.log("ERROR | User does not exist");
-                response.send({success: false, message: "User does not exist"});
+                response.send({ success: false, message: "User does not exist" });
                 return;
             }
 
@@ -261,11 +260,11 @@ export const reveal = functions.https.onRequest(
 
             if (match_doc.data()!.user_a_id === user_a.id) {
                 user_b = await users.doc(match_doc.data()!.user_b_id).get();
-                await match_doc_ref.update({user_a_revealed: true});
+                await match_doc_ref.update({ user_a_revealed: true });
 
             } else if (match_doc.data()!.user_b_id === user_a.id) {
                 user_b = await users.doc(match_doc.data()!.user_a_id).get();
-                await match_doc_ref.update({user_b_revealed: true});
+                await match_doc_ref.update({ user_b_revealed: true });
             } else {
                 console.log("ERROR | Requested match doesnt have the requested users ");
                 response.send({ success: false, message: "Requested match doesnt have the requested users" });
@@ -273,34 +272,34 @@ export const reveal = functions.https.onRequest(
 
             if (user_b === undefined) {
                 console.log("ERROR | User b does not exist");
-                response.send({success: false, message: "User B does not exist"});
+                response.send({ success: false, message: "User B does not exist" });
                 return;
             }
 
             match_doc = await match_doc_ref.get();
 
             if (match_doc.data()!.user_a_revealed === true && match_doc.data()!.user_b_revealed === true) {
-                
+
                 // TODO fix pronouns
                 const formData = {
                     "mode": "reveal",
                     "name": user_a.data().firstName,
                     "phone_number": user_a.data().phone,
                     "match_name": user_b.data()!.firstName,
-                    "match_phone_number": user_b.data()!.phone.substring(1), 
-                    "match_gender_pronoun": "they", 
-                    "match_gender_pronoun_possessive": "their", 
+                    "match_phone_number": user_b.data()!.phone.substring(1),
+                    "match_gender_pronoun": "they",
+                    "match_gender_pronoun_possessive": "their",
                 }
 
                 console.log("Revealing phone number 1");
-                requestLib.post({url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData}, function (error: any, r: any, body: any) {
+                requestLib.post({ url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData }, function (error: any, r: any, body: any) {
                     if (r.statusCode === 204) {
                         console.log("successfully revealed first phone number");
                     } else {
                         console.error('error:', error); // Print the error if one occurred
                         console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
-                        response.send({success: false})
-                    }                      
+                        response.send({ success: false })
+                    }
                 });
 
                 const formData2 = {
@@ -308,25 +307,25 @@ export const reveal = functions.https.onRequest(
                     "name": user_b.data()!.firstName,
                     "phone_number": user_b.data()!.phone,
                     "match_name": user_a.data().firstName,
-                    "match_phone_number": user_a.data().phone.substring(1), 
-                    "match_gender_pronoun": "they", 
-                    "match_gender_pronoun_possessive": "their", 
+                    "match_phone_number": user_a.data().phone.substring(1),
+                    "match_gender_pronoun": "they",
+                    "match_gender_pronoun_possessive": "their",
                 }
 
                 console.log("Revealing phone number 2");
-                requestLib.post({url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData2}, function (error:any, r:any, body:any) {
+                requestLib.post({ url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData2 }, function (error: any, r: any, body: any) {
                     if (r.statusCode === 204) {
                         console.log("successfully revealed second phone number");
                     } else {
                         console.error('error:', error); // Print the error if one occurred
                         console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
-                        response.send({success: false});
-                    }                      
+                        response.send({ success: false });
+                    }
                 });
-                
+
             }
 
-            response.send({success: true});
+            response.send({ success: true });
 
         }
     }

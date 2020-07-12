@@ -1,4 +1,4 @@
-import { Typography } from "antd";
+import { Typography, Spin } from "antd";
 import "firebase/analytics";
 import * as firebase from "firebase/app";
 import "firebase/functions";
@@ -29,7 +29,7 @@ function RegisterComplete() {
   }, []);
 
   if (!referrer) {
-    return <p>Loading</p>;
+    return <Spin size="large" />;
   }
 
   const personalLink = "voicebar.co/" + username;
