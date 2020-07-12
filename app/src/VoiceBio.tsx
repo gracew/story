@@ -10,7 +10,6 @@ function VoiceBio() {
   const [user, setUser] = useState<any>();
   const [bioUrl, setBioUrl] = useState<string>();
   const [specificCta, setSpecificCta] = useState(false);
-  const [generalCta, setGeneralCta] = useState(false);
   const { username } = useParams();
 
   useEffect(() => {
@@ -41,11 +40,9 @@ function VoiceBio() {
             Voice chat with {user.firstName}
           </button>
           {specificCta && (
-            <ReactTypeformEmbed url={`https://voicebio.typeform.com/to/BzkJGytE?referralUsername=${username}&referralGender=${user.gender}`} />
-          )}
-          <button>Sign up for Speakeasy</button>
-          {generalCta && (
-            <ReactTypeformEmbed url={`https://voicebio.typeform.com/to/BzkJGytE?referralUsername=${username}&referralGender=${user.gender}`} />
+            <ReactTypeformEmbed
+              url={`https://voicebio.typeform.com/to/BzkJGytE?referralUsername=${username}&referralGender=${user.gender}`}
+            />
           )}
         </div>
       )}
