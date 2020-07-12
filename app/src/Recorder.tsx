@@ -1,6 +1,7 @@
 import * as firebase from "firebase/app";
 import "firebase/functions";
 import "firebase/storage";
+import "firebase/analytics";
 import React, { useState } from "react";
 import { ReactMic, ReactMicStopEvent } from "react-mic";
 import { useHistory, useLocation } from "react-router-dom";
@@ -30,6 +31,8 @@ function Recorder() {
       history.push("/register/error");
     }
   }
+
+  firebase.analytics().logEvent('recorder', { referring_username: request.referralUsername});
 
   return (
     <div>

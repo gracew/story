@@ -1,6 +1,7 @@
 import { Button } from "antd";
 import * as firebase from "firebase/app";
 import "firebase/storage";
+import "firebase/analytics";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 // @ts-ignore
@@ -26,6 +27,8 @@ function VoiceBio() {
           .then((url) => setBioUrl(url));
       });
   }, []);
+
+  firebase.analytics().logEvent('voice_bio', { referring_username: username});
 
   return (
     <div>

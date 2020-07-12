@@ -1,9 +1,18 @@
+import * as firebase from "firebase/app";
 import React from "react";
+import "firebase/analytics";
 import { useLocation } from "react-router-dom";
 
 function RegisterComplete() {
   const query = new URLSearchParams(useLocation().search);
   const username = query.get("username");
+  const request: Record<string, string> = {};
+
+  query.forEach((value, key) => {
+    request[key] = value;
+  });
+
+  firebase.analytics().logEvent('register_complete', { referring_username: request.referralUsername});
 
   return (
     <div>
