@@ -4,7 +4,7 @@ import * as firebase from "firebase/app";
 import "firebase/functions";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
-import { ReactMic, ReactMicStopEvent } from "react-mic";
+import { ReactMic, ReactMicStopEvent } from "@cleandersonlobo/react-mic";
 import { useHistory, useLocation } from "react-router-dom";
 import "./Recorder.css";
 const uuid = require("uuid");
@@ -88,6 +88,8 @@ function Recorder() {
       <ReactMic
         className={recording ? "se-react-mic" : "se-react-mic-hide"}
         record={recording}
+        // @ts-ignore
+        mimeType="audio/mp3"
         onStop={(blob) => setBio(blob)}
       />
       {bio && !recording && (
