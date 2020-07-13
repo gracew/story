@@ -5,8 +5,10 @@
   "dependencies": {
     "@cleandersonlobo/react-mic": "^1.2.0",
     "@types/cleandersonlobo__react-mic": "npm:@types/react-mic",
+    "@use-it/interval": "^0.1.3",
     "antd": "^4.4.2",
     "firebase": "^7.15.5",
+    "moment": "^2.27.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",

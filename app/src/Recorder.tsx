@@ -6,8 +6,38 @@ import "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { ReactMic, ReactMicStopEvent } from "@cleandersonlobo/react-mic";
 import { useHistory, useLocation } from "react-router-dom";
+import useInterval from "@use-it/interval";
 import "./Recorder.css";
 const uuid = require("uuid");
+
+function TimedRecordButton({ stopRecording, minLength, maxLength }:
+  { stopRecording: () => void,
+    minLength: number,
+    maxLength: number
+  }) {
+  const [recordingTimer, setRecordingTimer] = useState(0);
+  useInterval(() => {
+    setRecordingTimer(recordingTimer => recordingTimer + 1);
+    if (maxLength <= recordingTimer) {
+      stopRecording();
+    }
+  }, 1000);
+  const timeRemaining = minLength - recordingTimer;
+  const recordText = (recordingTimer < minLength) ?
+    `Stop recording (available in ${timeRemaining}s)` :
+    "Stop recording";
+return (
+  <Button
+      className="record-stop"
+      disabled={recordingTimer < minLength}
+      onClick={stopRecording}
+      type="primary"
+    >
+    {recordText}
+  </Button>
+  );
+
+}
 
 function Recorder() {
   const history = useHistory();
@@ -53,9 +83,6 @@ function Recorder() {
     .analytics()
     .logEvent("recorder", { referring_username: request.referrerUsername });
 
-  const recordText = recording ? "Stop" : bio ? "Record again" : "Record";
-  const buttonType = recording ? "primary" : bio ? "default" : "primary";
-
   if (!referrer) {
     return <Spin size="large" />;
   }
@@ -77,14 +104,21 @@ function Recorder() {
         <div>Something that surprises people about you?</div>
         <div>Or say anything on your mind!</div>
       </div>
-
-      <Button
-        className="record-stop"
-        onClick={() => setRecording(!recording)}
-        type={buttonType}
-      >
-        {recordText}
-      </Button>
+      {recording ?
+        <TimedRecordButton
+          stopRecording={() => setRecording(false)}
+          minLength={20}
+          maxLength={120}
+        />
+        :
+          <Button
+            className="record-stop"
+            onClick={() => setRecording(true)}
+            type={bio ? "default" : "primary"}
+          >
+            {bio ? "Record again" : "Record"}
+          </Button>
+      }
       <ReactMic
         className={recording ? "se-react-mic" : "se-react-mic-hide"}
         record={recording}
