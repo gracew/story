@@ -57,7 +57,6 @@ function VoiceBio() {
           url={`https://voicebio.typeform.com/to/BzkJGytE?referrerUsername=${username}&referrerGender=${user.gender}&referrerFirstname=${user.firstName}`}
         />
       )}
-      <p className="vb-questions">Questions? Email hello@voicebar.co</p>
     </div>
   );
 }

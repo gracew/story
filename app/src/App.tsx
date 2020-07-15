@@ -55,6 +55,7 @@ function App() {
           </Route>
         </Switch>
       </div>
+      <p className="App-footer">Questions? Email hello@voicebar.co</p>
     </Router>
   );
 }

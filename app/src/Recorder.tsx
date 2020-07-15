@@ -1,42 +1,46 @@
+import { ReactMic, ReactMicStopEvent } from "@cleandersonlobo/react-mic";
+import useInterval from "@use-it/interval";
 import { Button, Spin } from "antd";
 import "firebase/analytics";
 import * as firebase from "firebase/app";
 import "firebase/functions";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
-import { ReactMic, ReactMicStopEvent } from "@cleandersonlobo/react-mic";
 import { useHistory, useLocation } from "react-router-dom";
-import useInterval from "@use-it/interval";
 import "./Recorder.css";
 const uuid = require("uuid");
 
-function TimedRecordButton({ stopRecording, minLength, maxLength }:
-  { stopRecording: () => void,
-    minLength: number,
-    maxLength: number
-  }) {
+function TimedRecordButton({
+  stopRecording,
+  minLength,
+  maxLength,
+}: {
+  stopRecording: () => void;
+  minLength: number;
+  maxLength: number;
+}) {
   const [recordingTimer, setRecordingTimer] = useState(0);
   useInterval(() => {
-    setRecordingTimer(recordingTimer => recordingTimer + 1);
+    setRecordingTimer((recordingTimer) => recordingTimer + 1);
     if (maxLength <= recordingTimer) {
       stopRecording();
     }
   }, 1000);
   const timeRemaining = minLength - recordingTimer;
-  const recordText = (recordingTimer < minLength) ?
-    `Stop recording (available in ${timeRemaining}s)` :
-    "Stop recording";
-return (
-  <Button
+  const recordText =
+    recordingTimer < minLength
+      ? `Stop recording (available in ${timeRemaining}s)`
+      : "Stop recording";
+  return (
+    <Button
       className="record-stop"
       disabled={recordingTimer < minLength}
       onClick={stopRecording}
       type="primary"
     >
-    {recordText}
-  </Button>
+      {recordText}
+    </Button>
   );
-
 }
 
 function Recorder() {
@@ -99,26 +103,26 @@ function Recorder() {
       <h2>Record your own voice bio</h2>
       <p>{text}.</p>
       <div className="record-prompts">
-        <div>Your best travel story?</div>
+        <div>Your best funny/inspiring/travel story?</div>
         <div>The most spontaneous thing you’ve ever done?</div>
         <div>Something that surprises people about you?</div>
         <div>Or say anything on your mind!</div>
       </div>
-      {recording ?
+      {recording ? (
         <TimedRecordButton
           stopRecording={() => setRecording(false)}
           minLength={20}
           maxLength={120}
         />
-        :
-          <Button
-            className="record-stop"
-            onClick={() => setRecording(true)}
-            type={bio ? "default" : "primary"}
-          >
-            {bio ? "Record again" : "Record"}
-          </Button>
-      }
+      ) : (
+        <Button
+          className="record-stop"
+          onClick={() => setRecording(true)}
+          type={bio ? "default" : "primary"}
+        >
+          {bio ? "Record again" : "Record"}
+        </Button>
+      )}
       <ReactMic
         className={recording ? "se-react-mic" : "se-react-mic-hide"}
         record={recording}
