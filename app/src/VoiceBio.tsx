@@ -47,21 +47,17 @@ function VoiceBio() {
 
   firebase.analytics().logEvent("voice_bio", { referring_username: username });
 
-  function formatGender(g: string) {
-    return g === "m" ? "Male" : "Female";
-  }
-
   return (
     <div className="vb-container">
       <h1 className="vb-name">{user.firstName}</h1>
       <h3 className="vb-meta">
-        {formatGender(user.gender)}, {user.age}
+        {user.gender}, {user.age}
       </h3>
       <audio className="se-audio-bio" controls src={bioUrl} />
       <Button
         className="vb-cta"
         type="primary"
-        href={`https://voicebio.typeform.com/to/BzkJGytE?referrerUsername=${username}&referrerGender=${user.gender}&referrerFirstname=${user.firstName}`}
+        href={`https://voicebio.typeform.com/to/BzkJGytE?referrerUsername=${username}&referrerFirstname=${user.firstName}`}
       >
         Set up voice call with {user.firstName}
       </Button>

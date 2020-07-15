@@ -92,10 +92,8 @@ function Recorder() {
   }
 
   let text = `We'll share it with ${referrer.firstName}`;
-  if (request.otherMen === "Yes") {
-    text += " and other men";
-  } else if (request.otherWomen === "Yes") {
-    text += " and other women";
+  if (request.otherPeople === "Yes") {
+    text += " and other potential matches";
   }
 
   return (

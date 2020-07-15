@@ -48,15 +48,12 @@ export const registerUser = functions.https.onCall(async (request) => {
         // NOTE(gracew): this might go on forever if there are more than 100 people with this first name
     }
 
-    const gender = request.referrerGender === "m" ? "f" : "m";
-
     const ref = admin.firestore().collection("users").doc();
     const user = {
         id: ref.id,
         username,
         phone: normalizedPhone,
         registeredAt: admin.firestore.FieldValue.serverTimestamp(),
-        gender,
         ...other,
     };
     await ref.set(user);
