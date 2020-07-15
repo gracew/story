@@ -3,17 +3,15 @@ import "firebase/analytics";
 import * as firebase from "firebase/app";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-// @ts-ignore
-import { ReactTypeformEmbed } from "react-typeform-embed";
+import { useHistory, useParams } from "react-router-dom";
 import "./VoiceBio.css";
 
 function VoiceBio() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>();
   const [bioUrl, setBioUrl] = useState<string>();
-  const [specificCta, setSpecificCta] = useState(false);
   const { username } = useParams();
+  const history = useHistory();
 
   useEffect(() => {
     firebase
@@ -63,15 +61,10 @@ function VoiceBio() {
       <Button
         className="vb-cta"
         type="primary"
-        onClick={() => setSpecificCta(true)}
+        href={`https://voicebio.typeform.com/to/BzkJGytE?referrerUsername=${username}&referrerGender=${user.gender}&referrerFirstname=${user.firstName}`}
       >
         Set up voice call with {user.firstName}
       </Button>
-      {specificCta && (
-        <ReactTypeformEmbed
-          url={`https://voicebio.typeform.com/to/BzkJGytE?referrerUsername=${username}&referrerGender=${user.gender}&referrerFirstname=${user.firstName}`}
-        />
-      )}
     </div>
   );
 }
