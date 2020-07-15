@@ -45,6 +45,7 @@ function TimedRecordButton({
 
 function Recorder() {
   const history = useHistory();
+  const [phoneRegistered, setPhoneRegistered] = useState();
   const [referrer, setReferrer] = useState<any>();
   const [recording, setRecording] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -58,12 +59,19 @@ function Recorder() {
   useEffect(() => {
     firebase
       .functions()
+      .httpsCallable("phoneRegistered")({
+        phone: request.phone,
+      })
+      .then((res) => setPhoneRegistered(res.data));
+  }, []);
+
+  useEffect(() => {
+    firebase
+      .functions()
       .httpsCallable("getUserByUsername")({
         username: request.referrerUsername,
       })
-      .then((res) => {
-        setReferrer(res.data);
-      });
+      .then((res) => setReferrer(res.data));
   }, []);
 
   async function onSubmit() {
@@ -87,6 +95,12 @@ function Recorder() {
     .analytics()
     .logEvent("recorder", { referring_username: request.referrerUsername });
 
+  if (phoneRegistered === undefined) {
+    return <Spin size="large" />;
+  }
+  if (phoneRegistered) {
+    history.push("/register/error");
+  }
   if (!referrer) {
     return <Spin size="large" />;
   }

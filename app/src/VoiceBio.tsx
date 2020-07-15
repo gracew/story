@@ -54,12 +54,17 @@ function VoiceBio() {
         {user.gender}, {user.age}
       </h3>
       <audio className="se-audio-bio" controls src={bioUrl} />
+      <p>Want to skip texting back and forth?</p>
+      <p className="vb-cta-description">
+        Record your own voice bio and set up an audio date with {user.firstName}
+        .
+      </p>
       <Button
         className="vb-cta"
         type="primary"
         href={`https://voicebio.typeform.com/to/BzkJGytE?referrerUsername=${username}&referrerFirstname=${user.firstName}`}
       >
-        Set up voice call with {user.firstName}
+        Set up an audio date with {user.firstName}
       </Button>
     </div>
   );

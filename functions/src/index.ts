@@ -12,6 +12,18 @@ admin.initializeApp();
 
 const requestLib = require('request');
 
+export const phoneRegistered = functions.https.onCall(async (request) => {
+    const normalizedPhone = request.phone.split(" ").join("");
+
+    // make sure the phone number hasn't already been registered
+    const existingUser = await admin
+        .firestore()
+        .collection("users")
+        .where("phone", "==", normalizedPhone)
+        .get();
+    return !existingUser.empty;
+});
+
 export const registerUser = functions.https.onCall(async (request) => {
     const { phone, ...other } = request;
     const normalizedPhone = phone.split(" ").join("");
