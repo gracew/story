@@ -362,8 +362,7 @@ export const getUserByUsername = functions.https.onCall(
                 "unknown username"
             );
         }
-        const { firstName, dob, bio, gender } = user.docs[0].data();
-        const age = moment().diff(moment(dob), "years")
+        const { firstName, age, bio, gender } = user.docs[0].data();
         return { firstName, age, bio, gender };
     }
 );
