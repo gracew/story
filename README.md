@@ -42,9 +42,16 @@ yarn deploy -P prod
 
 ## Deploying app
 
+Dev
+
+```
+PUBLIC_URL=https://speakeasy-92b16.web.app/ yarn build
+firebase deploy --only hosting
+```
+
+Prod
+
 ```
 PUBLIC_URL=https://voicebar.co yarn build
-firebase deploy --only hosting
-# deploy to prod
 firebase deploy --only hosting -P prod
 ```
