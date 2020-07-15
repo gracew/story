@@ -109,11 +109,13 @@ function Recorder() {
   if (request.otherPeople === "Yes") {
     text += " and other potential matches";
   }
+  text +=
+    ". You’ll also get a personal link to your voice bio that you can share on your dating profiles.";
 
   return (
     <div>
       <h2>Record your own voice bio</h2>
-      <p>{text}.</p>
+      <p>{text}</p>
       <div className="record-prompts">
         <div>Your best funny/inspiring/travel story?</div>
         <div>The most spontaneous thing you’ve ever done?</div>

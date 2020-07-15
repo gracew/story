@@ -37,7 +37,7 @@ function RegisterComplete() {
     <div>
       <h2>You're in!</h2>
       <p>
-        We'll send you an SMS as soon {referrer.firstName} is available to call.
+        We'll send you an SMS as soon as {referrer.firstName} is available to call.
       </p>
       <p>In the meantime, share your voice bio in your dating profiles.</p>
       <Text copyable={{ text: "https://" + personalLink }}>{personalLink}</Text>
