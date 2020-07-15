@@ -9,6 +9,7 @@ import { ReactTypeformEmbed } from "react-typeform-embed";
 import "./VoiceBio.css";
 
 function VoiceBio() {
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>();
   const [bioUrl, setBioUrl] = useState<string>();
   const [specificCta, setSpecificCta] = useState(false);
@@ -18,24 +19,38 @@ function VoiceBio() {
     firebase
       .functions()
       .httpsCallable("getUserByUsername")({ username })
-      .then((res) => {
-        setUser(res.data);
-        firebase
-          .storage()
-          .ref(res.data.bio)
-          .getDownloadURL()
-          .then((url) => setBioUrl(url));
-      });
+      .then((res) => setUser(res.data))
+      // ignore not-found error
+      .catch((err) => {})
+      .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      firebase
+        .storage()
+        .ref(user.bio)
+        .getDownloadURL()
+        .then((url) => setBioUrl(url));
+    }
+  }, [user]);
+
+  if (loading) {
+    return <Spin size="large" />;
+  }
+  if (!user) {
+    return (
+      <div>
+        <h2>User not found</h2>
+        <p>Oh no! If you typed or pasted this URL, double check it.</p>
+      </div>
+    );
+  }
 
   firebase.analytics().logEvent("voice_bio", { referring_username: username });
 
   function formatGender(g: string) {
     return g === "m" ? "Male" : "Female";
-  }
-
-  if (!user) {
-    return <Spin size="large" />;
   }
 
   return (
