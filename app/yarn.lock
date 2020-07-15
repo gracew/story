@@ -1470,10 +1470,10 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@cleandersonlobo/react-mic@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@cleandersonlobo/react-mic/-/react-mic-1.2.0.tgz#0e3c0cfc66b76ccbb23e9004f499b4dad34bc2df"
-  integrity sha512-PH04n7BUUA3w6jjtwgXhy9lWni0eJy6Sn3/v7yPPEZRBdknTkA0WwzUPZtjjmJKDzuTphdZTxo9Bt2SNcxx4GQ==
+"@cleandersonlobo/react-mic@~1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@cleandersonlobo/react-mic/-/react-mic-1.1.2.tgz#4594c83fc75202ab6d9d82803ee580b65865c47f"
+  integrity sha512-th7ereFd3iQHQWSkxyfo2quVOqqt8oISh+JQtodQ5aPqLvQcWPUlT/SqpX6zNVvqj0cUI7Q93oEtn7gNkjzteQ==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
