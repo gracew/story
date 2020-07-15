@@ -3,7 +3,6 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as fs from 'fs';
-import * as moment from 'moment';
 import * as os from 'os';
 import * as path from 'path';
 import { callNumberWithTwiml, getConferenceTwimlForPhone } from "./twilio";
