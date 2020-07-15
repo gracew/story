@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "speakeasy-92b16"
+    "default": "speakeasy-92b16",
+    "prod": "speakeasy-prod"
   }
 }

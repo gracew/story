@@ -20,6 +20,7 @@ yarn
 ```
 
 Note that we are using the Ant design component library. Information on theme customization:
+
 - https://ant.design/docs/react/use-with-create-react-app#Customize-Theme
 - https://ant.design/docs/react/customize-theme
 
@@ -35,6 +36,8 @@ yarn start
 ```
 cd functions
 yarn deploy
+# deploy to prod
+yarn deploy -P prod
 ```
 
 ## Deploying app
@@ -42,4 +45,6 @@ yarn deploy
 ```
 PUBLIC_URL=https://voicebar.co yarn build
 firebase deploy --only hosting
+# deploy to prod
+firebase deploy --only hosting -P prod
 ```

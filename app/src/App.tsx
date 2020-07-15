@@ -9,7 +9,17 @@ import Recorder from "./Recorder";
 import RegisterComplete from "./RegisterComplete";
 import VoiceBio from "./VoiceBio";
 
-const firebaseConfig = {
+const firebaseConfig = process.env.PUBLIC_URL === "https://voicebar.co" ?
+{
+  apiKey: "AIzaSyATNRFSSQDVmI90c5y7FI817U9lWiH19_w",
+  authDomain: "speakeasy-prod.firebaseapp.com",
+  databaseURL: "https://speakeasy-prod.firebaseio.com",
+  projectId: "speakeasy-prod",
+  storageBucket: "speakeasy-prod.appspot.com",
+  messagingSenderId: "349979681156",
+  appId: "1:349979681156:web:3842ca3cf4b6381e21fdd1",
+  measurementId: "G-XG7FSYCC65"
+}: {
   apiKey: "AIzaSyBLr4SMn_GwfA6AJFHCqSPrZSfORK3w91I",
   authDomain: "speakeasy-92b16.firebaseapp.com",
   databaseURL: "https://speakeasy-92b16.firebaseio.com",
