@@ -63,3 +63,13 @@ Prod
 PUBLIC_URL=https://voicebar.co yarn build
 firebase deploy --only hosting -P prod
 ```
+
+## Bios
+
+If downloading bios and reuploading (e.g. copying from dev to prod, or vice versa), you need to set the `Content-type`
+header to `audio/mpeg` using the `gsutil` cli. Otherwise the default `application/octet-stream` will be used, and the
+audio file won't play properly in Safari.
+
+```
+gsutil setmeta -h "Content-type: audio/mpeg" gs://speakeasy-prod.appspot.com/bios/*
+```
