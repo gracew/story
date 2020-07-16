@@ -31,6 +31,14 @@ cd app
 yarn start
 ```
 
+Accessing Mac localhost on iPhone
+
+1. Connect iPhone to Mac via USB, make sure it's on the same Wifi network
+2. Find Mac IP Address (System Preferences, Wifi)
+3. Type in Mac IP Address on iPhone
+
+Note that Safari iOS voice recording only works over https so you will need to deploy to dev (see below) in order to test that functionality.
+
 ## Deploying functions
 
 ```
