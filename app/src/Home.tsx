@@ -8,9 +8,9 @@ function Home() {
   return (
     <div className="home">
       <h2>Want to skip texting back and forth?</h2>
-      <p>Record your own voice bio and get matched for audio dates.</p>
+      <p>Record your own voice bio and get matched for voice dates.</p>
       <Button type="primary" href="https://voicebar.typeform.com/to/BzkJGytE">
-        Get matched for audio dates
+        Get matched for voice dates
       </Button>
     </div>
   );
