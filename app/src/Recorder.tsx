@@ -47,6 +47,7 @@ function Recorder() {
   const history = useHistory();
   const [phoneRegistered, setPhoneRegistered] = useState();
   const [referrer, setReferrer] = useState<any>();
+  const [loadingReferrer, setLoadingReferrer] = useState(false);
   const [recording, setRecording] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [bio, setBio] = useState<ReactMicStopEvent>();
@@ -66,12 +67,18 @@ function Recorder() {
   }, []);
 
   useEffect(() => {
-    firebase
-      .functions()
-      .httpsCallable("getUserByUsername")({
-        username: request.referrerUsername,
-      })
-      .then((res) => setReferrer(res.data));
+    if (request.referrerUsername !== "_____") {
+      setLoadingReferrer(true);
+      firebase
+        .functions()
+        .httpsCallable("getUserByUsername")({
+          username: request.referrerUsername,
+        })
+        .then((res) => {
+          setReferrer(res.data);
+          setLoadingReferrer(false);
+        });
+    }
   }, []);
 
   async function onSubmit() {
@@ -101,13 +108,18 @@ function Recorder() {
   if (phoneRegistered) {
     history.push("/register/error");
   }
-  if (!referrer) {
+  if (loadingReferrer) {
     return <Spin size="large" />;
   }
 
-  let text = `We'll share it with ${referrer.firstName}`;
-  if (request.otherPeople === "Yes") {
-    text += " and other potential matches";
+  let text;
+  if (referrer) {
+    text = `We'll share it with ${referrer.firstName}`;
+    if (request.otherPeople === "Yes") {
+      text += " and other potential matches";
+    }
+  } else {
+    text = `We'll share it with potential matches`;
   }
   text +=
     ". You’ll also get a personal link to your voice bio that you can share on your dating profiles.";

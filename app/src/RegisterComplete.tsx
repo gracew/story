@@ -16,29 +16,39 @@ function RegisterComplete() {
     .logEvent("register_complete", { referring_username: referrerUsername });
 
   const [referrer, setReferrer] = useState<any>();
+  const [loadingReferrer, setLoadingReferrer] = useState(false);
 
   useEffect(() => {
-    firebase
-      .functions()
-      .httpsCallable("getUserByUsername")({
-        username: referrerUsername,
-      })
-      .then((res) => {
-        setReferrer(res.data);
-      });
+    if (referrerUsername !== "_____") {
+      setLoadingReferrer(true);
+      firebase
+        .functions()
+        .httpsCallable("getUserByUsername")({
+          username: referrerUsername,
+        })
+        .then((res) => {
+          setReferrer(res.data);
+          setLoadingReferrer(false);
+        });
+    }
   }, []);
 
-  if (!referrer) {
+  if (loadingReferrer) {
     return <Spin size="large" />;
+  }
+
+  let text = "We'll send you an SMS as soon as ";
+  if (referrer) {
+    text += `${referrer.firstName} is available to call.`;
+  } else {
+    text += " we have a match for you.";
   }
 
   const personalLink = "voicebar.co/" + username;
   return (
     <div>
       <h2>You're in!</h2>
-      <p>
-        We'll send you an SMS as soon as {referrer.firstName} is available to call.
-      </p>
+      <p>{text}</p>
       <p>In the meantime, share your voice bio in your dating profiles.</p>
       <Text copyable={{ text: "https://" + personalLink }}>{personalLink}</Text>
     </div>
