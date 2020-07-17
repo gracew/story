@@ -41,9 +41,6 @@ function App() {
       <div className="App-header">Voicebar</div>
       <div className="App">
         <Switch>
-          <Route path="/">
-            <Home />
-          </Route>
           <Route path="/record">
             <Recorder />
           </Route>
@@ -58,6 +55,9 @@ function App() {
           </Route>
           <Route path="/:username">
             <VoiceBio />
+          </Route>
+          <Route path="/">
+            <Home />
           </Route>
         </Switch>
       </div>
