@@ -38,7 +38,7 @@ function App() {
   firebase.analytics();
   return (
     <Router>
-      <div className="App-header">Voicebar</div>
+      <header>Voicebar</header>
       <div className="App">
         <Switch>
           <Route path="/record">
@@ -61,7 +61,7 @@ function App() {
           </Route>
         </Switch>
       </div>
-      <p className="App-footer">Questions? Email hello@voicebar.co</p>
+      <footer>Questions? Email hello@voicebar.co</footer>
     </Router>
   );
 }
