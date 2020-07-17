@@ -43,6 +43,18 @@ function TimedRecordButton({
   );
 }
 
+// https://stackoverflow.com/questions/9038625/detect-if-device-is-ios
+function iOS() {
+  return [
+    "iPad Simulator",
+    "iPhone Simulator",
+    "iPod Simulator",
+    "iPad",
+    "iPhone",
+    "iPod",
+  ].includes(navigator.platform);
+}
+
 function Recorder() {
   const history = useHistory();
   const [phoneRegistered, setPhoneRegistered] = useState();
@@ -150,7 +162,7 @@ function Recorder() {
         </Button>
       )}
       <ReactMic
-        className={recording ? "se-react-mic" : "se-react-mic-hide"}
+        className={recording && !iOS() ? "se-react-mic" : "se-react-mic-hide"}
         record={recording}
         // @ts-ignore
         mimeType="audio/mp3"
