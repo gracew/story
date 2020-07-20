@@ -9,8 +9,7 @@ const client = require('twilio')(accountSid, authToken);
 
 export const getConferenceTwimlForPhone = async (phone_number: string, null_on_error=true) => {
     const users = admin.firestore().collection("users");
-    const stripped_number = phone_number.replace("+", "");
-    const result = await users.where("phone", "==", stripped_number).get();
+    const result = await users.where("phone", "==", phone_number).get();
     let error_response = null;
     if (!null_on_error) {
         error_response = new VoiceResponse();
