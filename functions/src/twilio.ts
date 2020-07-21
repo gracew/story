@@ -42,7 +42,7 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
     }
     const twiml = new VoiceResponse();
     const dial = twiml.dial();
-    dial.conference(match_result.id);
+    dial.conference(match_result.id, {jitterBufferSize: 'small'});
     return twiml;
 }
 
