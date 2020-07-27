@@ -1,6 +1,7 @@
 import { Button, Spin } from "antd";
 import "firebase/analytics";
 import * as firebase from "firebase/app";
+import "firebase/remote-config";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
@@ -45,7 +46,32 @@ function VoiceBio() {
     );
   }
 
-  firebase.analytics().logEvent("voice_bio", { referring_username: username });
+  firebase.analytics().logEvent("voice_bio", { referrer_username: username });
+
+  function onPlay() {
+    firebase
+      .analytics()
+      .logEvent("voice_bio_play", { referrer_username: username });
+  }
+
+  function onPause() {
+    firebase
+      .analytics()
+      .logEvent("voice_bio_pause", { referrer_username: username });
+  }
+
+  function onEnded() {
+    firebase
+      .analytics()
+      .logEvent("voice_bio_ended", { referrer_username: username });
+  }
+
+  function onCtaClick() {
+    firebase.analytics().logEvent("sign_up", { referrer_username: username });
+    window.location.href =
+      firebase.remoteConfig().getString("typeform_url") +
+      `?referrerUsername=${username}&referrerFirstname=${user.firstName}`;
+  }
 
   return (
     <div className="vb-container">
@@ -53,16 +79,19 @@ function VoiceBio() {
       <h3 className="vb-meta">
         {user.gender}, {user.age}
       </h3>
-      <audio className="se-audio-bio" controls src={bioUrl} />
+      <audio
+        className="se-audio-bio"
+        controls
+        onPlay={onPlay}
+        onPause={onPause}
+        onEnded={onEnded}
+        src={bioUrl}
+      />
       <p>Want to skip texting back and forth?</p>
       <p className="vb-cta-description">
         Record your own voice bio and set up a voice date with {user.firstName}.
       </p>
-      <Button
-        className="vb-cta"
-        type="primary"
-        href={`https://voicebar.typeform.com/to/NUynD2GT?referrerUsername=${username}&referrerFirstname=${user.firstName}`}
-      >
+      <Button className="vb-cta" type="primary" onClick={onCtaClick}>
         Set up a voice date with {user.firstName}
       </Button>
     </div>

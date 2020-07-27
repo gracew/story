@@ -13,7 +13,7 @@ function RegisterComplete() {
   const referrerUsername = query.get("referrerUsername");
   firebase
     .analytics()
-    .logEvent("register_complete", { referring_username: referrerUsername });
+    .logEvent("register_complete", { referrer_username: referrerUsername });
 
   const [referrer, setReferrer] = useState<any>();
   const [loadingReferrer, setLoadingReferrer] = useState(false);
