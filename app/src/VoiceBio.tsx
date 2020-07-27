@@ -61,7 +61,7 @@ function VoiceBio() {
       <Button
         className="vb-cta"
         type="primary"
-        href={`https://voicebar.typeform.com/to/BzkJGytE?referrerUsername=${username}&referrerFirstname=${user.firstName}`}
+        href={`https://voicebar.typeform.com/to/NUynD2GT?referrerUsername=${username}&referrerFirstname=${user.firstName}`}
       >
         Set up a voice date with {user.firstName}
       </Button>
