@@ -1,5 +1,6 @@
 import "firebase/analytics";
 import * as firebase from "firebase/app";
+import "firebase/remote-config";
 import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.less";
@@ -35,6 +36,7 @@ const firebaseConfig =
 
 function App() {
   firebase.initializeApp(firebaseConfig);
+  firebase.remoteConfig().fetchAndActivate();
   firebase.analytics();
   return (
     <Router>

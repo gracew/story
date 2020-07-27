@@ -112,7 +112,7 @@ function Recorder() {
 
   firebase
     .analytics()
-    .logEvent("recorder", { referring_username: request.referrerUsername });
+    .logEvent("recorder", { referrer_username: request.referrerUsername });
 
   if (phoneRegistered === undefined) {
     return <Spin size="large" />;
