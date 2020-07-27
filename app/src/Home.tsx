@@ -7,7 +7,7 @@ import "./Home.css";
 
 function Home() {
   function onCtaClick() {
-    firebase.analytics().logEvent("cta_click");
+    firebase.analytics().logEvent("sign_up", {});
     window.location.href = firebase.remoteConfig().getString("typeform_url");
   }
 
