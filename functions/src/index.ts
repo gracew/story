@@ -5,6 +5,7 @@ import * as functions from "firebase-functions";
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import * as twilio from 'twilio';
 import { callNumberWithTwiml, getConferenceTwimlForPhone } from "./twilio";
 
 admin.initializeApp();
@@ -365,3 +366,12 @@ export const getUserByUsername = functions.https.onCall(
         return { firstName, age, bio, gender };
     }
 );
+
+export const smsReply = functions.https.onRequest((req, res) => {
+    const messageRes = new twilio.twiml.MessagingResponse();
+    // this is just for notification purposes, replies need to be made in the Twilio console
+    messageRes.message({ to: functions.config().twilio.notify_phone, }, "User responded to Twilio SMS");
+
+    res.writeHead(200, { 'Content-Type': 'text/xml' });
+    res.end(messageRes.toString());
+});
