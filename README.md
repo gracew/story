@@ -53,14 +53,14 @@ yarn deploy -P prod
 Dev
 
 ```
-PUBLIC_URL=https://speakeasy-92b16.web.app/ yarn build
+PUBLIC_URL=https://speakeasy-92b16.web.app/app yarn build
 firebase deploy --only hosting
 ```
 
 Prod
 
 ```
-PUBLIC_URL=https://voicebar.co yarn build
+PUBLIC_URL=https://voicebar.co/app yarn build
 firebase deploy --only hosting -P prod
 ```
 

@@ -12,7 +12,7 @@ import RegisterComplete from "./RegisterComplete";
 import VoiceBio from "./VoiceBio";
 
 const firebaseConfig =
-  process.env.PUBLIC_URL === "https://voicebar.co"
+  process.env.PUBLIC_URL.startsWith("https://voicebar.co")
     ? {
         apiKey: "AIzaSyATNRFSSQDVmI90c5y7FI817U9lWiH19_w",
         authDomain: "speakeasy-prod.firebaseapp.com",
