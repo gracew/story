@@ -40,7 +40,7 @@ function App() {
   firebase.analytics();
   return (
     <Router>
-      <header>Voicebar</header>
+      <header><a href="/">Voicebar</a></header>
       <div className="App">
         <Switch>
           <Route path="/record">
