@@ -54,7 +54,7 @@ export const registerUser = functions.https.onCall(async (request) => {
     }
 
     // generate unique username/link
-    let username = request.firstName.toLowerCase();
+    let username = request.firstName.trim().toLowerCase();
     while (!(await usernameAvailable(username))) {
         username = username + randomBetween1and100();
         // NOTE(gracew): this might go on forever if there are more than 100 people with this first name
@@ -362,8 +362,8 @@ export const getUserByUsername = functions.https.onCall(
                 "unknown username"
             );
         }
-        const { firstName, age, bio, gender } = user.docs[0].data();
-        return { firstName, age, bio, gender };
+        const { firstName, age, bio, prompt, gender } = user.docs[0].data();
+        return { firstName, age, bio, prompt, gender };
     }
 );
 
