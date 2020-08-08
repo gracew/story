@@ -1,7 +1,6 @@
 const VoiceResponse = require('twilio').twiml.VoiceResponse;
 import * as admin from "firebase-admin";
-import * as firebase from "firebase/app";
-import "firebase/remote-config";
+import * as functions from "firebase-functions";
 
 const TWILIO_NUMBER = '+12036338466';
 const accountSid = 'AC07d4a9a61ac7c91f7e5cecf1e27c45a6';
@@ -9,7 +8,7 @@ const authToken = 'e4cac763ca2438390561cb3b1c2f6b72';
 const client = require('twilio')(accountSid, authToken);
 
 
-export const getConferenceTwimlForPhone = async (phone_number: string, null_on_error=true) => {
+export const getConferenceTwimlForPhone = async (phone_number: string, null_on_error = true) => {
     const users = admin.firestore().collection("users");
     const result = await users.where("phone", "==", phone_number).get();
     let error_response = null;
@@ -35,7 +34,7 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
     }
     if (!match_b_result.empty) {
         const match_b_result_doc = match_b_result.docs[0];
-        if (!match_result || (match_result.data()['created_at']  < match_b_result_doc.data()['created_at'])) {
+        if (!match_result || (match_result.data()['created_at'] < match_b_result_doc.data()['created_at'])) {
             match_result = match_b_result_doc;
         }
     }
@@ -44,17 +43,17 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
     }
     const twiml = new VoiceResponse();
     const dial = twiml.dial();
-    const jitterBufferSize = firebase.remoteConfig().getString("jitterBufferSize");
-    dial.conference(match_result.id, {jitterBufferSize: jitterBufferSize});
+    const jitterBufferSize = functions.config().twilio.jitter_buffer_size;
+    dial.conference(match_result.id, { jitterBufferSize: jitterBufferSize });
     return twiml;
 }
 
 export const callNumberWithTwiml = async (number: string, twiml: any) => {
     client.calls
-      .create({
-         twiml: twiml.toString(),
-         to: number,
-         from: TWILIO_NUMBER
-       })
-      .then((call: { sid: any; }) => console.log(call.sid));
+        .create({
+            twiml: twiml.toString(),
+            to: number,
+            from: TWILIO_NUMBER
+        })
+        .then((call: { sid: any; }) => console.log(call.sid));
 }
