@@ -1,5 +1,7 @@
 const VoiceResponse = require('twilio').twiml.VoiceResponse;
 import * as admin from "firebase-admin";
+import * as firebase from "firebase/app";
+import "firebase/remote-config";
 
 const TWILIO_NUMBER = '+12036338466';
 const accountSid = 'AC07d4a9a61ac7c91f7e5cecf1e27c45a6';
@@ -42,7 +44,8 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
     }
     const twiml = new VoiceResponse();
     const dial = twiml.dial();
-    dial.conference(match_result.id, {jitterBufferSize: 'off'});
+    const jitterBufferSize = firebase.remoteConfig().getString("jitterBufferSize");
+    dial.conference(match_result.id, {jitterBufferSize: jitterBufferSize});
     return twiml;
 }
 
