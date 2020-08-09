@@ -26,45 +26,46 @@ export const phoneRegistered = functions.https.onCall(async (request) => {
 
 export const registerUser = functions.https.onRequest(async (req, response) => {
 
-    let answersIdMap = {
-        '2a57e142-a19d-47a6-b9e7-e44e305020ae': 'firstName',
-        '5c4ac50c-5f56-479e-8f26-79c0a8fbcf2f': 'age',
-        '51a54426-5dd2-4195-ac3a-bc8bf63857aa': 'gender',
-        '6f60bcbb-622f-4b94-9671-e9f361bdffd7': 'phone',
-        '9cd16471-ba75-4b5a-8575-e9c59a76707b': 'city',
-        '46b2e2ef-78b4-4113-af23-9f6b43fdab5c': 'genderPreference'
-        '01093a01-0f3a-44b7-a595-2759523f3e48': 'funFacts'
-        'c2edd041-e6a2-406a-81a0-fa66868059a4': 'whereDidYouHearAboutVB'
+    const answersIdMap : {[key: string]: string} = {
+        "2a57e142-a19d-47a6-b9e7-e44e305020ae": "firstName",
+        "5c4ac50c-5f56-479e-8f26-79c0a8fbcf2f": "age",
+        "51a54426-5dd2-4195-ac3a-bc8bf63857aa": "gender",
+        "6f60bcbb-622f-4b94-9671-e9f361bdffd7": "phone",
+        "9cd16471-ba75-4b5a-8575-e9c59a76707b": "city",
+        "46b2e2ef-78b4-4113-af23-9f6b43fdab5c": "genderPreference",
+        "01093a01-0f3a-44b7-a595-2759523f3e48": "funFacts",
+        "c2edd041-e6a2-406a-81a0-fa66868059a4": "whereDidYouHearAboutVB"
     }
 
-    let user = {};
+    const user: {[key: string]: any} = {};
 
-    let answers = req.body.form_response.answers;
+    const answers = req.body.form_response.answers;
     console.log(answers);
 
-    for (let i = 0; i < answers.length; i++) {
-        let key = answersIdMap[answers[i].field.ref];
+    for (const a of answers) {
+        const refff: string = a.field.ref;
+        const key = answersIdMap[refff];
         console.log(key);
-        if (answers[i].type == 'text' || answers[i].type == 'number' || answers[i].type == 'phone_number' || answers[i].type == 'long_text' || answers[i].type == 'short_text') {
-            user[key] = answers[i][answers[i].type];
-        } else if (answers[i].type == 'choice') {
-            user[key] = answers[i].choice.label;
-        } else if (answers[i].type == 'choices') {
-            user[key] = answers[i].choices.labels;
+        if (a.type === 'text' || a.type === 'number' || a.type === 'phone_number' || a.type === 'long_text' || a.type === 'short_text') {
+            user[key] = a[a.type];
+        } else if (a.type === 'choice') {
+            user[key] = a.choice.label;
+        } else if (a.type === 'choices') {
+            user[key] = a.choices.labels;
         }
     }
-    console.log(user);
+
 
     user.phone = user.phone.split(" ").join("");
 
 
     // make sure the phone number hasn't already been registered
-    const existingUser = await admin
+    const ue = await admin
         .firestore()
         .collection("users")
         .where("phone", "==", user.phone)
         .get();
-    if (!existingUser.empty) {
+    if (!ue.empty) {
         throw new functions.https.HttpsError(
             "already-exists",
             "phone number has already been registered"
@@ -91,10 +92,10 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     //     // NOTE(gracew): this might go on forever if there are more than 100 people with this first name
     // }
 
-    const ref = admin.firestore().collection("users").doc();
-    user.id = ref.id;
-    user.registeredAt = admin.firestore.FieldValue.serverTimestamp(),
-    await ref.set(user);
+    const reff = admin.firestore().collection("users").doc();
+    user.id = reff.id;
+    user.registeredAt = admin.firestore.FieldValue.serverTimestamp();
+    await reff.set(user);
     response.send({'success': 'true'})
 });
 
@@ -152,7 +153,7 @@ export const createMatches = functions.storage.object().onFinalize(async (object
     const rows = contents.split("\n").slice(1);
     rows.forEach(async row => {
         const cols = row.split(",");
-        if (cols.length == 2) {
+        if (cols.length === 2) {
             const user_a_id: string = cols[0];
             const user_b_id: string = cols[1];
 
@@ -186,8 +187,8 @@ export const createMatches = functions.storage.object().onFinalize(async (object
                 "name": user_a.data()!.firstName,
                 "phone_number": user_a.data()!.phone,
                 "match_name": user_b.data()!.firstName,
-                "match_gender_pronoun": user_b.data()!.gender == 'male' ? "he" : "she",
-                "match_gender_pronoun_possessive": user_b.data()!.gender == 'male' ? "his" : "her",
+                "match_gender_pronoun": user_b.data()!.gender === 'male' ? "he" : "she",
+                "match_gender_pronoun_possessive": user_b.data()!.gender === 'male' ? "his" : "her",
                 "match_voice_bio_url": user_b.data()!.bio,
                 "match_id": match.id
             }
@@ -206,8 +207,8 @@ export const createMatches = functions.storage.object().onFinalize(async (object
                 "name": user_b.data()!.firstName,
                 "phone_number": user_b.data()!.phone,
                 "match_name": user_a.data()!.firstName,
-                "match_gender_pronoun": user_a.data()!.gender == 'male' ? "he" : "she",
-                "match_gender_pronoun_possessive": user_a.data()!.gender == 'male' ? "his" : "her",
+                "match_gender_pronoun": user_a.data()!.gender === 'male' ? "he" : "she",
+                "match_gender_pronoun_possessive": user_a.data()!.gender === 'male' ? "his" : "her",
                 "match_voice_bio_url": user_a.data()!.bio,
                 "match_id": match.id
             }
