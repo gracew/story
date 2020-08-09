@@ -24,15 +24,45 @@ export const phoneRegistered = functions.https.onCall(async (request) => {
     return !existingUser.empty;
 });
 
-export const registerUser = functions.https.onCall(async (request) => {
-    const { phone, ...other } = request;
-    const normalizedPhone = phone.split(" ").join("");
+export const registerUser = functions.https.onRequest(async (req, response) => {
+
+    let answersIdMap = {
+        '2a57e142-a19d-47a6-b9e7-e44e305020ae': 'firstName',
+        '5c4ac50c-5f56-479e-8f26-79c0a8fbcf2f': 'age',
+        '51a54426-5dd2-4195-ac3a-bc8bf63857aa': 'gender',
+        '6f60bcbb-622f-4b94-9671-e9f361bdffd7': 'phone',
+        '9cd16471-ba75-4b5a-8575-e9c59a76707b': 'city',
+        '46b2e2ef-78b4-4113-af23-9f6b43fdab5c': 'genderPreference'
+        '01093a01-0f3a-44b7-a595-2759523f3e48': 'funFacts'
+        'c2edd041-e6a2-406a-81a0-fa66868059a4': 'whereDidYouHearAboutVB'
+    }
+
+    let user = {};
+
+    let answers = req.body.form_response.answers;
+    console.log(answers);
+
+    for (let i = 0; i < answers.length; i++) {
+        let key = answersIdMap[answers[i].field.ref];
+        console.log(key);
+        if (answers[i].type == 'text' || answers[i].type == 'number' || answers[i].type == 'phone_number' || answers[i].type == 'long_text' || answers[i].type == 'short_text') {
+            user[key] = answers[i][answers[i].type];
+        } else if (answers[i].type == 'choice') {
+            user[key] = answers[i].choice.label;
+        } else if (answers[i].type == 'choices') {
+            user[key] = answers[i].choices.labels;
+        }
+    }
+    console.log(user);
+
+    user.phone = user.phone.split(" ").join("");
+
 
     // make sure the phone number hasn't already been registered
     const existingUser = await admin
         .firestore()
         .collection("users")
-        .where("phone", "==", normalizedPhone)
+        .where("phone", "==", user.phone)
         .get();
     if (!existingUser.empty) {
         throw new functions.https.HttpsError(
@@ -41,35 +71,31 @@ export const registerUser = functions.https.onCall(async (request) => {
         );
     }
 
-    async function usernameAvailable(proposed: string) {
-        const existingUsername = await admin
-            .firestore()
-            .collection("users")
-            .where("username", "==", proposed)
-            .get();
-        return existingUsername.docs.length === 0;
-    }
-    function randomBetween1and100() {
-        return Math.floor(Math.random() * 100);
-    }
+    // async function usernameAvailable(proposed: string) {
+    //     const existingUsername = await admin
+    //         .firestore()
+    //         .collection("users")
+    //         .where("username", "==", proposed)
+    //         .get();
+    //     return existingUsername.docs.length === 0;
+    // }
+    // function randomBetween1and100() {
+    //     return Math.floor(Math.random() * 100);
+    // }
 
-    // generate unique username/link
-    let username = request.firstName.trim().toLowerCase();
-    while (!(await usernameAvailable(username))) {
-        username = username + randomBetween1and100();
-        // NOTE(gracew): this might go on forever if there are more than 100 people with this first name
-    }
+    // // generate unique username/link
+    // let username = request.firstName as string;
+    // username = username.trim().toLowerCase();
+    // while (!(await usernameAvailable(username))) {
+    //     username = username + randomBetween1and100();
+    //     // NOTE(gracew): this might go on forever if there are more than 100 people with this first name
+    // }
 
     const ref = admin.firestore().collection("users").doc();
-    const user = {
-        id: ref.id,
-        username,
-        phone: normalizedPhone,
-        registeredAt: admin.firestore.FieldValue.serverTimestamp(),
-        ...other,
-    };
+    user.id = ref.id;
+    user.registeredAt = admin.firestore.FieldValue.serverTimestamp(),
     await ref.set(user);
-    return user;
+    response.send({'success': 'true'})
 });
 
 /**
@@ -80,7 +106,7 @@ export const registerUser = functions.https.onCall(async (request) => {
  * id,allowed,firstName,lastName
  * 1,TRUE,Grace,Wang
  * 2,FALSE,Minh,Pham
- */
+ */ 
 export const markAllowed = functions.storage.object().onFinalize(async (object) => {
     if (object.name !== "allowedUsers.csv") {
         return;
