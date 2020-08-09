@@ -13,6 +13,13 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "redirects": [
+      {
+        "source": "/signup",
+        "destination": "https://voicebar.typeform.com/to/NUynD2GT",
+        "type": 301
+      }
+    ],
     "rewrites": [
       {
         "source": "**",
