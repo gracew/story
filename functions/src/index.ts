@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
-import { callNumberWithTwiml, getConferenceTwimlForPhone } from "./twilio";
+import { callNumberWithTwiml, getConferenceTwimlForPhone, getCallStartingTwiml, announceToConference } from "./twilio";
 
 admin.initializeApp();
 
@@ -344,6 +344,21 @@ export const addUserToCall = functions.https.onRequest(
     async (request, response) => {
         const caller_phone = request.body.From;
         const twiml = await getConferenceTwimlForPhone(caller_phone, false);
+        response.set('Content-Type', 'text/xml');
+        response.send(twiml.toString());
+    }
+);
+
+export const conferenceStatusWebhook = functions.https.onRequest(
+    async (request, response) => {
+        const conference_sid = request.body.ConferenceSid;
+        await announceToConference(conference_sid);
+    }
+);
+
+export const announceUser = functions.https.onRequest(
+    async (request, response) => {
+        const twiml = await getCallStartingTwiml();
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }

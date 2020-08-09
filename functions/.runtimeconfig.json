@@ -1,0 +1,6 @@
+{
+  "twilio": {
+    "notify_phone": "+15714816721",
+    "jitter_buffer_size": "small"
+  }
+}
