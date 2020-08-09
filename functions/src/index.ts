@@ -41,10 +41,13 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
 
     const answers = req.body.form_response.answers;
     console.log(answers);
-
+    
     for (const a of answers) {
         const refff: string = a.field.ref;
         const key = answersIdMap[refff];
+        if (key === undefined) {
+            continue;
+        }
         console.log(key);
         if (a.type === 'text' || a.type === 'number' || a.type === 'phone_number' || a.type === 'long_text' || a.type === 'short_text') {
             user[key] = a[a.type];
