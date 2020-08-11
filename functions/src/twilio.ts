@@ -23,7 +23,7 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
     }
 
     if (result.empty) {
-        console.log("ERROR | No user with phone number " + phone_number);
+        console.error(`No user with phone number '${phone_number}'`);
         return error_response;
     }
     console.log("Finding conference for user with phone number " + phone_number);
