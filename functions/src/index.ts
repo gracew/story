@@ -41,7 +41,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
 
     const answers = req.body.form_response.answers;
     console.log(answers);
-    
+
     for (const a of answers) {
         const refff: string = a.field.ref;
         const key = answersIdMap[refff];
@@ -110,7 +110,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
  * id,allowed,firstName,lastName
  * 1,TRUE,Grace,Wang
  * 2,FALSE,Minh,Pham
- */ 
+ */
 export const markAllowed = functions.storage.object().onFinalize(async (object) => {
     if (object.name !== "allowedUsers.csv") {
         return;
@@ -375,7 +375,7 @@ export const addUserToCall = functions.https.onRequest(
         const caller_phone = request.body.From;
         const twiml = await getConferenceTwimlForPhone(caller_phone, false);
         response.set('Content-Type', 'text/xml');
-        response.send(twiml.toString());
+        response.send(twiml!.toString());
     }
 );
 
@@ -393,6 +393,17 @@ export const announceUser = functions.https.onRequest(
         response.send(twiml.toString());
     }
 );
+
+// runs every hour at 25 minutes past
+export const callEndWarning = functions.pubsub.schedule('25 * * * *').onRun(async (context) => {
+    const ongoingCalls = await admin
+        .firestore()
+        .collection("matches")
+        .where("ongoing", "==", true)
+        .get();
+    ongoingCalls.docs.forEach(doc => {
+    })
+});
 
 export const getUserByUsername = functions.https.onCall(
     async (request) => {
