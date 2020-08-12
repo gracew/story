@@ -6,7 +6,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
-import { callNumberWithTwiml, getConferenceTwimlForPhone, getCallStartingTwiml, announceToConference } from "./twilio";
+import * as util from "util";
+import { BASE_URL, client, getConferenceTwimlForPhone, TWILIO_NUMBER } from "./twilio";
 
 admin.initializeApp();
 
@@ -24,9 +25,28 @@ export const phoneRegistered = functions.https.onCall(async (request) => {
     return !existingUser.empty;
 });
 
+export const getUserByUsername = functions.https.onCall(
+    async (request) => {
+        const user = await admin
+            .firestore()
+            .collection("users")
+            .where("username", "==", request.username)
+            .get();
+        if (user.empty) {
+            throw new functions.https.HttpsError(
+                "not-found",
+                "unknown username"
+            );
+        }
+        const { firstName, age, bio, prompt, gender } = user.docs[0].data();
+        return { firstName, age, bio, prompt, gender };
+    }
+);
+
+
 export const registerUser = functions.https.onRequest(async (req, response) => {
 
-    const answersIdMap : {[key: string]: string} = {
+    const answersIdMap: { [key: string]: string } = {
         "2a57e142-a19d-47a6-b9e7-e44e305020ae": "firstName",
         "5c4ac50c-5f56-479e-8f26-79c0a8fbcf2f": "age",
         "51a54426-5dd2-4195-ac3a-bc8bf63857aa": "gender",
@@ -37,11 +57,11 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
         "c2edd041-e6a2-406a-81a0-fa66868059a4": "whereDidYouHearAboutVB"
     }
 
-    const user: {[key: string]: any} = {};
+    const user: { [key: string]: any } = {};
 
     const answers = req.body.form_response.answers;
     console.log(answers);
-    
+
     for (const a of answers) {
         const refff: string = a.field.ref;
         const key = answersIdMap[refff];
@@ -99,7 +119,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     user.id = reff.id;
     user.registeredAt = admin.firestore.FieldValue.serverTimestamp();
     await reff.set(user);
-    response.send({'success': 'true'})
+    response.send({ 'success': 'true' })
 });
 
 /**
@@ -110,7 +130,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
  * id,allowed,firstName,lastName
  * 1,TRUE,Grace,Wang
  * 2,FALSE,Minh,Pham
- */ 
+ */
 export const markAllowed = functions.storage.object().onFinalize(async (object) => {
     if (object.name !== "allowedUsers.csv") {
         return;
@@ -228,24 +248,6 @@ export const createMatches = functions.storage.object().onFinalize(async (object
         }
     });
 });
-
-export const callUser = functions.https.onCall(
-    async (request) => {
-        const ref = admin.firestore().collection("users").doc(request.user_id);
-        const user_doc = await ref.get();
-        const user_doc_data = user_doc.data()
-        if (!user_doc.exists || !user_doc_data) {
-            return { "error": "User does not exist!" };
-        }
-        const phone = user_doc_data.phone;
-        const twiml = await getConferenceTwimlForPhone(phone, true);
-        if (!twiml) {
-            return { "error": "User has no current matches!" };
-        }
-        await callNumberWithTwiml(phone, twiml);
-        return { "success": "Calling " + phone };
-    }
-);
 
 export const optIn = functions.https.onRequest(
     async (request, response) => {
@@ -370,47 +372,86 @@ export const reveal = functions.https.onRequest(
     }
 );
 
+export const callUser = functions.https.onCall(
+    async (request) => {
+        const ref = admin.firestore().collection("users").doc(request.user_id);
+        const user_doc = await ref.get();
+        const user_doc_data = user_doc.data()
+        if (!user_doc.exists || !user_doc_data) {
+            return { "error": "User does not exist!" };
+        }
+        const phone = user_doc_data.phone;
+        const twiml = await getConferenceTwimlForPhone(phone, true);
+        if (!twiml) {
+            return { "error": "User has no current matches!" };
+        }
+        await client.calls
+            .create({
+                twiml: twiml.toString(),
+                to: phone,
+                from: TWILIO_NUMBER
+            })
+        return { "success": "Calling " + phone };
+    }
+);
+
 export const addUserToCall = functions.https.onRequest(
     async (request, response) => {
         const caller_phone = request.body.From;
         const twiml = await getConferenceTwimlForPhone(caller_phone, false);
         response.set('Content-Type', 'text/xml');
-        response.send(twiml.toString());
+        response.send(twiml!.toString());
     }
 );
 
 export const conferenceStatusWebhook = functions.https.onRequest(
     async (request, response) => {
         const conference_sid = request.body.ConferenceSid;
-        await announceToConference(conference_sid);
+        const participants = await client.conferences(conference_sid).participants.list();
+        if (participants.length === 1) {
+            return;
+        }
+        await admin.firestore().collection("matches").doc(request.body.FriendlyName).update({ "ongoing": true, "twilioSid": conference_sid })
+        await client.conferences(conference_sid).update({ announceUrl: BASE_URL + "announceUser" })
+        await util.promisify(setTimeout)(7000);
+        await Promise.all(participants.map(participant =>
+            client.conferences(conference_sid).participants(participant.callSid).update({ muted: false })))
     }
 );
 
 export const announceUser = functions.https.onRequest(
-    async (request, response) => {
-        const twiml = await getCallStartingTwiml();
+    (request, response) => {
+        const twiml = new twilio.twiml.VoiceResponse();
+        twiml.say({
+            'voice': 'alice',
+        }, "Your call is starting now.  May the odds be ever in your favor!");
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
 );
 
-export const getUserByUsername = functions.https.onCall(
-    async (request) => {
-        const user = await admin
-            .firestore()
-            .collection("users")
-            .where("username", "==", request.username)
-            .get();
-        if (user.empty) {
-            throw new functions.https.HttpsError(
-                "not-found",
-                "unknown username"
-            );
-        }
-        const { firstName, age, bio, prompt, gender } = user.docs[0].data();
-        return { firstName, age, bio, prompt, gender };
+export const announceEnd = functions.https.onRequest(
+    (request, response) => {
+        const twiml = new twilio.twiml.VoiceResponse();
+        twiml.say({
+            'voice': 'alice',
+        }, "Your call will end in 5 minutes.");
+        response.set('Content-Type', 'text/xml');
+        response.send(twiml.toString());
     }
 );
+
+// runs every hour at 25 minutes past
+// export const callEndWarning = functions.pubsub.schedule('25 * * * *').onRun(async (context) => {
+export const callEndWarning = functions.pubsub.schedule('* * * * *').onRun(async (context) => {
+    const ongoingCalls = await admin
+        .firestore()
+        .collection("matches")
+        .where("ongoing", "==", true)
+        .get();
+    await Promise.all(ongoingCalls.docs.map(doc => client.conferences(doc.get("twilioSid")).update({ announceUrl: BASE_URL + "announceEnd" })));
+    await Promise.all(ongoingCalls.docs.map(doc => doc.ref.update({ ongoing: false })));
+});
 
 export const smsReply = functions.https.onRequest((req, res) => {
     const messageRes = new twilio.twiml.MessagingResponse();
