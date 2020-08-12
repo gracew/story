@@ -2,13 +2,11 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as twilio from "twilio";
 
-const util = require('util');
-const setTimeoutPromise = util.promisify(setTimeout);
-const TWILIO_NUMBER = '+12036338466';
-const BASE_URL = 'https://us-central1-speakeasy-prod.cloudfunctions.net/';
+export const TWILIO_NUMBER = '+12036338466';
+export const BASE_URL = 'https://us-central1-speakeasy-prod.cloudfunctions.net/';
 const accountSid = 'AC07d4a9a61ac7c91f7e5cecf1e27c45a6';
 const authToken = 'e4cac763ca2438390561cb3b1c2f6b72';
-const client = twilio(accountSid, authToken);
+export const client = twilio(accountSid, authToken);
 
 
 export const getConferenceTwimlForPhone = async (phone_number: string, null_on_error = true) => {
@@ -46,7 +44,7 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
     }
 
     const jitterBufferSize = functions.config().twilio.jitter_buffer_size;
-    const timeLimit = functions.config().twilio.time_limit_sec;
+    const timeLimit = parseInt(functions.config().twilio.time_limit_sec);
 
     const twiml = new twilio.twiml.VoiceResponse();
     const dial = twiml.dial({ timeLimit });
@@ -59,29 +57,6 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
         statusCallback: BASE_URL + "conferenceStatusWebhook",
         muted: true,
     }, match_result.id);
+
     return twiml;
-}
-
-export const announceToConference = async (conference_sid: string) => {
-    const participants = await client.conferences(conference_sid).participants.list();
-    if (participants.length === 1) {
-        return;
-    }
-    participants.forEach(participant =>
-        client.conferences(conference_sid).participants(participant.callSid).update({ announceUrl: BASE_URL + 'announceUser' })
-    );
-    setTimeoutPromise(7000).then(() =>
-        participants.forEach(participant =>
-            client.conferences(conference_sid).participants(participant.callSid).update({ muted: false }))
-    );
-}
-
-export const callNumberWithTwiml = async (number: string, twiml: any) => {
-    return client.calls
-        .create({
-            twiml: twiml.toString(),
-            to: number,
-            from: TWILIO_NUMBER
-        })
-        .then((call: { sid: any; }) => console.log(call.sid));
 }

@@ -6,7 +6,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
-import { announceToConference, callNumberWithTwiml, getConferenceTwimlForPhone } from "./twilio";
+import * as util from "util";
+import { BASE_URL, client, getConferenceTwimlForPhone, TWILIO_NUMBER } from "./twilio";
 
 admin.initializeApp();
 
@@ -384,7 +385,12 @@ export const callUser = functions.https.onCall(
         if (!twiml) {
             return { "error": "User has no current matches!" };
         }
-        await callNumberWithTwiml(phone, twiml);
+        await client.calls
+            .create({
+                twiml: twiml.toString(),
+                to: phone,
+                from: TWILIO_NUMBER
+            })
         return { "success": "Calling " + phone };
     }
 );
@@ -401,7 +407,15 @@ export const addUserToCall = functions.https.onRequest(
 export const conferenceStatusWebhook = functions.https.onRequest(
     async (request, response) => {
         const conference_sid = request.body.ConferenceSid;
-        await announceToConference(conference_sid);
+        const participants = await client.conferences(conference_sid).participants.list();
+        if (participants.length === 1) {
+            return;
+        }
+        await admin.firestore().collection("matches").doc(request.body.FriendlyName).update({ "ongoing": true, "twilioSid": conference_sid })
+        await client.conferences(conference_sid).update({ announceUrl: BASE_URL + "announceUser" })
+        await util.promisify(setTimeout)(7000);
+        await Promise.all(participants.map(participant =>
+            client.conferences(conference_sid).participants(participant.callSid).update({ muted: false })))
     }
 );
 
@@ -416,15 +430,27 @@ export const announceUser = functions.https.onRequest(
     }
 );
 
+export const announceEnd = functions.https.onRequest(
+    (request, response) => {
+        const twiml = new twilio.twiml.VoiceResponse();
+        twiml.say({
+            'voice': 'alice',
+        }, "Your call will end in 5 minutes.");
+        response.set('Content-Type', 'text/xml');
+        response.send(twiml.toString());
+    }
+);
+
 // runs every hour at 25 minutes past
-export const callEndWarning = functions.pubsub.schedule('25 * * * *').onRun(async (context) => {
+// export const callEndWarning = functions.pubsub.schedule('25 * * * *').onRun(async (context) => {
+export const callEndWarning = functions.pubsub.schedule('* * * * *').onRun(async (context) => {
     const ongoingCalls = await admin
         .firestore()
         .collection("matches")
         .where("ongoing", "==", true)
         .get();
-    ongoingCalls.docs.forEach(doc => {
-    })
+    await Promise.all(ongoingCalls.docs.map(doc => client.conferences(doc.get("twilioSid")).update({ announceUrl: BASE_URL + "announceEnd" })));
+    await Promise.all(ongoingCalls.docs.map(doc => doc.ref.update({ ongoing: false })));
 });
 
 export const smsReply = functions.https.onRequest((req, res) => {
