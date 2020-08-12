@@ -62,14 +62,6 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
     return twiml;
 }
 
-export const getCallStartingTwiml = async () => {
-    const twiml = new twilio.twiml.VoiceResponse();
-    twiml.say({
-        'voice': 'alice',
-    }, "Your call is starting now.  May the odds be ever in your favor!");
-    return twiml;
-}
-
 export const announceToConference = async (conference_sid: string) => {
     const participants = await client.conferences(conference_sid).participants.list();
     if (participants.length === 1) {
