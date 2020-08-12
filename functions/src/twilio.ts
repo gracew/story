@@ -5,7 +5,7 @@ import * as twilio from "twilio";
 export const TWILIO_NUMBER = '+12036338466';
 export const BASE_URL = 'https://us-central1-speakeasy-prod.cloudfunctions.net/';
 const accountSid = 'AC07d4a9a61ac7c91f7e5cecf1e27c45a6';
-const authToken = 'e4cac763ca2438390561cb3b1c2f6b72';
+const authToken = functions.config().twilio.auth_token;
 export const client = twilio(accountSid, authToken);
 
 
