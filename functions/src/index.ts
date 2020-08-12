@@ -442,8 +442,7 @@ export const announceEnd = functions.https.onRequest(
 );
 
 // runs every hour at 25 minutes past
-// export const callEndWarning = functions.pubsub.schedule('25 * * * *').onRun(async (context) => {
-export const callEndWarning = functions.pubsub.schedule('* * * * *').onRun(async (context) => {
+export const callEndWarning = functions.pubsub.schedule('25 * * * *').onRun(async (context) => {
     const ongoingCalls = await admin
         .firestore()
         .collection("matches")
