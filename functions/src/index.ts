@@ -406,16 +406,21 @@ export const addUserToCall = functions.https.onRequest(
 
 export const conferenceStatusWebhook = functions.https.onRequest(
     async (request, response) => {
-        const conference_sid = request.body.ConferenceSid;
-        const participants = await client.conferences(conference_sid).participants.list();
-        if (participants.length === 1) {
-            return;
+        if (request.body.StatusCallbackEvent === "participant-join") {
+            const conference_sid = request.body.ConferenceSid;
+            const participants = await client.conferences(conference_sid).participants.list();
+            if (participants.length === 1) {
+                return;
+            }
+            await admin.firestore().collection("matches").doc(request.body.FriendlyName).update({ "ongoing": true, "twilioSid": conference_sid })
+            await client.conferences(conference_sid).update({ announceUrl: BASE_URL + "announceUser" })
+            await util.promisify(setTimeout)(7000);
+            await Promise.all(participants.map(participant =>
+                client.conferences(conference_sid).participants(participant.callSid).update({ muted: false })))
+        } else if (request.body.StatusCallbackEvent === "conference-end") {
+            await admin.firestore().collection("matches").doc(request.body.FriendlyName).update({ "ongoing": false })
         }
-        await admin.firestore().collection("matches").doc(request.body.FriendlyName).update({ "ongoing": true, "twilioSid": conference_sid })
-        await client.conferences(conference_sid).update({ announceUrl: BASE_URL + "announceUser" })
-        await util.promisify(setTimeout)(7000);
-        await Promise.all(participants.map(participant =>
-            client.conferences(conference_sid).participants(participant.callSid).update({ muted: false })))
+        response.end();
     }
 );
 
