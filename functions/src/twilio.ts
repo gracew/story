@@ -26,20 +26,8 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
     }
     console.log("Finding conference for user with phone number " + phone_number);
     const user_id = result.docs[0].id;
-    const matches = admin.firestore().collection("matches");
-    const match_a_result = await matches.where("user_a_id", "==", user_id).orderBy("created_at", "desc").limit(1).get();
-    const match_b_result = await matches.where("user_b_id", "==", user_id).orderBy("created_at", "desc").limit(1).get();
-    let match_result = null;
-    if (!match_a_result.empty) {
-        match_result = match_a_result.docs[0];
-    }
-    if (!match_b_result.empty) {
-        const match_b_result_doc = match_b_result.docs[0];
-        if (!match_result || (match_result.data()['created_at'] < match_b_result_doc.data()['created_at'])) {
-            match_result = match_b_result_doc;
-        }
-    }
-    if (!match_result) {
+    const match = await admin.firestore().collection("matches").where("user_ids", "array-contains", user_id).orderBy("created_at", "desc").limit(1).get();
+    if (match.empty) {
         return error_response;
     }
 
@@ -56,7 +44,7 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
         statusCallbackEvent: ["join", "end"],
         statusCallback: BASE_URL + "conferenceStatusWebhook",
         muted: true,
-    }, match_result.id);
+    }, match.docs[0].id);
 
     return twiml;
 }
