@@ -385,19 +385,34 @@ export const callUser = functions.https.onCall(
         if (!twiml) {
             return { "error": "User has no current matches!" };
         }
+
         await client.calls
             .create({
-                twiml: twiml.toString(),
+                url: BASE_URL + "screenCall",
                 to: phone,
-                from: TWILIO_NUMBER
+                from: TWILIO_NUMBER,
             })
         return { "success": "Calling " + phone };
     }
 );
 
+
+export const screenCall = functions.https.onRequest(
+    async (request, response) => {
+        const twiml = new twilio.twiml.VoiceResponse();
+        const gather = twiml.gather({ numDigits: 1, action: BASE_URL + "/addUserToCall" });
+        gather.say({ voice: "alice" }, 'Welcome to Voicebar. Press any key to continue.');
+
+        // If the user doesn't enter input, loop
+        twiml.redirect('/screenCall');
+
+        response.set('Content-Type', 'text/xml');
+        response.send(twiml.toString());
+    });
+
 export const addUserToCall = functions.https.onRequest(
     async (request, response) => {
-        const caller_phone = request.body.From;
+        const caller_phone = request.body.Direction === "inbound" ? request.body.From : request.body.To;
         const twiml = await getConferenceTwimlForPhone(caller_phone, false);
         response.set('Content-Type', 'text/xml');
         response.send(twiml!.toString());
@@ -414,7 +429,7 @@ export const conferenceStatusWebhook = functions.https.onRequest(
             }
             await admin.firestore().collection("matches").doc(request.body.FriendlyName).update({ "ongoing": true, "twilioSid": conference_sid })
             await client.conferences(conference_sid).update({ announceUrl: BASE_URL + "announceUser" })
-            await util.promisify(setTimeout)(7000);
+            await util.promisify(setTimeout)(2500);
             await Promise.all(participants.map(participant =>
                 client.conferences(conference_sid).participants(participant.callSid).update({ muted: false })))
         } else if (request.body.StatusCallbackEvent === "conference-end") {
@@ -429,7 +444,7 @@ export const announceUser = functions.https.onRequest(
         const twiml = new twilio.twiml.VoiceResponse();
         twiml.say({
             'voice': 'alice',
-        }, "Your call is starting now.  May the odds be ever in your favor!");
+        }, "Your call is starting now.");
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
