@@ -56,6 +56,7 @@ export async function callStudio(mode: string) {
         .collection("matches")
         .where("created_at", ">=", moment().utc().startOf("day"))
         .get();
+    console.log("found the following matches: " + todaysMatches.docs.map(doc => doc.id));
     const userARefs = todaysMatches.docs.map(doc => admin.firestore().collection("users").doc(doc.get("user_a_id")));
     const userBRefs = todaysMatches.docs.map(doc => admin.firestore().collection("users").doc(doc.get("user_b_id")));
 

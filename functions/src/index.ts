@@ -272,9 +272,14 @@ export const issueCalls = functions.pubsub.schedule('every day 03:00').onRun(asy
         .collection("matches")
         .where("created_at", ">=", moment().utc().startOf("day"))
         .get();
+    console.log("found the following matches: " + todaysMatches.docs.map(doc => doc.id));
+
     const userAIds = todaysMatches.docs.map(doc => doc.get("user_a_id"));
     const userBIds = todaysMatches.docs.map(doc => doc.get("user_b_id"));
-    await Promise.all(userAIds.concat(userBIds).map(id => {
+    const userIds = userAIds.concat(userBIds);
+    console.log("issuing calls to the following users: " + userIds);
+
+    await Promise.all(userIds.map(id => {
         const body = { user_id: id };
         return fetch(BASE_URL + "/callUser", {
             method: "POST",
