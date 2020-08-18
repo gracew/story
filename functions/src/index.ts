@@ -285,8 +285,8 @@ export const issueCalls = functions.pubsub.schedule('every day 03:00').onRun(asy
 export const callStudioManual = functions.https.onRequest(
     (request, response) => callStudio(request.body.mode));
 
-// 3:45am GMT => 8:45pm PT
-export const revealRequest = functions.pubsub.schedule('every day 03:45').onRun((context) => {
+// 3:35am GMT => 8:35pm PT
+export const revealRequest = functions.pubsub.schedule('every day 03:35').onRun((context) => {
     return callStudio("reveal_request")
 });
 
