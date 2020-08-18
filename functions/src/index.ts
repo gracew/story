@@ -265,8 +265,8 @@ export const optIn = functions.https.onRequest(
     }
 );
 
-// 3am GMT => 8pm PT
-export const issueCalls = functions.pubsub.schedule('every day 03:00').onRun(async (context) => {
+// default time zone is America/Los_Angeles
+export const issueCalls = functions.pubsub.schedule('every day 20:00').onRun(async (context) => {
     const todaysMatches = await admin
         .firestore()
         .collection("matches")
@@ -285,8 +285,8 @@ export const issueCalls = functions.pubsub.schedule('every day 03:00').onRun(asy
 export const callStudioManual = functions.https.onRequest(
     (request, response) => callStudio(request.body.mode));
 
-// 3:35am GMT => 8:35pm PT
-export const revealRequest = functions.pubsub.schedule('every day 03:35').onRun((context) => {
+// default time zone is America/Los_Angeles
+export const revealRequest = functions.pubsub.schedule('every day 20:35').onRun((context) => {
     return callStudio("reveal_request")
 });
 
