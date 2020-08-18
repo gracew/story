@@ -8,6 +8,7 @@ import * as path from 'path';
 import * as twilio from 'twilio';
 import * as util from "util";
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, TWILIO_NUMBER } from "./twilio";
+import moment = require("moment");
 
 
 admin.initializeApp();
@@ -263,6 +264,26 @@ export const optIn = functions.https.onRequest(
         }
     }
 );
+
+// 3am GMT => 8pm PT
+export const issueCalls = functions.pubsub.schedule('every day 03:00').onRun(async (context) => {
+    const todaysMatches = await admin
+        .firestore()
+        .collection("matches")
+        .where("created_at", ">=", moment().utc().startOf("day"))
+        .get();
+    const userAIds = todaysMatches.docs.map(doc => doc.get("user_a_id"));
+    const userBIds = todaysMatches.docs.map(doc => doc.get("user_b_id"));
+    await Promise.all(userAIds.concat(userBIds).map(id => {
+        const body = { user_id: id };
+        return fetch(BASE_URL + "/callUser", {
+            method: "POST",
+            headers: { "Content-type": "application/json" },
+            body: JSON.stringify(body),
+        });
+    }))
+});
+
 
 // 3:45am GMT => 8:45pm PT
 export const revealRequest = functions.pubsub.schedule('every day 03:45').onRun(async (context) => {
