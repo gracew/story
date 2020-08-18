@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as twilio from "twilio";
+import moment = require("moment");
 
 export const TWILIO_NUMBER = '+12036338466';
 export const BASE_URL = 'https://us-central1-speakeasy-prod.cloudfunctions.net/';
@@ -26,20 +27,8 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
     }
     console.log("Finding conference for user with phone number " + phone_number);
     const user_id = result.docs[0].id;
-    const matches = admin.firestore().collection("matches");
-    const match_a_result = await matches.where("user_a_id", "==", user_id).orderBy("created_at", "desc").limit(1).get();
-    const match_b_result = await matches.where("user_b_id", "==", user_id).orderBy("created_at", "desc").limit(1).get();
-    let match_result = null;
-    if (!match_a_result.empty) {
-        match_result = match_a_result.docs[0];
-    }
-    if (!match_b_result.empty) {
-        const match_b_result_doc = match_b_result.docs[0];
-        if (!match_result || (match_result.data()['created_at'] < match_b_result_doc.data()['created_at'])) {
-            match_result = match_b_result_doc;
-        }
-    }
-    if (!match_result) {
+    const match = await admin.firestore().collection("matches").where("user_ids", "array-contains", user_id).orderBy("created_at", "desc").limit(1).get();
+    if (match.empty) {
         return error_response;
     }
 
@@ -56,7 +45,55 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
         statusCallbackEvent: ["join", "end"],
         statusCallback: BASE_URL + "conferenceStatusWebhook",
         muted: true,
-    }, match_result.id);
+    }, match.docs[0].id);
 
     return twiml;
+}
+
+export async function callStudio(mode: string) {
+    const todaysMatches = await admin
+        .firestore()
+        .collection("matches")
+        .where("created_at", ">=", moment().utc().startOf("day"))
+        .get();
+    console.log("found the following matches: " + todaysMatches.docs.map(doc => doc.id));
+    const userARefs = todaysMatches.docs.map(doc => admin.firestore().collection("users").doc(doc.get("user_a_id")));
+    const userBRefs = todaysMatches.docs.map(doc => admin.firestore().collection("users").doc(doc.get("user_b_id")));
+
+    const allUsers = await admin.firestore().getAll(...userARefs.concat(userBRefs));
+    const allUsersById = Object.assign({}, ...allUsers.map(user => ({ [user.id]: user })));
+
+    const userAPromises = todaysMatches.docs.map(doc => {
+        const userA = allUsersById[doc.get("user_a_id")];
+        const userB = allUsersById[doc.get("user_b_id")];
+        return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+            to: userA.get("phone"),
+            from: TWILIO_NUMBER,
+            parameters: {
+                mode,
+                userId: userA.id,
+                firstName: userA.get("firstName"),
+                matchName: userB.get("firstName"),
+                matchPhone: userB.get("phone").substring(2),
+            }
+        });
+    });
+
+    const userBPromises = todaysMatches.docs.map(doc => {
+        const userA = allUsersById[doc.get("user_a_id")];
+        const userB = allUsersById[doc.get("user_b_id")];
+        return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+            to: userB.get("phone"),
+            from: TWILIO_NUMBER,
+            parameters: {
+                mode,
+                userId: userB.id,
+                firstName: userB.get("firstName"),
+                matchName: userA.get("firstName"),
+                matchPhone: userA.get("phone").substring(2),
+            }
+        });
+    });
+
+    await Promise.all(userAPromises.concat(userBPromises));
 }

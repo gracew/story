@@ -3,15 +3,16 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as fs from 'fs';
+import * as moment from "moment";
 import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
 import * as util from "util";
-import { BASE_URL, client, getConferenceTwimlForPhone, TWILIO_NUMBER } from "./twilio";
+import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, TWILIO_NUMBER } from "./twilio";
+
 
 admin.initializeApp();
 
-const requestLib = require('request');
 
 export const phoneRegistered = functions.https.onCall(async (request) => {
     const normalizedPhone = request.phone.split(" ").join("");
@@ -149,17 +150,10 @@ export const markAllowed = functions.storage.object().onFinalize(async (object) 
     });
 });
 
-// Runs every day at 7pm GMT or noon PT
-export const sendOptInText = functions.pubsub.schedule('every day 19:00').onRun(async (context) => {
-    const allowedUsers = await admin
-        .firestore()
-        .collection("users")
-        .where("allowed", "==", true)
-        .get();
-    allowedUsers.docs.forEach(doc => {
-        // TODO(gracew): call messagebird
-    })
-});
+// Runs every day at 4pm GMT or 9am PT
+/*export const sendReminderText = functions.pubsub.schedule('every day 16:00').onRun(async (context) => {
+    return callStudio("remind");
+});*/
 
 /**
 format
@@ -205,7 +199,7 @@ export const createMatches = functions.storage.object().onFinalize(async (object
 
             console.log("creating match for " + user_a.data()!.firstName + "-" + user_b.data()!.firstName);
 
-            const formData = {
+            /*const formData = {
                 "mode": "voice_bio",
                 "name": user_a.data()!.firstName,
                 "phone_number": user_a.data()!.phone,
@@ -243,7 +237,7 @@ export const createMatches = functions.storage.object().onFinalize(async (object
                     console.error('error:', error); // Print the error if one occurred
                     console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
                 }
-            });
+            });*/
 
         }
     });
@@ -271,131 +265,147 @@ export const optIn = functions.https.onRequest(
     }
 );
 
-export const reveal = functions.https.onRequest(
+// 3am GMT => 8pm PT
+export const issueCalls = functions.pubsub.schedule('every day 03:00').onRun(async (context) => {
+    const todaysMatches = await admin
+        .firestore()
+        .collection("matches")
+        .where("created_at", ">=", moment().utc().startOf("day"))
+        .get();
+    console.log("found the following matches: " + todaysMatches.docs.map(doc => doc.id));
+
+    const userAIds = todaysMatches.docs.map(doc => doc.get("user_a_id"));
+    const userBIds = todaysMatches.docs.map(doc => doc.get("user_b_id"));
+    const userIds = userAIds.concat(userBIds);
+    console.log("issuing calls to the following users: " + userIds);
+
+    await Promise.all(userIds.map(id => callUserHelper(id)));
+});
+
+export const callStudioManual = functions.https.onRequest(
+    (request, response) => callStudio(request.body.mode));
+
+// 3:45am GMT => 8:45pm PT
+export const revealRequest = functions.pubsub.schedule('every day 03:45').onRun((context) => {
+    return callStudio("reveal_request")
+});
+
+export const saveReveal = functions.https.onRequest(
     async (request, response) => {
-        const match_id = request.body.match_id;
-        const phone_number = request.body.phone_number;
-
-        const match_doc_ref = admin.firestore().collection("matches").doc(match_id);
-        let match_doc = await match_doc_ref.get();
-        if (!match_doc.exists || match_doc.data() === undefined) {
-            console.log("ERROR | No match with id " + match_id);
-            response.send({ success: false, message: "Match does not exist" });
-        } else {
-            const users = await admin.firestore().collection("users");
-
-            const user_a_query = await users.where("phone", "==", phone_number).get();
-
-            console.log("user is revealing " + phone_number);
-            // check if user exists in table
-            if (user_a_query.empty) {
-                console.log("ERROR | User does not exist");
-                response.send({ success: false, message: "User does not exist" });
-                return;
-            }
-
-            const user_a = user_a_query.docs[0];
-            console.log("Reveailing user id " + user_a.id);
-
-            let user_b;
-
-            if (match_doc.data()!.user_a_id === user_a.id) {
-                user_b = await users.doc(match_doc.data()!.user_b_id).get();
-                await match_doc_ref.update({ user_a_revealed: true });
-
-            } else if (match_doc.data()!.user_b_id === user_a.id) {
-                user_b = await users.doc(match_doc.data()!.user_a_id).get();
-                await match_doc_ref.update({ user_b_revealed: true });
-            } else {
-                console.log("ERROR | Requested match doesnt have the requested users ");
-                response.send({ success: false, message: "Requested match doesnt have the requested users" });
-            }
-
-            if (user_b === undefined) {
-                console.log("ERROR | User b does not exist");
-                response.send({ success: false, message: "User B does not exist" });
-                return;
-            }
-
-            match_doc = await match_doc_ref.get();
-
-            if (match_doc.data()!.user_a_revealed === true && match_doc.data()!.user_b_revealed === true) {
-
-                // TODO fix pronouns
-                const formData = {
-                    "mode": "reveal",
-                    "name": user_a.data().firstName,
-                    "phone_number": user_a.data().phone,
-                    "match_name": user_b.data()!.firstName,
-                    "match_phone_number": user_b.data()!.phone.substring(1),
-                    "match_gender_pronoun": "they",
-                    "match_gender_pronoun_possessive": "their",
-                }
-
-                console.log("Revealing phone number 1");
-                requestLib.post({ url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData }, function (error: any, r: any, body: any) {
-                    if (r.statusCode === 204) {
-                        console.log("successfully revealed first phone number");
-                    } else {
-                        console.error('error:', error); // Print the error if one occurred
-                        console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
-                        response.send({ success: false })
-                    }
-                });
-
-                const formData2 = {
-                    "mode": "reveal",
-                    "name": user_b.data()!.firstName,
-                    "phone_number": user_b.data()!.phone,
-                    "match_name": user_a.data().firstName,
-                    "match_phone_number": user_a.data().phone.substring(1),
-                    "match_gender_pronoun": "they",
-                    "match_gender_pronoun_possessive": "their",
-                }
-
-                console.log("Revealing phone number 2");
-                requestLib.post({ url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData2 }, function (error: any, r: any, body: any) {
-                    if (r.statusCode === 204) {
-                        console.log("successfully revealed second phone number");
-                    } else {
-                        console.error('error:', error); // Print the error if one occurred
-                        console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
-                        response.send({ success: false });
-                    }
-                });
-
-            }
-
-            response.send({ success: true });
-
+        const phone = request.body.phone;
+        const reveal = request.body.reveal.toLowerCase() === "y" || request.body.reveal.toLowerCase() === "yes";
+        const users = await admin.firestore().collection("users");
+        const revealing_user_query = await users.where("phone", "==", phone).get();
+        // check if user exists in table
+        if (revealing_user_query.empty) {
+            console.error("No user with phone " + phone);
+            response.end();
+            return;
         }
+        const revealing_user = revealing_user_query.docs[0];
+
+        const match_query = await admin.firestore().collection("matches").where("user_ids", "array-contains", revealing_user.id).orderBy("created_at", "desc").limit(1).get();
+        if (match_query.empty) {
+            console.error("No match with phone " + phone);
+            response.end();
+            return;
+        }
+        const match_doc = match_query.docs[0]
+
+        let other_user;
+        let other_reveal;
+        if (match_doc.get("user_a_id") === revealing_user.id) {
+            other_user = await users.doc(match_doc.get("user_b_id")).get();
+            other_reveal = match_doc.get("user_b_revealed")
+            await match_doc.ref.update({ user_a_revealed: reveal });
+        } else if (match_doc.get("user_b_id") === revealing_user.id) {
+            other_user = await users.doc(match_doc.get("user_a_id")).get();
+            other_reveal = match_doc.get("user_a_revealed")
+            await match_doc.ref.update({ user_b_revealed: reveal });
+        } else {
+            console.error("Requested match doesnt have the requested users");
+            response.end();
+            return;
+        }
+
+        const other_data = {
+            userId: other_user.id,
+            firstName: other_user.data()!.firstName,
+            matchName: revealing_user.data().firstName,
+            matchPhone: revealing_user.data().phone.substring(2),
+        };
+
+        if (reveal && other_reveal) {
+            await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+                to: other_user.get("phone"),
+                from: TWILIO_NUMBER,
+                parameters: {
+                    mode: "reveal",
+                    ...other_data
+                }
+            });
+            response.send({ next: "reveal" })
+        } else if (reveal && other_reveal === false) {
+            response.send({ next: "reveal_other_no" })
+        } else if (reveal && other_reveal === undefined) {
+            response.send({ next: "reveal_other_pending" })
+        } else if (!reveal) {
+            if (other_reveal) {
+                await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+                    to: other_user.get("phone"),
+                    from: TWILIO_NUMBER,
+                    parameters: {
+                        mode: "reveal_other_no",
+                        ...other_data
+                    }
+                });
+            }
+            response.send({ next: "no_reveal" })
+        }
+
+        response.end();
     }
 );
+
+export const markInactive = functions.https.onRequest(
+    async (request, response) => {
+        const phone = request.body.phone;
+        const user_query = await admin.firestore().collection("users").where("phone", "==", phone).get();
+        if (user_query.empty) {
+            console.error("No user with phone " + phone);
+            response.end();
+            return;
+        }
+        await user_query.docs[0].ref.update({ active: false });
+        response.end();
+    }
+);
+
+async function callUserHelper(user_id: string) {
+    const ref = admin.firestore().collection("users").doc(user_id);
+    const user_doc = await ref.get();
+    const user_doc_data = user_doc.data()
+    if (!user_doc.exists || !user_doc_data) {
+        return { "error": "User does not exist!" };
+    }
+    const phone = user_doc_data.phone;
+    const twiml = await getConferenceTwimlForPhone(phone, true);
+    if (!twiml) {
+        return { "error": "User has no current matches!" };
+    }
+
+    await client.calls
+        .create({
+            url: BASE_URL + "screenCall",
+            to: phone,
+            from: TWILIO_NUMBER,
+        })
+    return { "success": "Calling " + phone };
+}
 
 export const callUser = functions.https.onCall(
-    async (request) => {
-        const ref = admin.firestore().collection("users").doc(request.user_id);
-        const user_doc = await ref.get();
-        const user_doc_data = user_doc.data()
-        if (!user_doc.exists || !user_doc_data) {
-            return { "error": "User does not exist!" };
-        }
-        const phone = user_doc_data.phone;
-        const twiml = await getConferenceTwimlForPhone(phone, true);
-        if (!twiml) {
-            return { "error": "User has no current matches!" };
-        }
-
-        await client.calls
-            .create({
-                url: BASE_URL + "screenCall",
-                to: phone,
-                from: TWILIO_NUMBER,
-            })
-        return { "success": "Calling " + phone };
-    }
+    (request) => callUserHelper(request.user_id)
 );
-
 
 export const screenCall = functions.https.onRequest(
     async (request, response) => {
@@ -470,13 +480,4 @@ export const callEndWarning = functions.pubsub.schedule('25 * * * *').onRun(asyn
         .get();
     await Promise.all(ongoingCalls.docs.map(doc => client.conferences(doc.get("twilioSid")).update({ announceUrl: BASE_URL + "announceEnd" })));
     await Promise.all(ongoingCalls.docs.map(doc => doc.ref.update({ ongoing: false })));
-});
-
-export const smsReply = functions.https.onRequest((req, res) => {
-    const messageRes = new twilio.twiml.MessagingResponse();
-    // this is just for notification purposes, replies need to be made in the Twilio console
-    messageRes.message({ to: functions.config().twilio.notify_phone, }, "User responded to Twilio SMS");
-
-    res.writeHead(200, { 'Content-Type': 'text/xml' });
-    res.end(messageRes.toString());
 });
