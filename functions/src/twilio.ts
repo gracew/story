@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as twilio from "twilio";
+import moment = require("moment");
 
 export const TWILIO_NUMBER = '+12036338466';
 export const BASE_URL = 'https://us-central1-speakeasy-prod.cloudfunctions.net/';
@@ -47,4 +48,38 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
     }, match.docs[0].id);
 
     return twiml;
+}
+
+export async function callStudio(mode: string) {
+    const todaysMatches = await admin
+        .firestore()
+        .collection("matches")
+        .where("created_at", ">=", moment().utc().startOf("day"))
+        .get();
+    const userARefs = todaysMatches.docs.map(doc => admin.firestore().collection("users").doc(doc.get("user_a_id")));
+    const userBRefs = todaysMatches.docs.map(doc => admin.firestore().collection("users").doc(doc.get("user_b_id")));
+
+    const allUsers = await admin.firestore().getAll(...userARefs.concat(userBRefs));
+    const allUsersById = Object.assign({}, ...allUsers.map(user => ({ [user.id]: user })));
+
+    const userAPromises = todaysMatches.docs.map(doc => {
+        const form = new FormData();
+        form.append("Parameters", JSON.stringify({
+            mode,
+            firstName: allUsersById[doc.get("user_a_id")].get("firstName"),
+            matchName: allUsersById[doc.get("user_b_id")].get("firstName"),
+        }));
+        return fetch(functions.config().twilio.flow_url, { method: "POST", body: form });
+    });
+    const userBPromises = todaysMatches.docs.map(doc => {
+        const form = new FormData();
+        form.append("Parameters", JSON.stringify({
+            mode,
+            firstName: allUsersById[doc.get("user_b_id")].get("firstName"),
+            matchName: allUsersById[doc.get("user_a_id")].get("firstName"),
+        }));
+        return fetch(functions.config().twilio.flow_url, { method: "POST", body: form });
+    });
+
+    await Promise.all(userAPromises.concat(userBPromises));
 }
