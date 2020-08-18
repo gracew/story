@@ -7,7 +7,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
 import * as util from "util";
-import { BASE_URL, client, getConferenceTwimlForPhone, TWILIO_NUMBER, callStudio } from "./twilio";
+import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, TWILIO_NUMBER } from "./twilio";
 
 
 admin.initializeApp();
@@ -269,18 +269,10 @@ export const revealRequest = functions.pubsub.schedule('every day 03:45').onRun(
     return callStudio("reveal_request")
 });
 
-function parseReveal(reveal: string) {
-    if (reveal.toLowerCase() === "y" || reveal.toLowerCase() === "yes") {
-        return true;
-    }
-    return false;
-}
-
 export const saveReveal = functions.https.onRequest(
     async (request, response) => {
         const phone = request.body.phone;
-        const reveal = parseReveal(request.body.reveal);
-
+        const reveal = request.body.reveal.toLowerCase() === "y" || request.body.reveal.toLowerCase() === "yes";
         const users = await admin.firestore().collection("users");
         const revealing_user_query = await users.where("phone", "==", phone).get();
         // check if user exists in table
@@ -346,14 +338,19 @@ export const saveReveal = functions.https.onRequest(
     }
 );
 
-export const callMatch = functions.https.onCall(
+export const callUser = functions.https.onCall(
     async (request) => {
-        const match = await admin.firestore().collection("users").doc(request.match_id).get();
-        if (!match.exists) {
-            return { "error": "Match does not exist!" };
+        const ref = admin.firestore().collection("users").doc(request.user_id);
+        const user_doc = await ref.get();
+        const user_doc_data = user_doc.data()
+        if (!user_doc.exists || !user_doc_data) {
+            return { "error": "User does not exist!" };
         }
-        /// get users
-        const phone = "";
+        const phone = user_doc_data.phone;
+        const twiml = await getConferenceTwimlForPhone(phone, true);
+        if (!twiml) {
+            return { "error": "User has no current matches!" };
+        }
 
         await client.calls
             .create({
