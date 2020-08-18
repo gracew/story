@@ -367,7 +367,7 @@ export const saveReveal = functions.https.onRequest(
     }
 );
 
-export const markInactive = functions.https.onRequest(
+export const markActive = functions.https.onRequest(
     async (request, response) => {
         const phone = request.body.phone;
         const user_query = await admin.firestore().collection("users").where("phone", "==", phone).get();
@@ -376,7 +376,7 @@ export const markInactive = functions.https.onRequest(
             response.end();
             return;
         }
-        await user_query.docs[0].ref.update({ active: false });
+        await user_query.docs[0].ref.update({ active: request.body.active });
         response.end();
     }
 );
