@@ -64,22 +64,35 @@ export async function callStudio(mode: string) {
     const allUsersById = Object.assign({}, ...allUsers.map(user => ({ [user.id]: user })));
 
     const userAPromises = todaysMatches.docs.map(doc => {
-        const form = new FormData();
-        form.append("Parameters", JSON.stringify({
-            mode,
-            firstName: allUsersById[doc.get("user_a_id")].get("firstName"),
-            matchName: allUsersById[doc.get("user_b_id")].get("firstName"),
-        }));
-        return fetch(functions.config().twilio.flow_url, { method: "POST", body: form });
+        const userA = allUsersById[doc.get("user_a_id")];
+        const userB = allUsersById[doc.get("user_b_id")];
+        return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+            to: userA.get("phone"),
+            from: TWILIO_NUMBER,
+            parameters: {
+                mode,
+                userId: userA.id,
+                firstName: userA.get("firstName"),
+                matchName: userB.get("firstName"),
+                matchPhone: userB.get("phone").substring(2),
+            }
+        });
     });
+
     const userBPromises = todaysMatches.docs.map(doc => {
-        const form = new FormData();
-        form.append("Parameters", JSON.stringify({
-            mode,
-            firstName: allUsersById[doc.get("user_b_id")].get("firstName"),
-            matchName: allUsersById[doc.get("user_a_id")].get("firstName"),
-        }));
-        return fetch(functions.config().twilio.flow_url, { method: "POST", body: form });
+        const userA = allUsersById[doc.get("user_a_id")];
+        const userB = allUsersById[doc.get("user_b_id")];
+        return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+            to: userB.get("phone"),
+            from: TWILIO_NUMBER,
+            parameters: {
+                mode,
+                userId: userB.id,
+                firstName: userB.get("firstName"),
+                matchName: userA.get("firstName"),
+                matchPhone: userA.get("phone").substring(2),
+            }
+        });
     });
 
     await Promise.all(userAPromises.concat(userBPromises));

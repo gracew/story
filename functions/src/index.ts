@@ -3,6 +3,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as fs from 'fs';
+import fetch from "node-fetch";
 import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
@@ -289,9 +290,11 @@ export const issueCalls = functions.pubsub.schedule('every day 03:00').onRun(asy
     }))
 });
 
+export const callStudioManual = functions.https.onRequest(
+    (request, response) => callStudio(request.body.mode));
 
 // 3:45am GMT => 8:45pm PT
-export const revealRequest = functions.pubsub.schedule('every day 03:45').onRun(async (context) => {
+export const revealRequest = functions.pubsub.schedule('every day 03:45').onRun((context) => {
     return callStudio("reveal_request")
 });
 
@@ -333,33 +336,55 @@ export const saveReveal = functions.https.onRequest(
             return;
         }
 
+        const other_data = {
+            userId: other_user.id,
+            firstName: other_user.data()!.firstName,
+            matchName: revealing_user.data().firstName,
+            matchPhone: revealing_user.data().phone.substring(2),
+        };
+
         if (reveal && other_reveal) {
-            const form = new FormData();
-            form.append("Parameters", JSON.stringify({
-                mode: "reveal",
-                firstName: revealing_user.data().firstName,
-                matchName: other_user.data()!.firstName,
-                matchPhone: other_user.data()!.phone.substring(1),
-            }));
-
-            const form2 = new FormData();
-            form2.append("Parameters", JSON.stringify({
-                mode: "reveal",
-                firstName: other_user.data()!.firstName,
-                matchName: revealing_user.data().firstName,
-                matchPhone: revealing_user.data().phone.substring(1),
-            }));
-
-            await Promise.all([
-                fetch(functions.config().twilio.flow_url, { method: "POST", body: form }),
-                fetch(functions.config().twilio.flow_url, { method: "POST", body: form2 }),
-            ]);
+            await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+                to: other_user.get("phone"),
+                from: TWILIO_NUMBER,
+                parameters: {
+                    mode: "reveal",
+                    ...other_data
+                }
+            });
+            response.send({ next: "reveal" })
         } else if (reveal && other_reveal === false) {
-            await callStudio("reveal_other_no")
+            response.send({ next: "reveal_other_no" })
         } else if (reveal && other_reveal === undefined) {
-            await callStudio("reveal_other_pending")
+            response.send({ next: "reveal_other_pending" })
+        } else if (!reveal) {
+            if (other_reveal) {
+                await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+                    to: other_user.get("phone"),
+                    from: TWILIO_NUMBER,
+                    parameters: {
+                        mode: "reveal_other_no",
+                        ...other_data
+                    }
+                });
+            }
+            response.send({ next: "no_reveal" })
         }
 
+        response.end();
+    }
+);
+
+export const markInactive = functions.https.onRequest(
+    async (request, response) => {
+        const phone = request.body.phone;
+        const user_query = await admin.firestore().collection("users").where("phone", "==", phone).get();
+        if (user_query.empty) {
+            console.error("No user with phone " + phone);
+            response.end();
+            return;
+        }
+        await user_query.docs[0].ref.update({ active: false });
         response.end();
     }
 );
@@ -461,13 +486,4 @@ export const callEndWarning = functions.pubsub.schedule('25 * * * *').onRun(asyn
         .get();
     await Promise.all(ongoingCalls.docs.map(doc => client.conferences(doc.get("twilioSid")).update({ announceUrl: BASE_URL + "announceEnd" })));
     await Promise.all(ongoingCalls.docs.map(doc => doc.ref.update({ ongoing: false })));
-});
-
-export const smsReply = functions.https.onRequest((req, res) => {
-    const messageRes = new twilio.twiml.MessagingResponse();
-    // this is just for notification purposes, replies need to be made in the Twilio console
-    messageRes.message({ to: functions.config().twilio.notify_phone, }, "User responded to Twilio SMS");
-
-    res.writeHead(200, { 'Content-Type': 'text/xml' });
-    res.end(messageRes.toString());
 });
