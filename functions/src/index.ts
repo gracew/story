@@ -3,13 +3,12 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as fs from 'fs';
-import fetch from "node-fetch";
+import * as moment from "moment";
 import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
 import * as util from "util";
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, TWILIO_NUMBER } from "./twilio";
-import moment = require("moment");
 
 
 admin.initializeApp();
@@ -280,14 +279,7 @@ export const issueCalls = functions.pubsub.schedule('every day 03:00').onRun(asy
     const userIds = userAIds.concat(userBIds);
     console.log("issuing calls to the following users: " + userIds);
 
-    await Promise.all(userIds.map(id => {
-        const body = { user_id: id };
-        return fetch(BASE_URL + "/callUser", {
-            method: "POST",
-            headers: { "Content-type": "application/json" },
-            body: JSON.stringify(body),
-        });
-    }))
+    await Promise.all(userIds.map(id => callUserHelper(id)));
 });
 
 export const callStudioManual = functions.https.onRequest(
@@ -389,28 +381,30 @@ export const markInactive = functions.https.onRequest(
     }
 );
 
-export const callUser = functions.https.onCall(
-    async (request) => {
-        const ref = admin.firestore().collection("users").doc(request.user_id);
-        const user_doc = await ref.get();
-        const user_doc_data = user_doc.data()
-        if (!user_doc.exists || !user_doc_data) {
-            return { "error": "User does not exist!" };
-        }
-        const phone = user_doc_data.phone;
-        const twiml = await getConferenceTwimlForPhone(phone, true);
-        if (!twiml) {
-            return { "error": "User has no current matches!" };
-        }
-
-        await client.calls
-            .create({
-                url: BASE_URL + "screenCall",
-                to: phone,
-                from: TWILIO_NUMBER,
-            })
-        return { "success": "Calling " + phone };
+async function callUserHelper(user_id: string) {
+    const ref = admin.firestore().collection("users").doc(user_id);
+    const user_doc = await ref.get();
+    const user_doc_data = user_doc.data()
+    if (!user_doc.exists || !user_doc_data) {
+        return { "error": "User does not exist!" };
     }
+    const phone = user_doc_data.phone;
+    const twiml = await getConferenceTwimlForPhone(phone, true);
+    if (!twiml) {
+        return { "error": "User has no current matches!" };
+    }
+
+    await client.calls
+        .create({
+            url: BASE_URL + "screenCall",
+            to: phone,
+            from: TWILIO_NUMBER,
+        })
+    return { "success": "Calling " + phone };
+}
+
+export const callUser = functions.https.onCall(
+    (request) => callUserHelper(request.user_id)
 );
 
 export const screenCall = functions.https.onRequest(
