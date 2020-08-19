@@ -265,12 +265,12 @@ export const optIn = functions.https.onRequest(
     }
 );
 
-// default time zone is America/Los_Angeles
-export const issueCalls = functions.pubsub.schedule('every day 20:00').onRun(async (context) => {
+// runs every hour
+export const issueCalls = functions.pubsub.schedule('0 * * * *').onRun(async (context) => {
     const todaysMatches = await admin
         .firestore()
         .collection("matches")
-        .where("created_at", ">=", moment().utc().startOf("day"))
+        .where("created_at", "==", moment().utc().startOf("hour"))
         .get();
     console.log("found the following matches: " + todaysMatches.docs.map(doc => doc.id));
 
@@ -282,12 +282,15 @@ export const issueCalls = functions.pubsub.schedule('every day 20:00').onRun(asy
     await Promise.all(userIds.map(id => callUserHelper(id)));
 });
 
-export const callStudioManual = functions.https.onRequest(
-    (request, response) => callStudio(request.body.mode));
-
-// default time zone is America/Los_Angeles
-export const revealRequest = functions.pubsub.schedule('every day 20:35').onRun((context) => {
-    return callStudio("reveal_request")
+// runs every hour at 35 minutes past
+export const revealRequest = functions.pubsub.schedule('35 * * * *').onRun(async (context) => {
+    const todaysMatches = await admin
+        .firestore()
+        .collection("matches")
+        .where("created_at", "==", moment().utc().startOf("hour"))
+        .get();
+    const connectedMatches = todaysMatches.docs.filter(m => m.get("twilioSid") !== undefined);
+    return callStudio("reveal_request", connectedMatches)
 });
 
 export const saveReveal = functions.https.onRequest(

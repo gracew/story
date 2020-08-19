@@ -1,7 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as twilio from "twilio";
-import moment = require("moment");
+import { QueryDocumentSnapshot } from "firebase-functions/lib/providers/firestore";
 
 export const TWILIO_NUMBER = '+12036338466';
 export const BASE_URL = 'https://us-central1-speakeasy-prod.cloudfunctions.net/';
@@ -50,20 +50,15 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
     return twiml;
 }
 
-export async function callStudio(mode: string) {
-    const todaysMatches = await admin
-        .firestore()
-        .collection("matches")
-        .where("created_at", ">=", moment().utc().startOf("day"))
-        .get();
-    console.log("found the following matches: " + todaysMatches.docs.map(doc => doc.id));
-    const userARefs = todaysMatches.docs.map(doc => admin.firestore().collection("users").doc(doc.get("user_a_id")));
-    const userBRefs = todaysMatches.docs.map(doc => admin.firestore().collection("users").doc(doc.get("user_b_id")));
+export async function callStudio(mode: string, matches: QueryDocumentSnapshot[]) {
+    console.log(`executing '${mode}' for the following matches: ` + matches.map(doc => doc.id));
+    const userARefs = matches.map(doc => admin.firestore().collection("users").doc(doc.get("user_a_id")));
+    const userBRefs = matches.map(doc => admin.firestore().collection("users").doc(doc.get("user_b_id")));
 
     const allUsers = await admin.firestore().getAll(...userARefs.concat(userBRefs));
     const allUsersById = Object.assign({}, ...allUsers.map(user => ({ [user.id]: user })));
 
-    const userAPromises = todaysMatches.docs.map(doc => {
+    const userAPromises = matches.map(doc => {
         const userA = allUsersById[doc.get("user_a_id")];
         const userB = allUsersById[doc.get("user_b_id")];
         return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
@@ -79,7 +74,7 @@ export async function callStudio(mode: string) {
         });
     });
 
-    const userBPromises = todaysMatches.docs.map(doc => {
+    const userBPromises = matches.map(doc => {
         const userA = allUsersById[doc.get("user_a_id")];
         const userB = allUsersById[doc.get("user_b_id")];
         return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
