@@ -282,6 +282,18 @@ export const issueCalls = functions.pubsub.schedule('0 * * * *').onRun(async (co
     await Promise.all(userIds.map(id => callUserHelper(id)));
 });
 
+export const callStudioManual = functions.https.onRequest(
+    async (request, response) => {
+        const matchId = request.body.matchId;
+        const match = await admin
+            .firestore()
+            .collection("matches")
+            .doc(matchId)
+            .get();
+        // @ts-ignore
+        return callStudio(request.body.mode, [match])
+    });
+
 // runs every hour at 35 minutes past
 export const revealRequest = functions.pubsub.schedule('35 * * * *').onRun(async (context) => {
     const todaysMatches = await admin
