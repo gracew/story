@@ -486,6 +486,17 @@ export const announceEnd = functions.https.onRequest(
     }
 );
 
+export const announce1Min = functions.https.onRequest(
+    (request, response) => {
+        const twiml = new twilio.twiml.VoiceResponse();
+        twiml.say({
+            'voice': 'alice',
+        }, "Your call will end in 1 minute.");
+        response.set('Content-Type', 'text/xml');
+        response.send(twiml.toString());
+    }
+);
+
 // runs every hour at 25 minutes past
 export const callEndWarning = functions.pubsub.schedule('25 * * * *').onRun(async (context) => {
     const ongoingCalls = await admin
@@ -494,5 +505,14 @@ export const callEndWarning = functions.pubsub.schedule('25 * * * *').onRun(asyn
         .where("ongoing", "==", true)
         .get();
     await Promise.all(ongoingCalls.docs.map(doc => client.conferences(doc.get("twilioSid")).update({ announceUrl: BASE_URL + "announceEnd" })));
-    await Promise.all(ongoingCalls.docs.map(doc => doc.ref.update({ ongoing: false })));
+});
+
+// runs every hour at 29 minutes past
+export const call1MinWarning = functions.pubsub.schedule('29 * * * *').onRun(async (context) => {
+    const ongoingCalls = await admin
+        .firestore()
+        .collection("matches")
+        .where("ongoing", "==", true)
+        .get();
+    await Promise.all(ongoingCalls.docs.map(doc => client.conferences(doc.get("twilioSid")).update({ announceUrl: BASE_URL + "announce1Min" })));
 });
