@@ -2,6 +2,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as twilio from "twilio";
 import { QueryDocumentSnapshot } from "firebase-functions/lib/providers/firestore";
+import moment = require("moment");
 
 export const TWILIO_NUMBER = '+12036338466';
 export const BASE_URL = 'https://us-central1-speakeasy-prod.cloudfunctions.net/';
@@ -27,7 +28,9 @@ export const getConferenceTwimlForPhone = async (phone_number: string, null_on_e
     }
     console.log("Finding conference for user with phone number " + phone_number);
     const user_id = result.docs[0].id;
-    const match = await admin.firestore().collection("matches").where("user_ids", "array-contains", user_id).orderBy("created_at", "desc").limit(1).get();
+    const match = await admin.firestore().collection("matches")
+        .where("user_ids", "array-contains", user_id)
+        .where("created_at", "==", moment().utc().startOf("hour")).get();
     if (match.empty) {
         return error_response;
     }
