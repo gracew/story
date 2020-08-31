@@ -52,7 +52,6 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
         "5c4ac50c-5f56-479e-8f26-79c0a8fbcf2f": "age",
         "51a54426-5dd2-4195-ac3a-bc8bf63857aa": "gender",
         "6f60bcbb-622f-4b94-9671-e9f361bdffd7": "phone",
-        "9cd16471-ba75-4b5a-8575-e9c59a76707b": "city",
         "46b2e2ef-78b4-4113-af23-9f6b43fdab5c": "genderPreference",
         "01093a01-0f3a-44b7-a595-2759523f3e48": "funFacts",
         "c2edd041-e6a2-406a-81a0-fa66868059a4": "whereDidYouHearAboutVB"
