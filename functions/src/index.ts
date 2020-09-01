@@ -265,6 +265,47 @@ export const optIn = functions.https.onRequest(
 );
 
 // runs every hour
+export const sendReminderTexts = functions.pubsub.schedule('0 * * * *').onRun(async (context) => {
+    const todaysMatches = await admin
+        .firestore()
+        .collection("matches")
+        .where("created_at", "==", moment().utc().startOf("hour").add(1, "hour"))
+        .get();
+    console.log("found the following matches: " + todaysMatches.docs.map(doc => doc.id));
+
+    const userAIds = todaysMatches.docs.map(doc => doc.get("user_a_id"));
+    const userBIds = todaysMatches.docs.map(doc => doc.get("user_b_id"));
+    const userIds = userAIds.concat(userBIds);
+    console.log("sending texts to the following users: " + userIds);
+
+    const users = await admin.firestore().getAll(...userIds.map(id => admin.firestore().collection("users").doc(id)));
+    const usersById = Object.assign({}, ...users.map(user => ({ [user.id]: user })));
+
+    const allPromises: Array<Promise<any>> = []
+    todaysMatches.docs.forEach(doc => {
+        const userA = usersById[doc.get("user_a_id")];
+        const userB = usersById[doc.get("user_b_id")];
+        allPromises.push(textUserHelper(userA, userB, doc.get("callIn")))
+        allPromises.push(textUserHelper(userB, userA, doc.get("callIn")))
+    })
+
+    await Promise.all(allPromises);
+});
+
+// TODO(gracew): type inputs
+async function textUserHelper(userA: any, userB: any, callIn: boolean) {
+    const callInText = callIn ? " Make sure to call us at (203) 633-8466 to be connected." : "";
+    const body = `Hi ${userA.get("firstName")}! This is Voicebar. Just a reminder that you’ll be speaking with ${userB.get("firstName")} in an hour.${callInText} Hope you two have a good conversation!`;
+
+    await client.messages
+        .create({
+            body,
+            from: TWILIO_NUMBER,
+            to: userA.get("phone"),
+        })
+}
+
+// runs every hour
 export const issueCalls = functions.pubsub.schedule('0 * * * *').onRun(async (context) => {
     const todaysMatches = await admin
         .firestore()
