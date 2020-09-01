@@ -273,8 +273,12 @@ export const issueCalls = functions.pubsub.schedule('0 * * * *').onRun(async (co
         .get();
     console.log("found the following matches: " + todaysMatches.docs.map(doc => doc.id));
 
-    const userAIds = todaysMatches.docs.map(doc => doc.get("user_a_id"));
-    const userBIds = todaysMatches.docs.map(doc => doc.get("user_b_id"));
+    // don't issue calls where callIn === true
+    const todaysMatchesCallOut = todaysMatches.docs.filter(m => m.get("callIn") !== true)
+    console.log("calling out for the following matches: " + todaysMatchesCallOut.map(doc => doc.id));
+
+    const userAIds = todaysMatchesCallOut.map(doc => doc.get("user_a_id"));
+    const userBIds = todaysMatchesCallOut.map(doc => doc.get("user_b_id"));
     const userIds = userAIds.concat(userBIds);
     console.log("issuing calls to the following users: " + userIds);
 
