@@ -1,6 +1,6 @@
 [[redirects]]
   from = "/"
-  to = "https://voicebar.webflow.io"
+  to = "https://webflow.voicebar.co"
   status = 200
   force = true
 
