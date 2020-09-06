@@ -76,7 +76,7 @@ function Recorder() {
         phone: request.phone,
       })
       .then((res) => setPhoneRegistered(res.data));
-  }, []);
+  }, [request.phone]);
 
   useEffect(() => {
     if (request.referrerUsername !== "_____") {
@@ -91,7 +91,7 @@ function Recorder() {
           setLoadingReferrer(false);
         });
     }
-  }, []);
+  }, [request.referrerUsername]);
 
   async function onSubmit() {
     setSubmitting(true);

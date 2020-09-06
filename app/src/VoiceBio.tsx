@@ -4,7 +4,7 @@ import * as firebase from "firebase/app";
 import "firebase/remote-config";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import "./VoiceBio.css";
 
 function VoiceBio() {
@@ -12,7 +12,6 @@ function VoiceBio() {
   const [user, setUser] = useState<any>();
   const [bioUrl, setBioUrl] = useState<string>();
   const { username } = useParams();
-  const history = useHistory();
 
   useEffect(() => {
     firebase
@@ -22,7 +21,7 @@ function VoiceBio() {
       // ignore not-found error
       .catch((err) => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [username]);
 
   useEffect(() => {
     if (user) {

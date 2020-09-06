@@ -31,7 +31,7 @@ function RegisterComplete() {
           setLoadingReferrer(false);
         });
     }
-  }, []);
+  }, [referrerUsername]);
 
   if (loadingReferrer) {
     return <Spin size="large" />;
