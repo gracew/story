@@ -5,11 +5,6 @@
   force = true
 
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
   from = "/signup"
   to = "https://voicebar.typeform.com/to/NUynD2GT"
   status = 301
@@ -18,3 +13,8 @@
   from = "/feedback"
   to = "https://voicebar.typeform.com/to/aryQh6Da"
   status = 301
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
