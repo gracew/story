@@ -352,7 +352,7 @@ export const revealRequest = functions.pubsub.schedule('35 * * * *').onRun(async
 export const saveReveal = functions.https.onRequest(
     async (request, response) => {
         const phone = request.body.phone;
-        const reveal = request.body.reveal.toLowerCase() === "y" || request.body.reveal.toLowerCase() === "yes";
+        const reveal = request.body.reveal.trim().toLowerCase() === "y" || request.body.reveal.trim().toLowerCase() === "yes";
         const users = await admin.firestore().collection("users");
         const revealing_user_query = await users.where("phone", "==", phone).get();
         // check if user exists in table
