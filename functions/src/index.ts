@@ -9,7 +9,7 @@ import * as path from 'path';
 import * as twilio from 'twilio';
 import * as util from "util";
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, TWILIO_NUMBER } from "./twilio";
-
+import {addUserToAirtable} from './airtable';
 
 admin.initializeApp();
 
@@ -49,15 +49,27 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
 
     const answersIdMap: { [key: string]: string } = {
         "2a57e142-a19d-47a6-b9e7-e44e305020ae": "firstName",
+        "26da12e0-58dd-4c2d-94c3-43ce603e7845": "lastName",
         "5c4ac50c-5f56-479e-8f26-79c0a8fbcf2f": "age",
         "51a54426-5dd2-4195-ac3a-bc8bf63857aa": "gender",
+        "1a448624-668f-4904-b1dc-238ab0918ab3": "race",
+        "cb8abb92-a2ee-4d68-8e66-4f20a41ca617": "email",
+        "9cd16471-ba75-4b5a-8575-e9c59a76707b": "location",
+        "e20e886c-b4c9-47c9-a8fc-6801602225d2" : "locationFlexibility",
+        "66620ef7-31d3-4269-b5be-4b5786793ec0": "agePreference",
         "6f60bcbb-622f-4b94-9671-e9f361bdffd7": "phone",
         "46b2e2ef-78b4-4113-af23-9f6b43fdab5c": "genderPreference",
         "01093a01-0f3a-44b7-a595-2759523f3e48": "funFacts",
+        "bad634b9-0941-45e8-9dce-9f70f94b63cc" : "interests",
+        "81a72b3b-f161-4fe3-86c8-2313634be26f": "social",
         "c2edd041-e6a2-406a-81a0-fa66868059a4": "whereDidYouHearAboutVB"
     }
 
-    const user: { [key: string]: any } = {};
+    const user: { [key: string]: any } = {
+        "referrer": req.body.form_response.hidden.referrer,
+        "signUpDate" : req.body.form_response.submitted_at
+    }
+
 
     const answers = req.body.form_response.answers;
     console.log(answers);
@@ -69,10 +81,10 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
             continue;
         }
         console.log(key);
-        if (a.type === 'text' || a.type === 'number' || a.type === 'phone_number' || a.type === 'long_text' || a.type === 'short_text') {
+        if (a.type === 'text' || a.type=== "boolean" || a.type === "email" || a.type === 'number' || a.type === 'phone_number' || a.type === 'long_text' || a.type === 'short_text') {
             user[key] = a[a.type];
         } else if (a.type === 'choice') {
-            user[key] = a.choice.label;
+            user[key] = a.choice.label ? a.choice.label : a.choice.other
         } else if (a.type === 'choices') {
             user[key] = a.choices.labels;
         }
@@ -95,30 +107,13 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
         );
     }
 
-    // async function usernameAvailable(proposed: string) {
-    //     const existingUsername = await admin
-    //         .firestore()
-    //         .collection("users")
-    //         .where("username", "==", proposed)
-    //         .get();
-    //     return existingUsername.docs.length === 0;
-    // }
-    // function randomBetween1and100() {
-    //     return Math.floor(Math.random() * 100);
-    // }
-
-    // // generate unique username/link
-    // let username = request.firstName as string;
-    // username = username.trim().toLowerCase();
-    // while (!(await usernameAvailable(username))) {
-    //     username = username + randomBetween1and100();
-    //     // NOTE(gracew): this might go on forever if there are more than 100 people with this first name
-    // }
-
     const reff = admin.firestore().collection("users").doc();
     user.id = reff.id;
     user.registeredAt = admin.firestore.FieldValue.serverTimestamp();
     await reff.set(user);
+    
+    addUserToAirtable(user)
+
     response.send({ 'success': 'true' })
 });
 
