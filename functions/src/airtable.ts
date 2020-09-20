@@ -21,14 +21,14 @@ export const addUserToAirtable = (userData : {[key: string]: any}) =>{
             "UserID" : userData.id,
             "Fun Facts": userData["funFacts"],
             "Email": userData["email"],
-            "Ethnicity": [userData["race"]],
+            "Ethnicity": userData["race"] ? [userData["race"]] : ["Prefer not to say"],
             "Flexible on Location": userData["locationFlexibility"] ? "Yes" : "No",
             "Match Age": userData["agePreference"],
             "Social Media": userData["social"],
             "How did you find us?": userData["whereDidYouHearAboutVB"],
             "Sign Up Date": signUpDate.format("YYYY-MM-DD"),
             "Wants": userData["genderPreference"],
-            "Interests": userData["interests"].split(","),
+            "Interests": userData["interests"] ? userData["interests"].split(",") : ["NO RESPONSE"],
             "Referrer": userData["referrer"]
     }
 
