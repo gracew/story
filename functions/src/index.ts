@@ -8,8 +8,8 @@ import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
 import * as util from "util";
+import { addUserToAirtable } from './airtable';
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, TWILIO_NUMBER } from "./twilio";
-import {addUserToAirtable} from './airtable';
 
 admin.initializeApp();
 
@@ -55,19 +55,19 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
         "1a448624-668f-4904-b1dc-238ab0918ab3": "race",
         "cb8abb92-a2ee-4d68-8e66-4f20a41ca617": "email",
         "9cd16471-ba75-4b5a-8575-e9c59a76707b": "location",
-        "e20e886c-b4c9-47c9-a8fc-6801602225d2" : "locationFlexibility",
+        "e20e886c-b4c9-47c9-a8fc-6801602225d2": "locationFlexibility",
         "66620ef7-31d3-4269-b5be-4b5786793ec0": "agePreference",
         "6f60bcbb-622f-4b94-9671-e9f361bdffd7": "phone",
         "46b2e2ef-78b4-4113-af23-9f6b43fdab5c": "genderPreference",
         "01093a01-0f3a-44b7-a595-2759523f3e48": "funFacts",
-        "bad634b9-0941-45e8-9dce-9f70f94b63cc" : "interests",
+        "bad634b9-0941-45e8-9dce-9f70f94b63cc": "interests",
         "81a72b3b-f161-4fe3-86c8-2313634be26f": "social",
         "c2edd041-e6a2-406a-81a0-fa66868059a4": "whereDidYouHearAboutVB"
     }
 
     const user: { [key: string]: any } = {
         "referrer": req.body.form_response.hidden.referrer,
-        "signUpDate" : req.body.form_response.submitted_at
+        "signUpDate": req.body.form_response.submitted_at
     }
 
 
@@ -81,7 +81,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
             continue;
         }
         console.log(key);
-        if (a.type === 'text' || a.type=== "boolean" || a.type === "email" || a.type === 'number' || a.type === 'phone_number' || a.type === 'long_text' || a.type === 'short_text') {
+        if (a.type === 'text' || a.type === "boolean" || a.type === "email" || a.type === 'number' || a.type === 'phone_number' || a.type === 'long_text' || a.type === 'short_text') {
             user[key] = a[a.type];
         } else if (a.type === 'choice') {
             user[key] = a.choice.label ? a.choice.label : a.choice.other
@@ -111,12 +111,35 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     user.id = reff.id;
     user.registeredAt = admin.firestore.FieldValue.serverTimestamp();
     await reff.set(user);
-    
+
     addUserToAirtable(user)
 
     response.send({ 'success': 'true' })
 });
 
+/**
+CSV is of the format: phone,textBody
+ */
+export const bulkSms = functions.storage.object().onFinalize(async (object) => {
+    if (!(object.name && object.name.startsWith("bulksms"))) {
+        return;
+    }
+    const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
+    await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
+    const contents = fs.readFileSync(tempFilePath).toString();
+    const rows = contents.split("\n");
+    await Promise.all(rows.map(row => {
+        const cols = row.split(",");
+        const phone = cols[0];
+        const body = cols[1];
+        return client.messages
+            .create({
+                body,
+                from: TWILIO_NUMBER,
+                to: phone,
+            });
+    }));
+});
 
 /**
 format
