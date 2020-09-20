@@ -95,26 +95,6 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
         );
     }
 
-    // async function usernameAvailable(proposed: string) {
-    //     const existingUsername = await admin
-    //         .firestore()
-    //         .collection("users")
-    //         .where("username", "==", proposed)
-    //         .get();
-    //     return existingUsername.docs.length === 0;
-    // }
-    // function randomBetween1and100() {
-    //     return Math.floor(Math.random() * 100);
-    // }
-
-    // // generate unique username/link
-    // let username = request.firstName as string;
-    // username = username.trim().toLowerCase();
-    // while (!(await usernameAvailable(username))) {
-    //     username = username + randomBetween1and100();
-    //     // NOTE(gracew): this might go on forever if there are more than 100 people with this first name
-    // }
-
     const reff = admin.firestore().collection("users").doc();
     user.id = reff.id;
     user.registeredAt = admin.firestore.FieldValue.serverTimestamp();
@@ -122,37 +102,6 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     response.send({ 'success': 'true' })
 });
 
-/**
- * The file is expected to be in CSV format where the first line is the header (skipped in processing). Each subsequent
- * row is expected to have the user ID in the first column and an allowed boolean in the second column. Subsequent
- * columns are ignored. Example:
- *
- * id,allowed,firstName,lastName
- * 1,TRUE,Grace,Wang
- * 2,FALSE,Minh,Pham
- */
-export const markAllowed = functions.storage.object().onFinalize(async (object) => {
-    if (object.name !== "allowedUsers.csv") {
-        return;
-    }
-    const tempFilePath = path.join(os.tmpdir(), object.name);
-    await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    const contents = fs.readFileSync(tempFilePath).toString();
-    const rows = contents.split("\n").slice(1);
-    rows.forEach(async row => {
-        const cols = row.split(",");
-        if (cols.length > 2) {
-            const id = cols[0];
-            const allowed = cols[1] === "TRUE" ? true : false;
-            await admin.firestore().collection("users").doc(id).update({ allowed })
-        }
-    });
-});
-
-// Runs every day at 4pm GMT or 9am PT
-/*export const sendReminderText = functions.pubsub.schedule('every day 16:00').onRun(async (context) => {
-    return callStudio("remind");
-});*/
 
 /**
 format
@@ -241,28 +190,6 @@ export const createMatches = functions.storage.object().onFinalize(async (object
         }
     });
 });
-
-export const optIn = functions.https.onRequest(
-    async (request, response) => {
-        const phone_number = request.body.phone_number;
-        const users = admin.firestore().collection("users");
-        const result = await users.where("phone", "==", phone_number).get();
-
-        if (result.empty) {
-            console.log("ERROR | No user with phone number " + phone_number);
-            response.send({ success: false, message: "User does not exist" });
-        } else {
-            console.log("Opting in user with phone number " + phone_number);
-            const user_id = result.docs[0].id;
-
-            await admin.firestore().collection("optIns").doc().set({
-                user_id: user_id,
-                created_at: Date.now()
-            })
-            response.send({ success: true });
-        }
-    }
-);
 
 // runs every hour
 export const sendReminderTexts = functions.pubsub.schedule('0 * * * *').onRun(async (context) => {
