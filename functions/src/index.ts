@@ -5,6 +5,7 @@ import * as functions from "firebase-functions";
 import * as fs from 'fs';
 import * as moment from "moment";
 import * as os from 'os';
+import * as csv from "csv-parser";
 import * as path from 'path';
 import * as twilio from 'twilio';
 import * as util from "util";
@@ -126,19 +127,19 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    const contents = fs.readFileSync(tempFilePath).toString();
-    const rows = contents.split("\n");
-    await Promise.all(rows.map(row => {
-        const cols = row.split(",");
-        const phone = cols[0];
-        const body = cols[1];
-        return client.messages
-            .create({
-                body,
-                from: TWILIO_NUMBER,
-                to: phone,
-            });
-    }));
+    const promises: Promise<any>[] = []
+    fs.createReadStream(tempFilePath)
+        .pipe(csv(["phone", "body"]))
+        .on('data', data => {
+            promises.push(client.messages
+                .create({
+                    body: data.body,
+                    from: TWILIO_NUMBER,
+                    to: data.phone,
+                }));
+
+        });
+    await Promise.all(promises);
 });
 
 /**
