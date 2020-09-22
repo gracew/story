@@ -1,17 +1,17 @@
 import * as functions from "firebase-functions";
 import * as moment from "moment";
 
-var Airtable = require('airtable');
+const Airtable = require('airtable');
 const baseId = functions.config().airtable.id;
 const apiKey = functions.config().airtable.key;
 
-var base = new Airtable({apiKey: apiKey}).base(baseId);
+const base = new Airtable({apiKey: apiKey}).base(baseId);
 
 export const addUserToAirtable = (userData : {[key: string]: any}) =>{
 
-    let signUpDate = moment(userData["signUpDate"])
+    const signUpDate = moment(userData["signUpDate"])
 
-    var newUser: { [key: string]: any}={
+    const newUser: { [key: string]: any}={
             "First": userData["firstName"],
             "Last" : userData["lastName"],
             "Age" : userData["age"],
@@ -49,4 +49,39 @@ export const addUserToAirtable = (userData : {[key: string]: any}) =>{
         }
         console.log("Created record: " + record.getId())
       });
+}
+
+export const addMatchToAirtable = (matchData : {[key: string]: any}) =>{
+    // const {user_a_id, user_b_id} = matchData
+
+    // let userA_recordID: string
+    // let userB_recordID: string
+    
+    // base('Users').select({
+    //     maxRecords: 2,
+    //     filterByFormula: `OR(UserID = "${user_a_id}", UserID="${user_b_id}")` 
+    // }).eachPage(function page(records: any, fetchNextPage: any) {
+    //     // This function (`page`) will get called for each page of records.
+    
+    //     records.forEach(function(record: any) {
+    //         console.log("Retrieved: " + record.id)
+    //         if (record.get("UserID") === user_a_id) {userA_recordID = record.id}
+    //         else {userB_recordID = record.id}
+    //     });
+    
+    //     // To fetch the next page of records, call `fetchNextPage`.
+    //     // If there are more records, `page` will get called again.
+    //     // If there are no more records, `done` will get called.
+    //     fetchNextPage();
+    
+    // }, function done(err: any) {
+    //     if (err) { console.error(err); return; }
+    // });
+
+    // const newMatch: { [key: string]: any} = {
+    //     "User A": userA_recordID,
+    //     "User B": userB_recordID,
+    // }
+
+
 }
