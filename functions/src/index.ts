@@ -10,7 +10,7 @@ import * as path from 'path';
 import * as twilio from 'twilio';
 import * as util from "util";
 import { addUserToAirtable } from './airtable';
-import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, TWILIO_NUMBER } from "./twilio";
+import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchNameAndDate, TWILIO_NUMBER } from "./twilio";
 
 admin.initializeApp();
 
@@ -329,13 +329,7 @@ export const saveReveal = functions.https.onRequest(
         }
         const revealing_user = revealing_user_query.docs[0];
 
-        const match_query = await admin.firestore().collection("matches").where("user_ids", "array-contains", revealing_user.id).orderBy("created_at", "desc").limit(1).get();
-        if (match_query.empty) {
-            console.error("No match with phone " + phone);
-            response.end();
-            return;
-        }
-        const match_doc = match_query.docs[0]
+        const match_doc = await admin.firestore().collection("matches").doc(request.body.matchId).get();
 
         let other_user;
         let other_reveal;
@@ -352,6 +346,13 @@ export const saveReveal = functions.https.onRequest(
             response.end();
             return;
         }
+        const latest_match_other = await admin.firestore().collection("matches")
+            .where("user_ids", "array-contains", other_user.id)
+            .orderBy("created_at", "desc")
+            .limit(1)
+            .get();
+        const other_next_match = await nextMatchNameAndDate(
+            { [other_user.id]: latest_match_other.docs[0] }, match_doc, other_user.id);
 
         const other_data = {
             userId: other_user.id,
@@ -366,7 +367,8 @@ export const saveReveal = functions.https.onRequest(
                 from: TWILIO_NUMBER,
                 parameters: {
                     mode: "reveal",
-                    ...other_data
+                    ...other_data,
+                    ...other_next_match,
                 }
             });
             response.send({ next: "reveal" })
@@ -382,7 +384,8 @@ export const saveReveal = functions.https.onRequest(
                     parameters: {
                         mode: "reveal_other_no",
                         ...other_data
-                    }
+                    },
+                    ...other_next_match,
                 });
             }
             response.send({ next: "no_reveal" })
