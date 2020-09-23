@@ -1,7 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import * as twilio from "twilio";
 import { QueryDocumentSnapshot } from "firebase-functions/lib/providers/firestore";
+import * as twilio from "twilio";
 import moment = require("moment");
 
 export const TWILIO_NUMBER = '+12036338466';
@@ -61,37 +61,67 @@ export async function callStudio(mode: string, matches: QueryDocumentSnapshot[])
     const allUsers = await admin.firestore().getAll(...userARefs.concat(userBRefs));
     const allUsersById = Object.assign({}, ...allUsers.map(user => ({ [user.id]: user })));
 
-    const userAPromises = matches.map(doc => {
+    const latestMatchesByUserId: Record<string, any> = {}
+    for (const u of allUsers) {
+        const latestMatch = await admin.firestore().collection("matches")
+            .where("user_ids", "array-contains", u.id)
+            .orderBy("created_at", "desc")
+            .limit(1)
+            .get();
+        latestMatchesByUserId[u.id] = latestMatch.docs[0];
+    };
+
+    const userAPromises = matches.map(async doc => {
         const userA = allUsersById[doc.get("user_a_id")];
         const userB = allUsersById[doc.get("user_b_id")];
+        const nextMatchParams = await nextMatchNameAndDate(latestMatchesByUserId, doc, userA.id);
         return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
             to: userA.get("phone"),
             from: TWILIO_NUMBER,
             parameters: {
                 mode,
                 userId: userA.id,
+                matchId: doc.id,
                 firstName: userA.get("firstName"),
                 matchName: userB.get("firstName"),
                 matchPhone: userB.get("phone").substring(2),
+                ...nextMatchParams,
             }
         });
     });
 
-    const userBPromises = matches.map(doc => {
+    const userBPromises = matches.map(async doc => {
         const userA = allUsersById[doc.get("user_a_id")];
         const userB = allUsersById[doc.get("user_b_id")];
+        const nextMatchParams = await nextMatchNameAndDate(latestMatchesByUserId, doc, userB.id);
         return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
             to: userB.get("phone"),
             from: TWILIO_NUMBER,
             parameters: {
                 mode,
                 userId: userB.id,
+                matchId: doc.id,
                 firstName: userB.get("firstName"),
                 matchName: userA.get("firstName"),
                 matchPhone: userA.get("phone").substring(2),
+                ...nextMatchParams,
             }
         });
     });
 
     await Promise.all(userAPromises.concat(userBPromises));
+}
+
+export async function nextMatchNameAndDate(matchesByUserId: Record<string, any>, currMatch: any, userId: string) {
+    const nextMatch = matchesByUserId[userId];
+    if (nextMatch && nextMatch.id === currMatch.id) {
+        return {};
+    }
+    const nextMatchUserId = nextMatch.get("user_a_id") === userId ? nextMatch.get("user_b_id") : nextMatch.get("user_a_id");
+    console.log(nextMatchUserId);
+    const nextMatchUser = await admin.firestore().collection("users").doc(nextMatchUserId).get();
+    return {
+        nextMatchName: nextMatchUser.get("firstName"),
+        nextMatchDate: moment(nextMatch.get("created_at")).format("dddd"),
+    }
 }
