@@ -188,8 +188,7 @@ export const createMatches = functions.storage.object().onFinalize(async (object
 
         const callDate: string = cols[2]
         const callTime: string = cols[3]
-        let timezone: string = processTimeZone(cols[4])
-        console.log(timezone)
+        let timezone: string = processTimeZone(cols[4].trim())
         
         const created_at = m.tz(callDate +" "+callTime, "MM-DD-YYYY hh:mm:ss a", timezone)
 
