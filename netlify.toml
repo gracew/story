@@ -6,21 +6,18 @@
 
 [[redirects]]
   from = "/signup"
-  to = "https://voicebar.typeform.com/to/NUynD2GT?r=:r"
+  to = "https://voicebar.typeform.com/to/NUynD2GT"
   status = 301
-  query = {r = ":r"}
 
 [[redirects]]
   from = "/feedback"
-  to = "https://voicebar.typeform.com/to/aryQh6Da?u=:u&m=:m"
+  to = "https://voicebar.typeform.com/to/aryQh6Da"
   status = 301
-  query = {u = ":u", m = ":m"}
 
 [[redirects]]
   from = "/prefs"
-  to = "https://voicebar.typeform.com/to/dDndU0sf?user=:user"
+  to = "https://voicebar.typeform.com/to/dDndU0sf"
   status = 301
-  query = {user = ":user"}
 
 [[redirects]]
   from = "/*"
