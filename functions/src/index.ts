@@ -438,25 +438,10 @@ export const conferenceStatusWebhook = functions.https.onRequest(
                 return;
             }
             await admin.firestore().collection("matches").doc(request.body.FriendlyName).update({ "ongoing": true, "twilioSid": conferenceSid })
-            await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "announceUser" })
-            await util.promisify(setTimeout)(2500);
-            await Promise.all(participants.map(participant =>
-                client.conferences(conferenceSid).participants(participant.callSid).update({ muted: false })))
         } else if (request.body.StatusCallbackEvent === "conference-end") {
             await admin.firestore().collection("matches").doc(request.body.FriendlyName).update({ "ongoing": false })
         }
         response.end();
-    }
-);
-
-export const announceUser = functions.https.onRequest(
-    (request, response) => {
-        const twiml = new twilio.twiml.VoiceResponse();
-        twiml.say({
-            'voice': 'alice',
-        }, "Your call is starting now.");
-        response.set('Content-Type', 'text/xml');
-        response.send(twiml.toString());
     }
 );
 
@@ -489,7 +474,9 @@ export const call5MinWarning = functions.pubsub.schedule('25 * * * *').onRun(asy
         .collection("matches")
         .where("ongoing", "==", true)
         .get();
-    await Promise.all(ongoingCalls.docs.map(doc => client.conferences(doc.get("twilioSid")).update({ announceUrl: BASE_URL + "announce5Min" })));
+    await Promise.all(ongoingCalls.docs.map(doc =>
+        client.conferences(doc.get("twilioSid"))
+            .update({ announceUrl: BASE_URL + "announce5Min" })));
 });
 
 // runs every hour at 29 minutes past
@@ -499,5 +486,7 @@ export const call1MinWarning = functions.pubsub.schedule('29 * * * *').onRun(asy
         .collection("matches")
         .where("ongoing", "==", true)
         .get();
-    await Promise.all(ongoingCalls.docs.map(doc => client.conferences(doc.get("twilioSid")).update({ announceUrl: BASE_URL + "announce1Min" })));
+    await Promise.all(ongoingCalls.docs.map(doc =>
+        client.conferences(doc.get("twilioSid"))
+            .update({ announceUrl: BASE_URL + "announce1Min" })));
 });
