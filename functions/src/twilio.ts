@@ -11,7 +11,7 @@ const authToken = functions.config().twilio.auth_token;
 export const client = twilio(accountSid, authToken);
 
 
-export const getConferenceTwimlForPhone = async (phone: string) => {
+export async function getConferenceTwimlForPhone(phone: string) {
     const users = admin.firestore().collection("users");
     const result = await users.where("phone", "==", phone).get();
     const errorResponse = new twilio.twiml.VoiceResponse();

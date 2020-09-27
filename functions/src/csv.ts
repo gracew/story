@@ -2,7 +2,7 @@ import * as csv from "csv-parser";
 import * as admin from "firebase-admin";
 import * as fs from 'fs';
 import * as moment from "moment-timezone";
-import * as twilio from 'twilio';
+import * as twilio from "twilio";
 import { TWILIO_NUMBER } from './twilio';
 import { processTimeZone } from "./util";
 
@@ -40,6 +40,10 @@ export async function processMatchCsv(tempFilePath: string) {
             }
 
             const timezone = processTimeZone(data.timezone.trim())
+            if (!timezone) {
+                console.error("invalid timezone, skpping row: " + data)
+                return;
+            }
             const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
             const match = {
                 user_a_id: data.userAId,

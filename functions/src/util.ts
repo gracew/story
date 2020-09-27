@@ -17,6 +17,5 @@ export function processTimeZone(tz: string) {
     } else if (tz === "ET") {
         return "America/New_York"
     }
-    // TODO(gracew): change this
-    return "error";
+    return undefined;
 }
