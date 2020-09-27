@@ -1,7 +1,7 @@
 import { processBulkSmsCsv, processMatchCsv } from "./csv";
 import { client, TWILIO_NUMBER } from "./twilio";
 
-jest.mock("./firestore")
+// TODO(gracew): pass around the twilio client explicitly to avoid this
 jest.mock("twilio", () => {
     return jest.fn().mockImplementation(() => {
         return { messages: { create: jest.fn() } };
