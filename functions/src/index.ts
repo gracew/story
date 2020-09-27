@@ -8,6 +8,7 @@ import { addUserToAirtable } from './airtable';
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchNameAndDate, TWILIO_NUMBER } from "./twilio";
 import { matchesThisHour } from "./util";
 import { processBulkSmsCsv, processMatchCsv } from "./csv";
+import { Firestore } from "./firestore";
 
 admin.initializeApp();
 
@@ -126,7 +127,7 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    await processBulkSmsCsv(tempFilePath, client)
+    await processBulkSmsCsv(tempFilePath)
 });
 
 /**
@@ -141,7 +142,7 @@ export const createMatches = functions.storage.object().onFinalize(async (object
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
 
-    await processMatchCsv(tempFilePath);
+    await processMatchCsv(tempFilePath, new Firestore());
 });
 
 // runs every hour
