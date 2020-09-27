@@ -1,7 +1,8 @@
 import * as csv from "csv-parser";
 import * as fs from 'fs';
 import * as moment from "moment-timezone";
-import { Firestore } from "./firestore";
+import { Firestore, IMatch } from "./firestore";
+import { availability, matchNotification } from "./smsCopy";
 import { client, TWILIO_NUMBER } from './twilio';
 
 export function processBulkSmsCsv(tempFilePath: string) {
@@ -27,10 +28,9 @@ export function processAvailabilityCsv(tempFilePath: string, firestore: Firestor
                 return;
             }
 
-            const body = `Hi ${user.firstName}. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ${data.timezone} any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.`;
             client.messages
                 .create({
-                    body,
+                    body: availability(user, data.timezone),
                     from: TWILIO_NUMBER,
                     to: user.phone,
                 });
@@ -65,7 +65,8 @@ export function processMatchCsv(tempFilePath: string, firestore: Firestore) {
                 user_ids: [data.userAId, data.userBId],
                 created_at: createdAt.toDate()
             });
-        });
+        })
+        .on("end", () => sendMatchNotificationTexts(firestore));
 }
 
 function processTimeZone(tz: string) {
@@ -77,4 +78,39 @@ function processTimeZone(tz: string) {
         return "America/New_York"
     }
     return undefined;
+}
+
+async function sendMatchNotificationTexts(firestore: Firestore) {
+    const matches = await firestore.matchesThisWeek();
+
+    // create map from userId to matches
+    const userToMatches: Record<string, IMatch[]> = {};
+    matches.forEach(m => {
+        if (!(m.user_a_id in userToMatches)) {
+            userToMatches[m.user_a_id] = [];
+        }
+        userToMatches[m.user_a_id].push(m)
+
+        if (!(m.user_b_id in userToMatches)) {
+            userToMatches[m.user_b_id] = [];
+        }
+        userToMatches[m.user_b_id].push(m)
+    });
+
+    const usersById = await firestore.getUsersForMatches(matches);
+    // notify each user
+    await Promise.all(
+        Object.keys(userToMatches).map(async userId => {
+            const texts = matchNotification(userId, userToMatches[userId], usersById)
+            // send these linearly
+            for (const t of texts) {
+                await client.messages
+                    .create({
+                        body: t,
+                        from: TWILIO_NUMBER,
+                        to: usersById[userId].phone,
+                    });
+            }
+        })
+    )
 }

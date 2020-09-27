@@ -8,6 +8,13 @@ jest.mock("twilio", () => {
     })
 });
 
+const firestore = {
+    getUser: jest.fn(),
+    createMatch: jest.fn(),
+    matchesThisWeek: jest.fn(),
+    getUsersForMatches: jest.fn(),
+};
+
 beforeEach(() => jest.resetAllMocks());
 
 it("processBulkSmsCsv", async () => {
@@ -26,14 +33,10 @@ another line
 it("processAvailabilityCsv", async () => {
     const user1 = { exists: true, firstName: "Anna", phone: "+1234567890" };
     const user2 = { exists: true, firstName: "Grace", phone: "+10123456789" };
-    const firestore = {
-        getUser: jest.fn()
-            .mockResolvedValueOnce(user1)
-            .mockResolvedValueOnce(user2),
-        createMatch: jest.fn(),
-    }
+    firestore.getUser
+        .mockResolvedValueOnce(user1)
+        .mockResolvedValueOnce(user2);
     processAvailabilityCsv("./testdata/availability.csv", firestore)
-    // wait 200ms, TODO(gracew): fix this
     await new Promise(r => setTimeout(r, 200));
     expect(client.messages.create).toHaveBeenCalledTimes(2);
     expect(client.messages.create).toHaveBeenCalledWith({
@@ -50,24 +53,86 @@ it("processAvailabilityCsv", async () => {
 
 
 it("processMatchCsv", async () => {
-    const firestore = {
-        getUser: jest.fn().mockResolvedValue({ exists: true }),
-        createMatch: jest.fn(),
-    }
-    processMatchCsv("./testdata/matches.csv", firestore)
-    // wait 200ms, TODO(gracew): fix this
-    await new Promise(r => setTimeout(r, 200));
-    expect(firestore.createMatch).toHaveBeenCalledTimes(2);
-    expect(firestore.createMatch).toHaveBeenCalledWith({
+    const match1 = {
         user_a_id: "UqS4ivx8v9xcUcrAKt3B",
         user_b_id: "wz931t4yTP2F5xvOW0QI",
         user_ids: ["UqS4ivx8v9xcUcrAKt3B", "wz931t4yTP2F5xvOW0QI"],
         created_at: new Date("2020-09-23T20:00:00-04:00"),
-    })
-    expect(firestore.createMatch).toHaveBeenCalledWith({
+    };
+    const match2 = {
         user_a_id: "oS89cjnV1wRP5kKvHGoP",
         user_b_id: "zV4nHElSwPWNvFP0aVYs",
         user_ids: ["oS89cjnV1wRP5kKvHGoP", "zV4nHElSwPWNvFP0aVYs"],
         created_at: new Date("2020-09-23T20:00:00-07:00"),
+    };
+    firestore.getUser.mockResolvedValue({ exists: true });
+    firestore.matchesThisWeek.mockResolvedValue([match1, match2])
+    firestore.getUsersForMatches.mockResolvedValue({
+        UqS4ivx8v9xcUcrAKt3B: {},
+        wz931t4yTP2F5xvOW0QI: {},
+        oS89cjnV1wRP5kKvHGoP: {},
+        zV4nHElSwPWNvFP0aVYs: {},
     })
+    processMatchCsv("./testdata/matches.csv", firestore)
+    await new Promise(r => setTimeout(r, 200));
+    expect(firestore.createMatch).toHaveBeenCalledTimes(2);
+    expect(firestore.createMatch).toHaveBeenCalledWith(match1)
+    expect(firestore.createMatch).toHaveBeenCalledWith(match2)
+    expect(client.messages.create).toHaveBeenCalledTimes(4);
+});
+
+it("processMatchCsv - multiple dates", async () => {
+    const match1 = {
+        user_a_id: "UqS4ivx8v9xcUcrAKt3B",
+        user_b_id: "wz931t4yTP2F5xvOW0QI",
+        user_ids: ["UqS4ivx8v9xcUcrAKt3B", "wz931t4yTP2F5xvOW0QI"],
+        created_at: new Date("2020-09-23T20:00:00-04:00"),
+    };
+    const match2 = {
+        user_a_id: "UqS4ivx8v9xcUcrAKt3B",
+        user_b_id: "zV4nHElSwPWNvFP0aVYs",
+        user_ids: ["UqS4ivx8v9xcUcrAKt3B", "zV4nHElSwPWNvFP0aVYs"],
+        created_at: new Date("2020-09-23T20:00:00-07:00"),
+    };
+    firestore.getUser.mockResolvedValue({ exists: true });
+    firestore.matchesThisWeek.mockResolvedValue([match1, match2])
+    firestore.getUsersForMatches.mockResolvedValue({
+        UqS4ivx8v9xcUcrAKt3B: {},
+        wz931t4yTP2F5xvOW0QI: {},
+        zV4nHElSwPWNvFP0aVYs: {},
+    })
+    processMatchCsv("./testdata/matchesMultipleDates.csv", firestore)
+    await new Promise(r => setTimeout(r, 200));
+    expect(firestore.createMatch).toHaveBeenCalledTimes(2);
+    expect(firestore.createMatch).toHaveBeenCalledWith(match1)
+    expect(firestore.createMatch).toHaveBeenCalledWith(match2)
+    expect(client.messages.create).toHaveBeenCalledTimes(3);
+});
+
+it("processMatchCsv - multiple texts per user", async () => {
+    const match1 = {
+        user_a_id: "UqS4ivx8v9xcUcrAKt3B",
+        user_b_id: "wz931t4yTP2F5xvOW0QI",
+        user_ids: ["UqS4ivx8v9xcUcrAKt3B", "wz931t4yTP2F5xvOW0QI"],
+        created_at: new Date("2020-09-23T20:00:00-04:00"),
+    };
+    const match2 = {
+        user_a_id: "UqS4ivx8v9xcUcrAKt3B",
+        user_b_id: "zV4nHElSwPWNvFP0aVYs",
+        user_ids: ["UqS4ivx8v9xcUcrAKt3B", "zV4nHElSwPWNvFP0aVYs"],
+        created_at: new Date("2020-09-23T20:00:00-07:00"),
+    };
+    firestore.getUser.mockResolvedValue({ exists: true });
+    firestore.matchesThisWeek.mockResolvedValue([match1, match2])
+    firestore.getUsersForMatches.mockResolvedValue({
+        UqS4ivx8v9xcUcrAKt3B: { funFacts: "funFacts" },
+        wz931t4yTP2F5xvOW0QI: { funFacts: "funFacts" },
+        zV4nHElSwPWNvFP0aVYs: { funFacts: "funFacts" },
+    })
+    processMatchCsv("./testdata/matchesMultipleDates.csv", firestore)
+    await new Promise(r => setTimeout(r, 200));
+    expect(firestore.createMatch).toHaveBeenCalledTimes(2);
+    expect(firestore.createMatch).toHaveBeenCalledWith(match1)
+    expect(firestore.createMatch).toHaveBeenCalledWith(match2)
+    expect(client.messages.create).toHaveBeenCalledTimes(7);
 });

@@ -5,9 +5,10 @@ import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
 import { addUserToAirtable } from './airtable';
-import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchNameAndDate, TWILIO_NUMBER } from "./twilio";
+import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchNameAndDate, notifyUsersOfMatch, TWILIO_NUMBER } from "./twilio";
 import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
-import { Firestore, matchesThisHour } from "./firestore";
+import { Firestore, IMatch, IUser, matchesThisHour } from "./firestore";
+import { reminder } from "./smsCopy";
 
 admin.initializeApp();
 
@@ -172,7 +173,7 @@ export const sendReminderTexts = functions.pubsub.schedule('0 * * * *').onRun(as
     console.log("sending texts to the following users: " + userIds);
 
     const users = await admin.firestore().getAll(...userIds.map(id => admin.firestore().collection("users").doc(id)));
-    const usersById = Object.assign({}, ...users.map(user => ({ [user.id]: user })));
+    const usersById = Object.assign({}, ...users.map(user => ({ [user.id]: user.data() })));
 
     const allPromises: Array<Promise<any>> = []
     todaysMatches.docs.forEach(doc => {
@@ -185,15 +186,12 @@ export const sendReminderTexts = functions.pubsub.schedule('0 * * * *').onRun(as
     await Promise.all(allPromises);
 });
 
-// TODO(gracew): type inputs
-async function textUserHelper(userA: any, userB: any) {
-    const body = `Hi ${userA.get("firstName")}! This is Voicebar. Just a reminder that you’ll be speaking with ${userB.get("firstName")} in an hour. Hope you two have a good conversation!`;
-
+async function textUserHelper(userA: IUser, userB: IUser) {
     await client.messages
         .create({
-            body,
+            body: reminder(userA, userB),
             from: TWILIO_NUMBER,
-            to: userA.get("phone"),
+            to: userA.phone,
         })
 }
 
