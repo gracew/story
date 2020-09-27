@@ -7,8 +7,8 @@ import { client, TWILIO_NUMBER } from './twilio';
 export function processBulkSmsCsv(tempFilePath: string) {
     fs.createReadStream(tempFilePath)
         .pipe(csv(["phone", "body"]))
-        .on('data', data => {
-            client.messages
+        .on('data', async data => {
+            await client.messages
                 .create({
                     body: data.body,
                     from: TWILIO_NUMBER,
@@ -28,7 +28,7 @@ export function processAvailabilityCsv(tempFilePath: string, firestore: Firestor
             }
 
             const body = `Hi ${user.firstName}. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ${data.timezone} any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.`;
-            client.messages
+            await client.messages
                 .create({
                     body,
                     from: TWILIO_NUMBER,

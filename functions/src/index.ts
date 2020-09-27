@@ -126,7 +126,7 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    await processBulkSmsCsv(tempFilePath)
+    processBulkSmsCsv(tempFilePath)
 });
 
 /**
@@ -139,7 +139,7 @@ export const sendAvailabilityTexts = functions.storage.object().onFinalize(async
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    await processAvailabilityCsv(tempFilePath, new Firestore());
+    processAvailabilityCsv(tempFilePath, new Firestore());
 });
 
 /**
@@ -154,7 +154,7 @@ export const createMatches = functions.storage.object().onFinalize(async (object
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
 
-    await processMatchCsv(tempFilePath, new Firestore());
+    processMatchCsv(tempFilePath, new Firestore());
 });
 
 // runs every hour
@@ -363,7 +363,7 @@ export const addUserToCall = functions.https.onRequest(
         const callerPhone = request.body.Direction === "inbound" ? request.body.From : request.body.To;
         const twiml = await getConferenceTwimlForPhone(callerPhone);
         response.set('Content-Type', 'text/xml');
-        response.send(twiml!.toString());
+        response.send(twiml.toString());
     }
 );
 
