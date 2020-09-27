@@ -14,7 +14,7 @@ import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchName
 
 admin.initializeApp();
 
-
+/** Used by the frontend to verify that the phone number hasn't already been registered. */
 export const phoneRegistered = functions.https.onCall(async (request) => {
     const normalizedPhone = request.phone.split(" ").join("");
 
@@ -27,6 +27,9 @@ export const phoneRegistered = functions.https.onCall(async (request) => {
     return !existingUser.empty;
 });
 
+/**
+ * Used by the frontend to look up metadata for a user based on username (e.g. when navigating to voicebar.co/grace).
+ */
 export const getUserByUsername = functions.https.onCall(
     async (request) => {
         const user = await admin
@@ -45,7 +48,7 @@ export const getUserByUsername = functions.https.onCall(
     }
 );
 
-
+/** Called upon typeform submission to save user data in firebase and airtable. */
 export const registerUser = functions.https.onRequest(async (req, response) => {
 
     const answersIdMap: { [key: string]: string } = {
@@ -119,7 +122,8 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
 });
 
 /**
-CSV is of the format: phone,textBody
+ * Sends an SMS for each row in a CSV. The CSV should be in the format: phone,textBody. There should not be a header
+ * line.
  */
 export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     if (!(object.name && object.name.startsWith("bulksms"))) {
@@ -142,20 +146,21 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     await Promise.all(promises);
 });
 
+function processTimeZone(tz: string) {
+    if (tz === "PT") {
+        return "America/Los_Angeles"
+    } else if (tz === "CT") {
+        return "America/Chicago"
+    } else if (tz === "ET") {
+        return "America/New_York"
+    }
+    // TODO(gracew): change this
+    return "error";
+}
 
 /**
-Helper function for createMatches
- */
-function processTimeZone(tz: string) {
-    console.log(`"${tz}"`)
-    console.log(tz === "PT")
-    if (tz === "PT") { return "America/Los_Angeles" }
-    else if (tz === "CT") { return "America/Chicago" }
-    else if (tz === "ET") { return "America/New_York" }
-    else { return "error" }
-}
-/**
-CSV is of the format: userA ID,userB ID,call date(MM-DD-YYYY), call time (hh:mm a), timezone
+ * Creates a match for each row in a CSV. The CSV should be in the format: 
+ * userAId,userBId,callDate (MM-DD-YYYY),callTime (hh:mm a),timezone. There should not be a header line. 
  */
 export const createMatches = functions.storage.object().onFinalize(async (object) => {
     if (!(object.name && object.name.startsWith("matchescsv"))) {
@@ -169,39 +174,36 @@ export const createMatches = functions.storage.object().onFinalize(async (object
     fs.createReadStream(tempFilePath)
         .pipe(csv(["userAId", "userBId", "date", "time", "timezone"]))
         .on("data", async data => {
-            const user_a = await admin.firestore().collection("users").doc(data.userAId).get();
-            const user_b = await admin.firestore().collection("users").doc(data.userBId).get();
+            const userA = await admin.firestore().collection("users").doc(data.userAId).get();
+            const userB = await admin.firestore().collection("users").doc(data.userBId).get();
 
-            if (!user_a.exists) {
+            if (!userA.exists) {
                 console.error("ERROR | cannot find user with id " + data.userAId);
                 return;
             }
-            if (!user_b.exists) {
+            if (!userB.exists) {
                 console.error("ERROR | cannot find user with id " + data.userBId);
                 return;
             }
 
-            let timezone: string = processTimeZone(data.timezone.trim())
+            const timezone = processTimeZone(data.timezone.trim())
 
-            const created_at = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
+            const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
 
             const match: { [key: string]: any } = {
-                "user_a_id": data.userAId,
-                "user_b_id": data.userBId,
-                "user_ids": [data.userAId, data.userBId],
-                "created_at": created_at
+                user_a_id: data.userAId,
+                user_b_id: data.userBId,
+                user_ids: [data.userAId, data.userBId],
+                created_at: createdAt
             }
 
-            console.log("creating match for " + user_a.data()!.firstName + "-" + user_b.data()!.firstName);
+            console.log("creating match for " + userA.data()!.firstName + "-" + userB.data()!.firstName);
 
             const reff = admin.firestore().collection("matches").doc();
-            match.id = reff.id;
             promises.push(reff.set(match));
         });
-        await Promise.all(promises);
+    await Promise.all(promises);
 });
-
-
 
 // runs every hour
 export const sendReminderTexts = functions.pubsub.schedule('0 * * * *').onRun(async (context) => {
@@ -224,17 +226,16 @@ export const sendReminderTexts = functions.pubsub.schedule('0 * * * *').onRun(as
     todaysMatches.docs.forEach(doc => {
         const userA = usersById[doc.get("user_a_id")];
         const userB = usersById[doc.get("user_b_id")];
-        allPromises.push(textUserHelper(userA, userB, doc.get("callIn")))
-        allPromises.push(textUserHelper(userB, userA, doc.get("callIn")))
+        allPromises.push(textUserHelper(userA, userB))
+        allPromises.push(textUserHelper(userB, userA))
     })
 
     await Promise.all(allPromises);
 });
 
 // TODO(gracew): type inputs
-async function textUserHelper(userA: any, userB: any, callIn: boolean) {
-    const callInText = callIn ? " Make sure to call us at (203) 633-8466 to be connected." : "";
-    const body = `Hi ${userA.get("firstName")}! This is Voicebar. Just a reminder that you’ll be speaking with ${userB.get("firstName")} in an hour.${callInText} Hope you two have a good conversation!`;
+async function textUserHelper(userA: any, userB: any) {
+    const body = `Hi ${userA.get("firstName")}! This is Voicebar. Just a reminder that you’ll be speaking with ${userB.get("firstName")} in an hour. Hope you two have a good conversation!`;
 
     await client.messages
         .create({
@@ -293,72 +294,72 @@ export const saveReveal = functions.https.onRequest(
         const phone = request.body.phone;
         const reveal = request.body.reveal.trim().toLowerCase() === "y" || request.body.reveal.trim().toLowerCase() === "yes";
         const users = await admin.firestore().collection("users");
-        const revealing_user_query = await users.where("phone", "==", phone).get();
+        const revealingUserQuery = await users.where("phone", "==", phone).get();
         // check if user exists in table
-        if (revealing_user_query.empty) {
+        if (revealingUserQuery.empty) {
             console.error("No user with phone " + phone);
             response.end();
             return;
         }
-        const revealing_user = revealing_user_query.docs[0];
+        const revealingUser = revealingUserQuery.docs[0];
 
-        const match_doc = await admin.firestore().collection("matches").doc(request.body.matchId).get();
+        const match = await admin.firestore().collection("matches").doc(request.body.matchId).get();
 
-        let other_user;
-        let other_reveal;
-        if (match_doc.get("user_a_id") === revealing_user.id) {
-            other_user = await users.doc(match_doc.get("user_b_id")).get();
-            other_reveal = match_doc.get("user_b_revealed")
-            await match_doc.ref.update({ user_a_revealed: reveal });
-        } else if (match_doc.get("user_b_id") === revealing_user.id) {
-            other_user = await users.doc(match_doc.get("user_a_id")).get();
-            other_reveal = match_doc.get("user_a_revealed")
-            await match_doc.ref.update({ user_b_revealed: reveal });
+        let otherUser;
+        let otherReveal;
+        if (match.get("user_a_id") === revealingUser.id) {
+            otherUser = await users.doc(match.get("user_b_id")).get();
+            otherReveal = match.get("user_b_revealed")
+            await match.ref.update({ user_a_revealed: reveal });
+        } else if (match.get("user_b_id") === revealingUser.id) {
+            otherUser = await users.doc(match.get("user_a_id")).get();
+            otherReveal = match.get("user_a_revealed")
+            await match.ref.update({ user_b_revealed: reveal });
         } else {
             console.error("Requested match doesnt have the requested users");
             response.end();
             return;
         }
-        const latest_match_other = await admin.firestore().collection("matches")
-            .where("user_ids", "array-contains", other_user.id)
+        const latestMatchOther = await admin.firestore().collection("matches")
+            .where("user_ids", "array-contains", otherUser.id)
             .orderBy("created_at", "desc")
             .limit(1)
             .get();
-        const other_next_match = await nextMatchNameAndDate(
-            { [other_user.id]: latest_match_other.docs[0] }, match_doc, other_user.id);
+        const otherNextMatch = await nextMatchNameAndDate(
+            { [otherUser.id]: latestMatchOther.docs[0] }, match, otherUser.id);
 
-        const other_data = {
-            userId: other_user.id,
-            firstName: other_user.data()!.firstName,
-            matchName: revealing_user.data().firstName,
-            matchPhone: revealing_user.data().phone.substring(2),
+        const otherData = {
+            userId: otherUser.id,
+            firstName: otherUser.data()!.firstName,
+            matchName: revealingUser.data().firstName,
+            matchPhone: revealingUser.data().phone.substring(2),
         };
 
-        if (reveal && other_reveal) {
+        if (reveal && otherReveal) {
             await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
-                to: other_user.get("phone"),
+                to: otherUser.get("phone"),
                 from: TWILIO_NUMBER,
                 parameters: {
                     mode: "reveal",
-                    ...other_data,
-                    ...other_next_match,
+                    ...otherData,
+                    ...otherNextMatch,
                 }
             });
             response.send({ next: "reveal" })
-        } else if (reveal && other_reveal === false) {
+        } else if (reveal && otherReveal === false) {
             response.send({ next: "reveal_other_no" })
-        } else if (reveal && other_reveal === undefined) {
+        } else if (reveal && otherReveal === undefined) {
             response.send({ next: "reveal_other_pending" })
         } else if (!reveal) {
-            if (other_reveal) {
+            if (otherReveal) {
                 await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
-                    to: other_user.get("phone"),
+                    to: otherUser.get("phone"),
                     from: TWILIO_NUMBER,
                     parameters: {
                         mode: "reveal_other_no",
-                        ...other_data
+                        ...otherData
                     },
-                    ...other_next_match,
+                    ...otherNextMatch,
                 });
             }
             response.send({ next: "no_reveal" })
@@ -371,25 +372,23 @@ export const saveReveal = functions.https.onRequest(
 export const markActive = functions.https.onRequest(
     async (request, response) => {
         const phone = request.body.phone;
-        const user_query = await admin.firestore().collection("users").where("phone", "==", phone).get();
-        if (user_query.empty) {
+        const userQuery = await admin.firestore().collection("users").where("phone", "==", phone).get();
+        if (userQuery.empty) {
             console.error("No user with phone " + phone);
             response.end();
             return;
         }
-        await user_query.docs[0].ref.update({ active: request.body.active });
+        await userQuery.docs[0].ref.update({ active: request.body.active });
         response.end();
     }
 );
 
-async function callUserHelper(user_id: string) {
-    const ref = admin.firestore().collection("users").doc(user_id);
-    const user_doc = await ref.get();
-    const user_doc_data = user_doc.data()
-    if (!user_doc.exists || !user_doc_data) {
+async function callUserHelper(userId: string) {
+    const user = await admin.firestore().collection("users").doc(userId).get()
+    if (!user.exists) {
         return { "error": "User does not exist!" };
     }
-    const phone = user_doc_data.phone;
+    const phone = user.get("phone")
     const twiml = await getConferenceTwimlForPhone(phone, true);
     if (!twiml) {
         return { "error": "User has no current matches!" };
@@ -411,7 +410,7 @@ export const callUser = functions.https.onCall(
 export const screenCall = functions.https.onRequest(
     async (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
-        const gather = twiml.gather({ numDigits: 1, action: BASE_URL + "/addUserToCall" });
+        const gather = twiml.gather({ numDigits: 1, action: BASE_URL + "addUserToCall" });
         gather.say({ voice: "alice" }, 'Welcome to Voicebar. Press any key to continue.');
 
         // If the user doesn't enter input, loop
@@ -423,8 +422,8 @@ export const screenCall = functions.https.onRequest(
 
 export const addUserToCall = functions.https.onRequest(
     async (request, response) => {
-        const caller_phone = request.body.Direction === "inbound" ? request.body.From : request.body.To;
-        const twiml = await getConferenceTwimlForPhone(caller_phone, false);
+        const callerPhone = request.body.Direction === "inbound" ? request.body.From : request.body.To;
+        const twiml = await getConferenceTwimlForPhone(callerPhone, false);
         response.set('Content-Type', 'text/xml');
         response.send(twiml!.toString());
     }
@@ -433,16 +432,16 @@ export const addUserToCall = functions.https.onRequest(
 export const conferenceStatusWebhook = functions.https.onRequest(
     async (request, response) => {
         if (request.body.StatusCallbackEvent === "participant-join") {
-            const conference_sid = request.body.ConferenceSid;
-            const participants = await client.conferences(conference_sid).participants.list();
+            const conferenceSid = request.body.ConferenceSid;
+            const participants = await client.conferences(conferenceSid).participants.list();
             if (participants.length === 1) {
                 return;
             }
-            await admin.firestore().collection("matches").doc(request.body.FriendlyName).update({ "ongoing": true, "twilioSid": conference_sid })
-            await client.conferences(conference_sid).update({ announceUrl: BASE_URL + "announceUser" })
+            await admin.firestore().collection("matches").doc(request.body.FriendlyName).update({ "ongoing": true, "twilioSid": conferenceSid })
+            await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "announceUser" })
             await util.promisify(setTimeout)(2500);
             await Promise.all(participants.map(participant =>
-                client.conferences(conference_sid).participants(participant.callSid).update({ muted: false })))
+                client.conferences(conferenceSid).participants(participant.callSid).update({ muted: false })))
         } else if (request.body.StatusCallbackEvent === "conference-end") {
             await admin.firestore().collection("matches").doc(request.body.FriendlyName).update({ "ongoing": false })
         }
@@ -461,7 +460,7 @@ export const announceUser = functions.https.onRequest(
     }
 );
 
-export const announceEnd = functions.https.onRequest(
+export const announce5Min = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
         twiml.say({
@@ -484,13 +483,13 @@ export const announce1Min = functions.https.onRequest(
 );
 
 // runs every hour at 25 minutes past
-export const callEndWarning = functions.pubsub.schedule('25 * * * *').onRun(async (context) => {
+export const call5MinWarning = functions.pubsub.schedule('25 * * * *').onRun(async (context) => {
     const ongoingCalls = await admin
         .firestore()
         .collection("matches")
         .where("ongoing", "==", true)
         .get();
-    await Promise.all(ongoingCalls.docs.map(doc => client.conferences(doc.get("twilioSid")).update({ announceUrl: BASE_URL + "announceEnd" })));
+    await Promise.all(ongoingCalls.docs.map(doc => client.conferences(doc.get("twilioSid")).update({ announceUrl: BASE_URL + "announce5Min" })));
 });
 
 // runs every hour at 29 minutes past
