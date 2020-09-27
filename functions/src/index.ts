@@ -1,16 +1,13 @@
-// // Start writing Firebase Functions
-// // https://firebase.google.com/docs/functions/typescript
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import * as fs from 'fs';
 import * as moment from "moment-timezone";
 import * as os from 'os';
-import * as csv from "csv-parser";
 import * as path from 'path';
 import * as twilio from 'twilio';
-import * as util from "util";
 import { addUserToAirtable } from './airtable';
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchNameAndDate, TWILIO_NUMBER } from "./twilio";
+import { processBulkSmsCsv, processMatchCsv } from "./csv";
+import { Firestore, matchesThisHour } from "./firestore";
 
 admin.initializeApp();
 
@@ -94,9 +91,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
         }
     }
 
-
     user.phone = user.phone.split(" ").join("");
-
 
     // make sure the phone number hasn't already been registered
     const ue = await admin
@@ -131,32 +126,8 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    const promises: Promise<any>[] = []
-    fs.createReadStream(tempFilePath)
-        .pipe(csv(["phone", "body"]))
-        .on('data', data => {
-            promises.push(client.messages
-                .create({
-                    body: data.body,
-                    from: TWILIO_NUMBER,
-                    to: data.phone,
-                }));
-
-        });
-    await Promise.all(promises);
+    await processBulkSmsCsv(tempFilePath)
 });
-
-function processTimeZone(tz: string) {
-    if (tz === "PT") {
-        return "America/Los_Angeles"
-    } else if (tz === "CT") {
-        return "America/Chicago"
-    } else if (tz === "ET") {
-        return "America/New_York"
-    }
-    // TODO(gracew): change this
-    return "error";
-}
 
 /**
  * Creates a match for each row in a CSV. The CSV should be in the format: 
@@ -170,39 +141,7 @@ export const createMatches = functions.storage.object().onFinalize(async (object
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
 
-    const promises: Promise<any>[] = []
-    fs.createReadStream(tempFilePath)
-        .pipe(csv(["userAId", "userBId", "date", "time", "timezone"]))
-        .on("data", async data => {
-            const userA = await admin.firestore().collection("users").doc(data.userAId).get();
-            const userB = await admin.firestore().collection("users").doc(data.userBId).get();
-
-            if (!userA.exists) {
-                console.error("ERROR | cannot find user with id " + data.userAId);
-                return;
-            }
-            if (!userB.exists) {
-                console.error("ERROR | cannot find user with id " + data.userBId);
-                return;
-            }
-
-            const timezone = processTimeZone(data.timezone.trim())
-
-            const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
-
-            const match: { [key: string]: any } = {
-                user_a_id: data.userAId,
-                user_b_id: data.userBId,
-                user_ids: [data.userAId, data.userBId],
-                created_at: createdAt
-            }
-
-            console.log("creating match for " + userA.data()!.firstName + "-" + userB.data()!.firstName);
-
-            const reff = admin.firestore().collection("matches").doc();
-            promises.push(reff.set(match));
-        });
-    await Promise.all(promises);
+    await processMatchCsv(tempFilePath, new Firestore());
 });
 
 // runs every hour
@@ -247,19 +186,11 @@ async function textUserHelper(userA: any, userB: any) {
 
 // runs every hour
 export const issueCalls = functions.pubsub.schedule('0 * * * *').onRun(async (context) => {
-    const todaysMatches = await admin
-        .firestore()
-        .collection("matches")
-        .where("created_at", "==", moment().utc().startOf("hour"))
-        .get();
-    console.log("found the following matches: " + todaysMatches.docs.map(doc => doc.id));
+    const matches = await matchesThisHour();
+    console.log("found the following matches: " + matches.docs.map(doc => doc.id));
 
-    // don't issue calls where callIn === true
-    const todaysMatchesCallOut = todaysMatches.docs.filter(m => m.get("callIn") !== true)
-    console.log("calling out for the following matches: " + todaysMatchesCallOut.map(doc => doc.id));
-
-    const userAIds = todaysMatchesCallOut.map(doc => doc.get("user_a_id"));
-    const userBIds = todaysMatchesCallOut.map(doc => doc.get("user_b_id"));
+    const userAIds = matches.docs.map(doc => doc.get("user_a_id"));
+    const userBIds = matches.docs.map(doc => doc.get("user_b_id"));
     const userIds = userAIds.concat(userBIds);
     console.log("issuing calls to the following users: " + userIds);
 
@@ -280,12 +211,8 @@ export const callStudioManual = functions.https.onRequest(
 
 // runs every hour at 35 minutes past
 export const revealRequest = functions.pubsub.schedule('35 * * * *').onRun(async (context) => {
-    const todaysMatches = await admin
-        .firestore()
-        .collection("matches")
-        .where("created_at", "==", moment().utc().startOf("hour"))
-        .get();
-    const connectedMatches = todaysMatches.docs.filter(m => m.get("twilioSid") !== undefined);
+    const matches = await matchesThisHour();
+    const connectedMatches = matches.docs.filter(m => m.get("twilioSid") !== undefined);
     return callStudio("reveal_request", connectedMatches)
 });
 
@@ -386,25 +313,22 @@ export const markActive = functions.https.onRequest(
 async function callUserHelper(userId: string) {
     const user = await admin.firestore().collection("users").doc(userId).get()
     if (!user.exists) {
-        return { "error": "User does not exist!" };
-    }
-    const phone = user.get("phone")
-    const twiml = await getConferenceTwimlForPhone(phone, true);
-    if (!twiml) {
-        return { "error": "User has no current matches!" };
+        console.error("Could not make call for user that does not exist: " + userId)
     }
 
     await client.calls
         .create({
             url: BASE_URL + "screenCall",
-            to: phone,
+            to: user.get("phone"),
             from: TWILIO_NUMBER,
         })
-    return { "success": "Calling " + phone };
 }
 
-export const callUser = functions.https.onCall(
-    (request) => callUserHelper(request.user_id)
+export const callUser = functions.https.onRequest(
+    async (request, response) => {
+        await callUserHelper(request.body.userId)
+        response.end();
+    }
 );
 
 export const screenCall = functions.https.onRequest(
@@ -420,10 +344,11 @@ export const screenCall = functions.https.onRequest(
         response.send(twiml.toString());
     });
 
+/** Called directly for incoming calls. Also called for outbound calls after the user has passed the call screen. */
 export const addUserToCall = functions.https.onRequest(
     async (request, response) => {
         const callerPhone = request.body.Direction === "inbound" ? request.body.From : request.body.To;
-        const twiml = await getConferenceTwimlForPhone(callerPhone, false);
+        const twiml = await getConferenceTwimlForPhone(callerPhone);
         response.set('Content-Type', 'text/xml');
         response.send(twiml!.toString());
     }
@@ -437,35 +362,20 @@ export const conferenceStatusWebhook = functions.https.onRequest(
             if (participants.length === 1) {
                 return;
             }
-            await admin.firestore().collection("matches").doc(request.body.FriendlyName).update({ "ongoing": true, "twilioSid": conferenceSid })
-            await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "announceUser" })
-            await util.promisify(setTimeout)(2500);
-            await Promise.all(participants.map(participant =>
-                client.conferences(conferenceSid).participants(participant.callSid).update({ muted: false })))
+            await admin.firestore().collection("matches").doc(request.body.FriendlyName)
+                .update({ "ongoing": true, "twilioSid": conferenceSid })
         } else if (request.body.StatusCallbackEvent === "conference-end") {
-            await admin.firestore().collection("matches").doc(request.body.FriendlyName).update({ "ongoing": false })
+            await admin.firestore().collection("matches").doc(request.body.FriendlyName)
+                .update({ "ongoing": false })
         }
         response.end();
-    }
-);
-
-export const announceUser = functions.https.onRequest(
-    (request, response) => {
-        const twiml = new twilio.twiml.VoiceResponse();
-        twiml.say({
-            'voice': 'alice',
-        }, "Your call is starting now.");
-        response.set('Content-Type', 'text/xml');
-        response.send(twiml.toString());
     }
 );
 
 export const announce5Min = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
-        twiml.say({
-            'voice': 'alice',
-        }, "Your call will end in 5 minutes.");
+        twiml.say({ 'voice': 'alice' }, "Your call will end in 5 minutes.");
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
@@ -474,9 +384,7 @@ export const announce5Min = functions.https.onRequest(
 export const announce1Min = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
-        twiml.say({
-            'voice': 'alice',
-        }, "Your call will end in 1 minute.");
+        twiml.say({ 'voice': 'alice' }, "Your call will end in 1 minute.");
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
@@ -489,7 +397,9 @@ export const call5MinWarning = functions.pubsub.schedule('25 * * * *').onRun(asy
         .collection("matches")
         .where("ongoing", "==", true)
         .get();
-    await Promise.all(ongoingCalls.docs.map(doc => client.conferences(doc.get("twilioSid")).update({ announceUrl: BASE_URL + "announce5Min" })));
+    await Promise.all(ongoingCalls.docs.map(doc =>
+        client.conferences(doc.get("twilioSid"))
+            .update({ announceUrl: BASE_URL + "announce5Min" })));
 });
 
 // runs every hour at 29 minutes past
@@ -499,5 +409,7 @@ export const call1MinWarning = functions.pubsub.schedule('29 * * * *').onRun(asy
         .collection("matches")
         .where("ongoing", "==", true)
         .get();
-    await Promise.all(ongoingCalls.docs.map(doc => client.conferences(doc.get("twilioSid")).update({ announceUrl: BASE_URL + "announce1Min" })));
+    await Promise.all(ongoingCalls.docs.map(doc =>
+        client.conferences(doc.get("twilioSid"))
+            .update({ announceUrl: BASE_URL + "announce1Min" })));
 });
