@@ -3,7 +3,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as fs from 'fs';
-import * as moment from "moment";
+import * as moment from "moment-timezone";
 import * as os from 'os';
 import * as csv from "csv-parser";
 import * as path from 'path';
@@ -142,93 +142,66 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     await Promise.all(promises);
 });
 
-/**
-format
 
-user_a_id, user_b_id
+/**
+Helper function for createMatches
+ */
+function processTimeZone(tz: string) {
+    console.log(`"${tz}"`)
+    console.log(tz === "PT")
+    if (tz === "PT") { return "America/Los_Angeles" }
+    else if (tz === "CT") { return "America/Chicago" }
+    else if (tz === "ET") { return "America/New_York" }
+    else { return "error" }
+}
+/**
+CSV is of the format: userA ID,userB ID,call date(MM-DD-YYYY), call time (hh:mm a), timezone
  */
 export const createMatches = functions.storage.object().onFinalize(async (object) => {
-    if (object.name !== "matches.csv") {
+    if (!(object.name && object.name.startsWith("matchescsv"))) {
         return;
     }
-    const tempFilePath = path.join(os.tmpdir(), object.name);
-    await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    const contents = fs.readFileSync(tempFilePath).toString();
-    const rows = contents.split("\n").slice(1);
-    rows.forEach(async row => {
-        const cols = row.split(",");
-        if (cols.length === 2) {
-            const user_a_id: string = cols[0];
-            const user_b_id: string = cols[1];
 
-            const user_a = await admin.firestore().collection("users").doc(user_a_id).get();
-            const user_b = await admin.firestore().collection("users").doc(user_b_id).get();
+    const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
+    await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
+
+    const promises: Promise<any>[] = []
+    fs.createReadStream(tempFilePath)
+        .pipe(csv(["userAId", "userBId", "date", "time", "timezone"]))
+        .on("data", async data => {
+            const user_a = await admin.firestore().collection("users").doc(data.userAId).get();
+            const user_b = await admin.firestore().collection("users").doc(data.userBId).get();
 
             if (!user_a.exists) {
-                console.error("ERROR | cannot find user with id " + user_a_id);
+                console.error("ERROR | cannot find user with id " + data.userAId);
                 return;
             }
             if (!user_b.exists) {
-                console.error("ERROR | cannot find user with id " + user_b_id);
+                console.error("ERROR | cannot find user with id " + data.userBId);
                 return;
             }
 
-            console.log(" about to create match for " + user_a.data()!.firstName + "-" + user_b.data()!.firstName);
+            let timezone: string = processTimeZone(data.timezone.trim())
 
-            const match = admin.firestore().collection("matches").doc(user_a.data()!.firstName + "-" + user_b.data()!.firstName + "-" + Date.now());
-            await match.set({
-                user_a_id: user_a_id,
-                user_b_id: user_b_id,
-                user_a_revealed: false,
-                user_b_revealed: false,
-                created_at: Date.now()
-            })
+            const created_at = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
+
+            const match: { [key: string]: any } = {
+                "user_a_id": data.userAId,
+                "user_b_id": data.userBId,
+                "user_ids": [data.userAId, data.userBId],
+                "created_at": created_at
+            }
 
             console.log("creating match for " + user_a.data()!.firstName + "-" + user_b.data()!.firstName);
 
-            /*const formData = {
-                "mode": "voice_bio",
-                "name": user_a.data()!.firstName,
-                "phone_number": user_a.data()!.phone,
-                "match_name": user_b.data()!.firstName,
-                "match_gender_pronoun": user_b.data()!.gender === 'male' ? "he" : "she",
-                "match_gender_pronoun_possessive": user_b.data()!.gender === 'male' ? "his" : "her",
-                "match_voice_bio_url": user_b.data()!.bio,
-                "match_id": match.id
-            }
-
-            requestLib.post({ url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData }, function (error: any, r: any, body: any) {
-                if (r.statusCode === 204) {
-                    console.log("successfully revealed sent voice bio 1");
-                } else {
-                    console.error('error:', error); // Print the error if one occurred
-                    console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
-                }
-            });
-
-            const formData2 = {
-                "mode": "voice_bio",
-                "name": user_b.data()!.firstName,
-                "phone_number": user_b.data()!.phone,
-                "match_name": user_a.data()!.firstName,
-                "match_gender_pronoun": user_a.data()!.gender === 'male' ? "he" : "she",
-                "match_gender_pronoun_possessive": user_a.data()!.gender === 'male' ? "his" : "her",
-                "match_voice_bio_url": user_a.data()!.bio,
-                "match_id": match.id
-            }
-
-            requestLib.post({ url: 'https://flows.messagebird.com/flows/f97ab91a-ece1-470b-908b-81525f07251a/invoke', json: formData2 }, function (error: any, r: any, body: any) {
-                if (r.statusCode === 204) {
-                    console.log("successfully sent voice bio 2");
-                } else {
-                    console.error('error:', error); // Print the error if one occurred
-                    console.log('statusCode:', r && r.statusCode); // Print the response status code if a response was received
-                }
-            });*/
-
-        }
-    });
+            const reff = admin.firestore().collection("matches").doc();
+            match.id = reff.id;
+            promises.push(reff.set(match));
+        });
+        await Promise.all(promises);
 });
+
+
 
 // runs every hour
 export const sendReminderTexts = functions.pubsub.schedule('0 * * * *').onRun(async (context) => {
