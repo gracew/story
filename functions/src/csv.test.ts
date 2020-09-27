@@ -32,7 +32,6 @@ it("processAvailabilityCsv", async () => {
             .mockResolvedValueOnce(user2),
         createMatch: jest.fn(),
     }
-    // @ts-ignore
     processAvailabilityCsv("./testdata/availability.csv", firestore)
     // wait 200ms, TODO(gracew): fix this
     await new Promise(r => setTimeout(r, 200));
