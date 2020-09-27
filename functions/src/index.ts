@@ -159,8 +159,8 @@ function processTimeZone(tz: string) {
 }
 
 /**
- * Creates a match for each row in a CSV. The CSV should be in the format:
- * userAId,userBId,callDate (MM-DD-YYYY),callTime (hh:mm a),timezone. There should not be a header line.
+ * Creates a match for each row in a CSV. The CSV should be in the format: 
+ * userAId,userBId,callDate (MM-DD-YYYY),callTime (hh:mm a),timezone. There should not be a header line. 
  */
 export const createMatches = functions.storage.object().onFinalize(async (object) => {
     if (!(object.name && object.name.startsWith("matchescsv"))) {
@@ -303,18 +303,18 @@ export const saveReveal = functions.https.onRequest(
         }
         const revealingUser = revealingUserQuery.docs[0];
 
-        const matchDoc = await admin.firestore().collection("matches").doc(request.body.matchId).get();
+        const match = await admin.firestore().collection("matches").doc(request.body.matchId).get();
 
         let otherUser;
         let otherReveal;
-        if (matchDoc.get("user_a_id") === revealingUser.id) {
-            otherUser = await users.doc(matchDoc.get("user_b_id")).get();
-            otherReveal = matchDoc.get("user_b_revealed")
-            await matchDoc.ref.update({ user_a_revealed: reveal });
-        } else if (matchDoc.get("user_b_id") === revealingUser.id) {
-            otherUser = await users.doc(matchDoc.get("user_a_id")).get();
-            otherReveal = matchDoc.get("user_a_revealed")
-            await matchDoc.ref.update({ user_b_revealed: reveal });
+        if (match.get("user_a_id") === revealingUser.id) {
+            otherUser = await users.doc(match.get("user_b_id")).get();
+            otherReveal = match.get("user_b_revealed")
+            await match.ref.update({ user_a_revealed: reveal });
+        } else if (match.get("user_b_id") === revealingUser.id) {
+            otherUser = await users.doc(match.get("user_a_id")).get();
+            otherReveal = match.get("user_a_revealed")
+            await match.ref.update({ user_b_revealed: reveal });
         } else {
             console.error("Requested match doesnt have the requested users");
             response.end();
@@ -326,7 +326,7 @@ export const saveReveal = functions.https.onRequest(
             .limit(1)
             .get();
         const otherNextMatch = await nextMatchNameAndDate(
-            { [otherUser.id]: latestMatchOther.docs[0] }, matchDoc, otherUser.id);
+            { [otherUser.id]: latestMatchOther.docs[0] }, match, otherUser.id);
 
         const otherData = {
             userId: otherUser.id,
