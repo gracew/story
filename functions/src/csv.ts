@@ -4,40 +4,50 @@ import * as moment from "moment-timezone";
 import { Firestore } from "./firestore";
 import { client, TWILIO_NUMBER } from './twilio';
 
-export function processBulkSmsCsv(tempFilePath: string) {
+export async function processBulkSmsCsv(tempFilePath: string) {
+    const promises: Promise<any>[] = [];
     fs.createReadStream(tempFilePath)
         .pipe(csv(["phone", "body"]))
         .on('data', async data => {
-            await client.messages
+            promises.push(client.messages
                 .create({
                     body: data.body,
                     from: TWILIO_NUMBER,
                     to: data.phone,
-                });
+                }));
         });
+    await Promise.all(promises);
 }
 
-export function processAvailabilityCsv(tempFilePath: string, firestore: Firestore) {
+export async function processAvailabilityCsv(tempFilePath: string, firestore: Firestore) {
+    const promises: Promise<any>[] = [];
+    const foo: any[] = []
     fs.createReadStream(tempFilePath)
         .pipe(csv(["userId", "timezone"]))
         .on('data', async data => {
-            const user = await firestore.getUser(data.userId);
-            if (!user) {
-                console.error("cannot find user with id " + data.userId);
-                return;
+            foo.push(data);
+        })
+        .on("end", () => {
+            Promise.all(foo.map(async data => {
+                const user = await firestore.getUser(data.userId)
+                if (!user) {
+                    console.error("cannot find user with id " + data.userId);
+                    return;
+                }
+                const body = `Hi ${user.firstName}. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ${data.timezone} any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.`;
+                return client.messages
+                    .create({
+                        body,
+                        from: TWILIO_NUMBER,
+                        to: user.phone,
+                    });
             }
-
-            const body = `Hi ${user.firstName}. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ${data.timezone} any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.`;
-            await client.messages
-                .create({
-                    body,
-                    from: TWILIO_NUMBER,
-                    to: user.phone,
-                });
+        ))
         });
 }
 
-export function processMatchCsv(tempFilePath: string, firestore: Firestore) {
+export async function processMatchCsv(tempFilePath: string, firestore: Firestore) {
+    const promises: Promise<any>[] = [];
     fs.createReadStream(tempFilePath)
         .pipe(csv(["userAId", "userBId", "date", "time", "timezone"]))
         .on("data", async data => {
@@ -59,13 +69,14 @@ export function processMatchCsv(tempFilePath: string, firestore: Firestore) {
                 return;
             }
             const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
-            await firestore.createMatch({
+            promises.push(firestore.createMatch({
                 user_a_id: data.userAId,
                 user_b_id: data.userBId,
                 user_ids: [data.userAId, data.userBId],
                 created_at: createdAt.toDate()
-            });
+            }));
         });
+    await Promise.all(promises);
 }
 
 function processTimeZone(tz: string) {

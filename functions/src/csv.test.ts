@@ -28,13 +28,14 @@ it("processAvailabilityCsv", async () => {
     const user2 = { exists: true, firstName: "Grace", phone: "+10123456789" };
     const firestore = {
         getUser: jest.fn()
+            .mockResolvedValue(user1)
             .mockResolvedValueOnce(user1)
             .mockResolvedValueOnce(user2),
         createMatch: jest.fn(),
     }
     processAvailabilityCsv("./testdata/availability.csv", firestore)
     // wait 200ms, TODO(gracew): fix this
-    await new Promise(r => setTimeout(r, 200));
+    // await new Promise(r => setTimeout(r, 200));
     expect(client.messages.create).toHaveBeenCalledTimes(2);
     expect(client.messages.create).toHaveBeenCalledWith({
         body: "Hi Anna. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ET any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.",
