@@ -1,4 +1,3 @@
-import * as csv from "csv-parser";
 import * as fs from 'fs';
 import * as moment from "moment-timezone";
 import * as neatCsv from 'neat-csv';
