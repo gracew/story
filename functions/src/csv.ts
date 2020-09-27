@@ -1,82 +1,71 @@
 import * as csv from "csv-parser";
 import * as fs from 'fs';
 import * as moment from "moment-timezone";
+import * as neatCsv from 'neat-csv';
 import { Firestore } from "./firestore";
 import { client, TWILIO_NUMBER } from './twilio';
 
 export async function processBulkSmsCsv(tempFilePath: string) {
-    const promises: Promise<any>[] = [];
-    fs.createReadStream(tempFilePath)
-        .pipe(csv(["phone", "body"]))
-        .on('data', async data => {
-            promises.push(client.messages
-                .create({
-                    body: data.body,
-                    from: TWILIO_NUMBER,
-                    to: data.phone,
-                }));
-        });
-    await Promise.all(promises);
+    const contents = fs.readFileSync(tempFilePath).toString();
+    const rows = await neatCsv(contents, { headers: ["phone", "body"] });
+    return Promise.all(rows.map(async data => {
+        return client.messages
+            .create({
+                body: data.body,
+                from: TWILIO_NUMBER,
+                to: data.phone,
+            });
+    }))
 }
 
 export async function processAvailabilityCsv(tempFilePath: string, firestore: Firestore) {
-    const promises: Promise<any>[] = [];
-    const foo: any[] = []
-    fs.createReadStream(tempFilePath)
-        .pipe(csv(["userId", "timezone"]))
-        .on('data', async data => {
-            foo.push(data);
-        })
-        .on("end", () => {
-            Promise.all(foo.map(async data => {
-                const user = await firestore.getUser(data.userId)
-                if (!user) {
-                    console.error("cannot find user with id " + data.userId);
-                    return;
-                }
-                const body = `Hi ${user.firstName}. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ${data.timezone} any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.`;
-                return client.messages
-                    .create({
-                        body,
-                        from: TWILIO_NUMBER,
-                        to: user.phone,
-                    });
-            }
-        ))
-        });
+    const contents = fs.readFileSync(tempFilePath).toString();
+    const rows = await neatCsv(contents, { headers: ["userId", "timezone"] });
+    return Promise.all(rows.map(async data => {
+        const user = await firestore.getUser(data.userId)
+        if (!user) {
+            console.error("cannot find user with id " + data.userId);
+            return;
+        }
+        const body = `Hi ${user.firstName}. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ${data.timezone} any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.`;
+        return client.messages
+            .create({
+                body,
+                from: TWILIO_NUMBER,
+                to: user.phone,
+            });
+    }));
 }
 
 export async function processMatchCsv(tempFilePath: string, firestore: Firestore) {
-    const promises: Promise<any>[] = [];
-    fs.createReadStream(tempFilePath)
-        .pipe(csv(["userAId", "userBId", "date", "time", "timezone"]))
-        .on("data", async data => {
-            const userA = await firestore.getUser(data.userAId);
-            const userB = await firestore.getUser(data.userBId);
+    const contents = fs.readFileSync(tempFilePath).toString();
+    const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "date", "time", "timezone"] })
+    return Promise.all(rows.map(async data => {
+        const userA = await firestore.getUser(data.userAId);
+        const userB = await firestore.getUser(data.userBId);
 
-            if (!userA) {
-                console.error("cannot find user with id " + data.userAId);
-                return;
-            }
-            if (!userB) {
-                console.error("cannot find user with id " + data.userBId);
-                return;
-            }
+        if (!userA) {
+            console.error("cannot find user with id " + data.userAId);
+            return;
+        }
+        if (!userB) {
+            console.error("cannot find user with id " + data.userBId);
+            return;
+        }
 
-            const timezone = processTimeZone(data.timezone.trim())
-            if (!timezone) {
-                console.error("invalid timezone, skpping row: " + data)
-                return;
-            }
-            const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
-            promises.push(firestore.createMatch({
-                user_a_id: data.userAId,
-                user_b_id: data.userBId,
-                user_ids: [data.userAId, data.userBId],
-                created_at: createdAt.toDate()
-            }));
+        const timezone = processTimeZone(data.timezone.trim())
+        if (!timezone) {
+            console.error("invalid timezone, skpping row: " + data)
+            return;
+        }
+        const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
+        return firestore.createMatch({
+            user_a_id: data.userAId,
+            user_b_id: data.userBId,
+            user_ids: [data.userAId, data.userBId],
+            created_at: createdAt.toDate()
         });
-    await Promise.all(promises);
+    }));
 }
 
 function processTimeZone(tz: string) {

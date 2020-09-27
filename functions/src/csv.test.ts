@@ -11,9 +11,7 @@ jest.mock("twilio", () => {
 beforeEach(() => jest.resetAllMocks());
 
 it("processBulkSmsCsv", async () => {
-    processBulkSmsCsv("./testdata/bulkSms.csv")
-    // wait 200ms, TODO(gracew): fix this
-    await new Promise(r => setTimeout(r, 200));
+    await processBulkSmsCsv("./testdata/bulkSms.csv")
     expect(client.messages.create).toHaveBeenCalledTimes(2);
     const body1 = `Your Voicebar match will expire soon! If you'd like to connect this week, please reply in the next hour and let us know which days work for you for an 8pm call.
 
@@ -33,9 +31,7 @@ it("processAvailabilityCsv", async () => {
             .mockResolvedValueOnce(user2),
         createMatch: jest.fn(),
     }
-    processAvailabilityCsv("./testdata/availability.csv", firestore)
-    // wait 200ms, TODO(gracew): fix this
-    // await new Promise(r => setTimeout(r, 200));
+    await processAvailabilityCsv("./testdata/availability.csv", firestore)
     expect(client.messages.create).toHaveBeenCalledTimes(2);
     expect(client.messages.create).toHaveBeenCalledWith({
         body: "Hi Anna. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ET any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.",
@@ -55,7 +51,7 @@ it("processMatchCsv", async () => {
         getUser: jest.fn().mockResolvedValue({ exists: true }),
         createMatch: jest.fn(),
     }
-    processMatchCsv("./testdata/matches.csv", firestore)
+    await processMatchCsv("./testdata/matches.csv", firestore)
     // wait 200ms, TODO(gracew): fix this
     await new Promise(r => setTimeout(r, 200));
     expect(firestore.createMatch).toHaveBeenCalledTimes(2);
