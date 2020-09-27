@@ -1,4 +1,4 @@
-import { processBulkSmsCsv, processMatchCsv } from "./csv";
+import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
 import { client, TWILIO_NUMBER } from "./twilio";
 
 // TODO(gracew): pass around the twilio client explicitly to avoid this
@@ -8,7 +8,9 @@ jest.mock("twilio", () => {
     })
 });
 
-it("bulkSms", async () => {
+beforeEach(() => jest.resetAllMocks());
+
+it("processBulkSmsCsv", async () => {
     processBulkSmsCsv("./testdata/bulkSms.csv")
     // wait 200ms, TODO(gracew): fix this
     await new Promise(r => setTimeout(r, 200));
@@ -21,7 +23,34 @@ another line
     expect(client.messages.create).toHaveBeenCalledWith({ body: "another message", from: TWILIO_NUMBER, to: "+10123456789" })
 });
 
-it("createMatches", async () => {
+it("processAvailabilityCsv", async () => {
+    const user1 = { exists: true, firstName: "Anna", phone: "+1234567890" };
+    const user2 = { exists: true, firstName: "Grace", phone: "+10123456789" };
+    const firestore = {
+        getUser: jest.fn()
+            .mockResolvedValueOnce(user1)
+            .mockResolvedValueOnce(user2),
+        createMatch: jest.fn(),
+    }
+    // @ts-ignore
+    processAvailabilityCsv("./testdata/availability.csv", firestore)
+    // wait 200ms, TODO(gracew): fix this
+    await new Promise(r => setTimeout(r, 200));
+    expect(client.messages.create).toHaveBeenCalledTimes(2);
+    expect(client.messages.create).toHaveBeenCalledWith({
+        body: "Hi Anna. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ET any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.",
+        from: TWILIO_NUMBER,
+        to: user1.phone,
+    })
+    expect(client.messages.create).toHaveBeenCalledWith({
+        body: "Hi Grace. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm PT any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.",
+        from: TWILIO_NUMBER,
+        to: user2.phone,
+    })
+});
+
+
+it("processMatchCsv", async () => {
     const firestore = {
         getUser: jest.fn().mockResolvedValue({ exists: true }),
         createMatch: jest.fn(),

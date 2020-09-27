@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as twilio from 'twilio';
 import { addUserToAirtable } from './airtable';
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchNameAndDate, TWILIO_NUMBER } from "./twilio";
-import { processBulkSmsCsv, processMatchCsv } from "./csv";
+import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
 import { Firestore, matchesThisHour } from "./firestore";
 
 admin.initializeApp();
@@ -127,6 +127,19 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
     await processBulkSmsCsv(tempFilePath)
+});
+
+/**
+ * Sends an availability text for each row in a CSV. The CSV should be in the format: userId,timezone. The timezone
+ * value will be directly inserted into the text and should be of the form "PT". There should not be a header line.
+ */
+export const sendAvailabilityTexts = functions.storage.object().onFinalize(async (object) => {
+    if (!(object.name && object.name.startsWith("availability"))) {
+        return;
+    }
+    const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
+    await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
+    await processAvailabilityCsv(tempFilePath, new Firestore());
 });
 
 /**
