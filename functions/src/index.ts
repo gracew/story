@@ -3,13 +3,14 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as fs from 'fs';
-import * as moment from "moment";
+import * as moment from "moment-timezone";
 import * as os from 'os';
+import * as csv from "csv-parser";
 import * as path from 'path';
 import * as twilio from 'twilio';
 import * as util from "util";
 import { addUserToAirtable } from './airtable';
-import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, TWILIO_NUMBER } from "./twilio";
+import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchNameAndDate, TWILIO_NUMBER } from "./twilio";
 
 admin.initializeApp();
 
@@ -126,32 +127,32 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    const contents = fs.readFileSync(tempFilePath).toString();
-    const rows = contents.split("\n");
-    await Promise.all(rows.map(row => {
-        const cols = row.split(",");
-        const phone = cols[0];
-        const body = cols[1];
-        return client.messages
-            .create({
-                body,
-                from: TWILIO_NUMBER,
-                to: phone,
-            });
-    }));
+    const promises: Promise<any>[] = []
+    fs.createReadStream(tempFilePath)
+        .pipe(csv(["phone", "body"]))
+        .on('data', data => {
+            promises.push(client.messages
+                .create({
+                    body: data.body,
+                    from: TWILIO_NUMBER,
+                    to: data.phone,
+                }));
+
+        });
+    await Promise.all(promises);
 });
 
 
 /**
 Helper function for createMatches
  */
-function processTimeZone(tz:string) {
-    console.log(`"${tz}"`)    
+function processTimeZone(tz: string) {
+    console.log(`"${tz}"`)
     console.log(tz === "PT")
-    if (tz === "PT") {return "America/Los_Angeles"}    
-    else if(tz === "CT") {return "America/Chicago"}
-    else if(tz === "ET") {return "America/New_York"}
-    else {return "error"}
+    if (tz === "PT") { return "America/Los_Angeles" }
+    else if (tz === "CT") { return "America/Chicago" }
+    else if (tz === "ET") { return "America/New_York" }
+    else { return "error" }
 }
 /**
 CSV is of the format: userA ID,userB ID,call date(MM-DD-YYYY), call time (hh:mm a), timezone
@@ -163,52 +164,41 @@ export const createMatches = functions.storage.object().onFinalize(async (object
 
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    const contents = fs.readFileSync(tempFilePath).toString();
-    const rows = contents.split("\n");
 
-    rows.forEach(async row => {
-        const cols = row.split(",");
-        
-        const user_a_id: string = cols[0];
-        const user_b_id: string = cols[1];
-        
-        const user_a = await admin.firestore().collection("users").doc(user_a_id).get();
-        const user_b = await admin.firestore().collection("users").doc(user_b_id).get();
+    const promises: Promise<any>[] = []
+    fs.createReadStream(tempFilePath)
+        .pipe(csv(["userAId", "userBId", "date", "time", "timezone"]))
+        .on("data", async data => {
+            const user_a = await admin.firestore().collection("users").doc(data.userAId).get();
+            const user_b = await admin.firestore().collection("users").doc(data.userBId).get();
 
-        if (!user_a.exists) {
-            console.error("ERROR | cannot find user with id " + user_a_id);
-            return;
-        }
-        if (!user_b.exists) {
-            console.error("ERROR | cannot find user with id " + user_b_id);
-            return;
-        }
+            if (!user_a.exists) {
+                console.error("ERROR | cannot find user with id " + data.userAId);
+                return;
+            }
+            if (!user_b.exists) {
+                console.error("ERROR | cannot find user with id " + data.userBId);
+                return;
+            }
 
-        var m = require('moment-timezone');
+            let timezone: string = processTimeZone(data.timezone.trim())
 
-        const callDate: string = cols[2]
-        const callTime: string = cols[3]
-        let timezone: string = processTimeZone(cols[4].trim())
-        
-        const created_at = m.tz(callDate +" "+callTime, "MM-DD-YYYY hh:mm:ss a", timezone)
+            const created_at = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
 
-        console.log(created_at)
-
-        const match: { [key: string]: any } = {
-                "user_a_id": user_a_id,
-                "user_b_id": user_b_id,
-                "user_ids": [user_a_id, user_b_id],
+            const match: { [key: string]: any } = {
+                "user_a_id": data.userAId,
+                "user_b_id": data.userBId,
+                "user_ids": [data.userAId, data.userBId],
                 "created_at": created_at
             }
-        
-        console.log(match)
-            
-        console.log("creating match for " + user_a.data()!.firstName + "-" + user_b.data()!.firstName);
 
-        const reff = admin.firestore().collection("matches").doc();
+            console.log("creating match for " + user_a.data()!.firstName + "-" + user_b.data()!.firstName);
+
+            const reff = admin.firestore().collection("matches").doc();
             match.id = reff.id;
-            await reff.set(match)
-    });
+            promises.push(reff.set(match));
+        });
+        await Promise.all(promises);
 });
 
 
@@ -312,13 +302,7 @@ export const saveReveal = functions.https.onRequest(
         }
         const revealing_user = revealing_user_query.docs[0];
 
-        const match_query = await admin.firestore().collection("matches").where("user_ids", "array-contains", revealing_user.id).orderBy("created_at", "desc").limit(1).get();
-        if (match_query.empty) {
-            console.error("No match with phone " + phone);
-            response.end();
-            return;
-        }
-        const match_doc = match_query.docs[0]
+        const match_doc = await admin.firestore().collection("matches").doc(request.body.matchId).get();
 
         let other_user;
         let other_reveal;
@@ -335,6 +319,13 @@ export const saveReveal = functions.https.onRequest(
             response.end();
             return;
         }
+        const latest_match_other = await admin.firestore().collection("matches")
+            .where("user_ids", "array-contains", other_user.id)
+            .orderBy("created_at", "desc")
+            .limit(1)
+            .get();
+        const other_next_match = await nextMatchNameAndDate(
+            { [other_user.id]: latest_match_other.docs[0] }, match_doc, other_user.id);
 
         const other_data = {
             userId: other_user.id,
@@ -349,7 +340,8 @@ export const saveReveal = functions.https.onRequest(
                 from: TWILIO_NUMBER,
                 parameters: {
                     mode: "reveal",
-                    ...other_data
+                    ...other_data,
+                    ...other_next_match,
                 }
             });
             response.send({ next: "reveal" })
@@ -365,7 +357,8 @@ export const saveReveal = functions.https.onRequest(
                     parameters: {
                         mode: "reveal_other_no",
                         ...other_data
-                    }
+                    },
+                    ...other_next_match,
                 });
             }
             response.send({ next: "no_reveal" })

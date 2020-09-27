@@ -18,6 +18,11 @@
   from = "/prefs"
   to = "https://voicebar.typeform.com/to/dDndU0sf"
   status = 301
+  
+[[redirects]]
+  from = "/prefs2"
+  to = "https://voicebar.typeform.com/to/Wp4gvDt5"
+  status = 301
 
 [[redirects]]
   from = "/*"
