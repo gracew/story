@@ -17,6 +17,26 @@ export function processBulkSmsCsv(tempFilePath: string) {
         });
 }
 
+export function processAvailabilityCsv(tempFilePath: string, firestore: Firestore) {
+    fs.createReadStream(tempFilePath)
+        .pipe(csv(["userId", "timezone"]))
+        .on('data', async data => {
+            const user = await firestore.getUser(data.userId);
+            if (!user) {
+                console.error("cannot find user with id " + data.userId);
+                return;
+            }
+
+            const body = `Hi ${user.firstName}. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ${data.timezone} any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.`;
+            client.messages
+                .create({
+                    body,
+                    from: TWILIO_NUMBER,
+                    to: user.phone,
+                });
+        });
+}
+
 export function processMatchCsv(tempFilePath: string, firestore: Firestore) {
     fs.createReadStream(tempFilePath)
         .pipe(csv(["userAId", "userBId", "date", "time", "timezone"]))
@@ -24,11 +44,11 @@ export function processMatchCsv(tempFilePath: string, firestore: Firestore) {
             const userA = await firestore.getUser(data.userAId);
             const userB = await firestore.getUser(data.userBId);
 
-            if (!userA.exists) {
+            if (!userA) {
                 console.error("cannot find user with id " + data.userAId);
                 return;
             }
-            if (!userB.exists) {
+            if (!userB) {
                 console.error("cannot find user with id " + data.userBId);
                 return;
             }

@@ -1,6 +1,10 @@
 import * as admin from "firebase-admin";
 import * as moment from "moment";
 
+export interface IUser {
+    firstName: string;
+    phone: string;
+}
 export interface IMatch {
     user_a_id: string;
     user_b_id: string;
@@ -9,8 +13,9 @@ export interface IMatch {
 }
 
 export class Firestore {
-    public getUser(id: string) {
-        return admin.firestore().collection("users").doc(id).get();
+    public async getUser(id: string): Promise<IUser | undefined> {
+        const user = await admin.firestore().collection("users").doc(id).get();
+        return user.data() as IUser | undefined;
     }
 
     public createMatch(match: IMatch) {
