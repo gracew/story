@@ -11,39 +11,31 @@ const authToken = functions.config().twilio.auth_token;
 export const client = twilio(accountSid, authToken);
 
 
-export const getConferenceTwimlForPhone = async (phone_number: string, null_on_error = true) => {
+export const getConferenceTwimlForPhone = async (phone: string) => {
     const users = admin.firestore().collection("users");
-    const result = await users.where("phone", "==", phone_number).get();
-    let error_response = null;
-    if (!null_on_error) {
-        error_response = new twilio.twiml.VoiceResponse();
-        error_response.say({
-            'voice': 'alice',
-        }, "We don't have a match for you!  Please try again later.");
-    }
+    const result = await users.where("phone", "==", phone).get();
+    const errorResponse = new twilio.twiml.VoiceResponse();
+    errorResponse.say({ 'voice': 'alice' }, "We don't have a match for you!  Please try again later.");
 
     if (result.empty) {
-        console.error(`No user with phone number '${phone_number}'`);
-        return error_response;
+        console.error(`No user with phone number '${phone}'`);
+        return errorResponse;
     }
-    console.log("Finding conference for user with phone number " + phone_number);
-    const user_id = result.docs[0].id;
+    console.log("Finding conference for user with phone number " + phone);
+    const userId = result.docs[0].id;
     const match = await admin.firestore().collection("matches")
-        .where("user_ids", "array-contains", user_id)
+        .where("user_ids", "array-contains", userId)
         .where("created_at", "==", moment().utc().startOf("hour")).get();
     if (match.empty) {
-        return error_response;
+        return errorResponse;
     }
 
-    const jitterBufferSize = functions.config().twilio.jitter_buffer_size;
-    const timeLimit = parseInt(functions.config().twilio.time_limit_sec);
-
     const twiml = new twilio.twiml.VoiceResponse();
-    const dial = twiml.dial({ timeLimit });
+    const dial = twiml.dial({ timeLimit: parseInt(functions.config().twilio.time_limit_sec) });
     dial.conference({
         // @ts-ignore
-        jitterBufferSize: jitterBufferSize,
-        participantLabel: user_id,
+        jitterBufferSize: functions.config().twilio.jitter_buffer_size,
+        participantLabel: userId,
         waitUrl: "http://twimlets.com/holdmusic?Bucket=com.twilio.music.guitars",
         statusCallbackEvent: ["join", "end"],
         statusCallback: BASE_URL + "conferenceStatusWebhook",

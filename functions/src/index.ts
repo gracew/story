@@ -1,16 +1,13 @@
-// // Start writing Firebase Functions
-// // https://firebase.google.com/docs/functions/typescript
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import * as fs from 'fs';
 import * as moment from "moment-timezone";
 import * as os from 'os';
-import * as csv from "csv-parser";
 import * as path from 'path';
 import * as twilio from 'twilio';
 import { addUserToAirtable } from './airtable';
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchNameAndDate, TWILIO_NUMBER } from "./twilio";
-import { matchesThisHour, processTimeZone } from "./util";
+import { matchesThisHour } from "./util";
+import { processBulkSmsCsv, processMatchCsv } from "./csv";
 
 admin.initializeApp();
 
@@ -129,19 +126,7 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    const promises: Promise<any>[] = []
-    fs.createReadStream(tempFilePath)
-        .pipe(csv(["phone", "body"]))
-        .on('data', data => {
-            promises.push(client.messages
-                .create({
-                    body: data.body,
-                    from: TWILIO_NUMBER,
-                    to: data.phone,
-                }));
-
-        });
-    await Promise.all(promises);
+    await processBulkSmsCsv(tempFilePath, client)
 });
 
 /**
@@ -156,33 +141,7 @@ export const createMatches = functions.storage.object().onFinalize(async (object
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
 
-    const promises: Promise<any>[] = []
-    fs.createReadStream(tempFilePath)
-        .pipe(csv(["userAId", "userBId", "date", "time", "timezone"]))
-        .on("data", async data => {
-            const userA = await admin.firestore().collection("users").doc(data.userAId).get();
-            const userB = await admin.firestore().collection("users").doc(data.userBId).get();
-
-            if (!userA.exists) {
-                console.error("cannot find user with id " + data.userAId);
-                return;
-            }
-            if (!userB.exists) {
-                console.error("cannot find user with id " + data.userBId);
-                return;
-            }
-
-            const timezone = processTimeZone(data.timezone.trim())
-            const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
-            const match = {
-                user_a_id: data.userAId,
-                user_b_id: data.userBId,
-                user_ids: [data.userAId, data.userBId],
-                created_at: createdAt
-            }
-            promises.push(admin.firestore().collection("matches").doc().set(match));
-        });
-    await Promise.all(promises);
+    await processMatchCsv(tempFilePath);
 });
 
 // runs every hour
@@ -389,7 +348,7 @@ export const screenCall = functions.https.onRequest(
 export const addUserToCall = functions.https.onRequest(
     async (request, response) => {
         const callerPhone = request.body.Direction === "inbound" ? request.body.From : request.body.To;
-        const twiml = await getConferenceTwimlForPhone(callerPhone, false);
+        const twiml = await getConferenceTwimlForPhone(callerPhone);
         response.set('Content-Type', 'text/xml');
         response.send(twiml!.toString());
     }
