@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import * as moment from "moment";
 
 export interface IMatch {
     user_a_id: string;
@@ -15,4 +16,12 @@ export class Firestore {
     public createMatch(match: IMatch) {
         return admin.firestore().collection("matches").doc().set(match);
     }
+}
+
+export async function matchesThisHour() {
+    return await admin
+        .firestore()
+        .collection("matches")
+        .where("created_at", "==", moment().utc().startOf("hour"))
+        .get();
 }

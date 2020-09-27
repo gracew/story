@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import * as moment from "moment-timezone";
 import { Firestore } from "./firestore";
 import { client, TWILIO_NUMBER } from './twilio';
-import { processTimeZone } from "./util";
 
 export function processBulkSmsCsv(tempFilePath: string) {
     fs.createReadStream(tempFilePath)
@@ -47,4 +46,15 @@ export function processMatchCsv(tempFilePath: string, firestore: Firestore) {
                 created_at: createdAt.toDate()
             });
         });
+}
+
+function processTimeZone(tz: string) {
+    if (tz === "PT") {
+        return "America/Los_Angeles"
+    } else if (tz === "CT") {
+        return "America/Chicago"
+    } else if (tz === "ET") {
+        return "America/New_York"
+    }
+    return undefined;
 }
