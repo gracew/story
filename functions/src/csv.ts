@@ -39,7 +39,7 @@ export async function processAvailabilityCsv(tempFilePath: string, firestore: Fi
 export async function processMatchCsv(tempFilePath: string, firestore: Firestore) {
     const contents = fs.readFileSync(tempFilePath).toString();
     const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "date", "time", "timezone"] })
-    await Promise.all(rows.map(async data => {
+    const matches = await Promise.all(rows.map(async data => {
         const userA = await firestore.getUser(data.userAId);
         const userB = await firestore.getUser(data.userBId);
 
@@ -58,14 +58,18 @@ export async function processMatchCsv(tempFilePath: string, firestore: Firestore
             return;
         }
         const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
-        await firestore.createMatch({
+        const match = {
             user_a_id: data.userAId,
             user_b_id: data.userBId,
             user_ids: [data.userAId, data.userBId],
             created_at: createdAt.toDate()
-        });
+        };
+        await firestore.createMatch(match);
+        return match;
     }));
-    return sendMatchNotificationTexts(firestore);
+    return sendMatchNotificationTexts(
+        matches.filter(m => m !== undefined) as IMatch[],
+        firestore);
 }
 
 function processTimeZone(tz: string) {
@@ -79,9 +83,7 @@ function processTimeZone(tz: string) {
     return undefined;
 }
 
-async function sendMatchNotificationTexts(firestore: Firestore) {
-    const matches = await firestore.matchesThisWeek();
-
+async function sendMatchNotificationTexts(matches: IMatch[], firestore: Firestore) {
     // create map from userId to matches
     const userToMatches: Record<string, IMatch[]> = {};
     matches.forEach(m => {

@@ -11,7 +11,6 @@ jest.mock("twilio", () => {
 const firestore = {
     getUser: jest.fn(),
     createMatch: jest.fn(),
-    matchesThisWeek: jest.fn(),
     getUsersForMatches: jest.fn(),
 };
 
@@ -63,7 +62,6 @@ it("processMatchCsv", async () => {
         created_at: new Date("2020-09-23T20:00:00-07:00"),
     };
     firestore.getUser.mockResolvedValue({ exists: true });
-    firestore.matchesThisWeek.mockResolvedValue([match1, match2])
     firestore.getUsersForMatches.mockResolvedValue({
         UqS4ivx8v9xcUcrAKt3B: {},
         wz931t4yTP2F5xvOW0QI: {},
@@ -91,7 +89,6 @@ it("processMatchCsv - multiple dates", async () => {
         created_at: new Date("2020-09-23T20:00:00-07:00"),
     };
     firestore.getUser.mockResolvedValue({ exists: true });
-    firestore.matchesThisWeek.mockResolvedValue([match1, match2])
     firestore.getUsersForMatches.mockResolvedValue({
         UqS4ivx8v9xcUcrAKt3B: {},
         wz931t4yTP2F5xvOW0QI: {},
@@ -118,7 +115,6 @@ it("processMatchCsv - multiple texts per user", async () => {
         created_at: new Date("2020-09-23T20:00:00-07:00"),
     };
     firestore.getUser.mockResolvedValue({ exists: true });
-    firestore.matchesThisWeek.mockResolvedValue([match1, match2])
     firestore.getUsersForMatches.mockResolvedValue({
         UqS4ivx8v9xcUcrAKt3B: { funFacts: "funFacts" },
         wz931t4yTP2F5xvOW0QI: { funFacts: "funFacts" },

@@ -23,13 +23,6 @@ export class Firestore {
         return admin.firestore().collection("matches").doc().set(match);
     }
 
-    public async matchesThisWeek(): Promise<IMatch[]> {
-        const result = await admin.firestore().collection("matches")
-            .where("created_at", ">=", moment().utc().startOf("week"))
-            .get();
-        return result.docs.map(doc => doc.data() as IMatch);
-    }
-    
     public async getUsersForMatches(matches: IMatch[]): Promise<Record<string, IUser>> {
         const userARefs = matches.map(m => admin.firestore().collection("users").doc(m.user_a_id));
         const userBRefs = matches.map(m => admin.firestore().collection("users").doc(m.user_b_id));
