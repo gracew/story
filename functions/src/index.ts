@@ -5,9 +5,9 @@ import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
 import { addUserToAirtable } from './airtable';
-import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchNameAndDate, notifyUsersOfMatch, TWILIO_NUMBER } from "./twilio";
+import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchNameAndDate, TWILIO_NUMBER } from "./twilio";
 import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
-import { Firestore, IMatch, IUser, matchesThisHour } from "./firestore";
+import { Firestore, IUser, matchesThisHour } from "./firestore";
 import { reminder } from "./smsCopy";
 
 admin.initializeApp();
@@ -361,7 +361,7 @@ export const addUserToCall = functions.https.onRequest(
         const callerPhone = request.body.Direction === "inbound" ? request.body.From : request.body.To;
         const twiml = await getConferenceTwimlForPhone(callerPhone);
         response.set('Content-Type', 'text/xml');
-        response.send(twiml!.toString());
+        response.send(twiml.toString());
     }
 );
 
