@@ -1,7 +1,8 @@
 import * as fs from 'fs';
 import * as moment from "moment-timezone";
+import { Firestore, IMatch } from "./firestore";
+import { availability, matchNotification } from "./smsCopy";
 import * as neatCsv from 'neat-csv';
-import { Firestore } from "./firestore";
 import { client, TWILIO_NUMBER } from './twilio';
 
 export async function processBulkSmsCsv(tempFilePath: string) {
@@ -26,10 +27,9 @@ export async function processAvailabilityCsv(tempFilePath: string, firestore: Fi
             console.error("cannot find user with id " + data.userId);
             return;
         }
-        const body = `Hi ${user.firstName}. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ${data.timezone} any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.`;
         return client.messages
             .create({
-                body,
+                body: availability(user, data.timezone),
                 from: TWILIO_NUMBER,
                 to: user.phone,
             });
@@ -39,7 +39,7 @@ export async function processAvailabilityCsv(tempFilePath: string, firestore: Fi
 export async function processMatchCsv(tempFilePath: string, firestore: Firestore) {
     const contents = fs.readFileSync(tempFilePath).toString();
     const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "date", "time", "timezone"] })
-    return Promise.all(rows.map(async data => {
+    const matches = await Promise.all(rows.map(async data => {
         const userA = await firestore.getUser(data.userAId);
         const userB = await firestore.getUser(data.userBId);
 
@@ -58,13 +58,18 @@ export async function processMatchCsv(tempFilePath: string, firestore: Firestore
             return;
         }
         const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
-        return firestore.createMatch({
+        const match = {
             user_a_id: data.userAId,
             user_b_id: data.userBId,
             user_ids: [data.userAId, data.userBId],
             created_at: createdAt.toDate()
-        });
+        };
+        await firestore.createMatch(match);
+        return match;
     }));
+    return sendMatchNotificationTexts(
+        matches.filter(m => m !== undefined) as IMatch[],
+        firestore);
 }
 
 function processTimeZone(tz: string) {
@@ -76,4 +81,37 @@ function processTimeZone(tz: string) {
         return "America/New_York"
     }
     return undefined;
+}
+
+async function sendMatchNotificationTexts(matches: IMatch[], firestore: Firestore) {
+    // create map from userId to matches
+    const userToMatches: Record<string, IMatch[]> = {};
+    matches.forEach(m => {
+        if (!(m.user_a_id in userToMatches)) {
+            userToMatches[m.user_a_id] = [];
+        }
+        userToMatches[m.user_a_id].push(m)
+
+        if (!(m.user_b_id in userToMatches)) {
+            userToMatches[m.user_b_id] = [];
+        }
+        userToMatches[m.user_b_id].push(m)
+    });
+
+    const usersById = await firestore.getUsersForMatches(matches);
+    // notify each user
+    await Promise.all(
+        Object.keys(userToMatches).map(async userId => {
+            const texts = matchNotification(userId, userToMatches[userId], usersById)
+            // send these linearly
+            for (const t of texts) {
+                await client.messages
+                    .create({
+                        body: t,
+                        from: TWILIO_NUMBER,
+                        to: usersById[userId].phone,
+                    });
+            }
+        })
+    )
 }

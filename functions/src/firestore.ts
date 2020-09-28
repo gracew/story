@@ -4,6 +4,7 @@ import * as moment from "moment";
 export interface IUser {
     firstName: string;
     phone: string;
+    funFacts?: string;
 }
 export interface IMatch {
     user_a_id: string;
@@ -20,6 +21,14 @@ export class Firestore {
 
     public createMatch(match: IMatch) {
         return admin.firestore().collection("matches").doc().set(match);
+    }
+
+    public async getUsersForMatches(matches: IMatch[]): Promise<Record<string, IUser>> {
+        const userARefs = matches.map(m => admin.firestore().collection("users").doc(m.user_a_id));
+        const userBRefs = matches.map(m => admin.firestore().collection("users").doc(m.user_b_id));
+
+        const allUsers = await admin.firestore().getAll(...userARefs.concat(userBRefs));
+        return Object.assign({}, ...allUsers.map(user => ({ [user.id]: user.data() })));
     }
 }
 
