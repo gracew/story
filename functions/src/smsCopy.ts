@@ -71,6 +71,6 @@ function day(match: IMatch) {
 }
 
 export function reminder(userA: IUser, userB: IUser) {
-    return `Hin ${userA.firstName}! This is Voicebar. Just a reminder that you’ll be speaking with ${userB.firstName} in an hour. Hope you two have a good conversation!`;
+    return `Hi ${userA.firstName}! This is Voicebar. Just a reminder that you’ll be speaking with ${userB.firstName} in an hour. Hope you two have a good conversation!`;
 
 }
