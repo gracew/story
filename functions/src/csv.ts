@@ -14,7 +14,7 @@ export async function processBulkSmsCsv(tempFilePath: string) {
                 body: data.body,
                 from: TWILIO_NUMBER,
                 to: data.phone,
-            });
+            }, /* TODO(gracew): log on error */ );
     }))
 }
 

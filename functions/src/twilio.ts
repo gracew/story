@@ -45,25 +45,20 @@ export async function getConferenceTwimlForPhone(phone: string) {
     return twiml;
 }
 
-export async function callStudio(mode: string, matches: QueryDocumentSnapshot[]) {
+export async function callStudio(mode: string, matches: QueryDocumentSnapshot[], firestore: Firestore) {
     console.log(`executing '${mode}' for the following matches: ` + matches.map(doc => doc.id));
-    const allUsersById = await new Firestore().getUsersForMatches(matches.map(m => m.data() as IMatch));
+    const allUsersById = await firestore.getUsersForMatches(matches.map(m => m.data() as IMatch));
 
     const latestMatchesByUserId: Record<string, any> = {}
     for (const id of Object.keys(allUsersById)) {
-        const latestMatch = await admin.firestore().collection("matches")
-            .where("user_ids", "array-contains", id)
-            .orderBy("created_at", "desc")
-            .limit(1)
-            .get();
-        latestMatchesByUserId[id] = latestMatch.docs[0];
+        latestMatchesByUserId[id] = await firestore.latestMatchForUser(id);
     };
 
     const userAPromises = matches.map(async doc => {
         const userAId = doc.get("user_a_id");
         const userA = allUsersById[doc.get("user_a_id")];
         const userB = allUsersById[doc.get("user_b_id")];
-        const nextMatchParams = await nextMatchNameAndDate(latestMatchesByUserId, doc, userAId);
+        const nextMatchParams = await nextMatchNameAndDate(latestMatchesByUserId, doc.data() as IMatch, userAId, firestore);
         return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
             to: userA.phone,
             from: TWILIO_NUMBER,
@@ -83,7 +78,7 @@ export async function callStudio(mode: string, matches: QueryDocumentSnapshot[])
         const userBId = doc.get("user_b_id");
         const userA = allUsersById[doc.get("user_a_id")];
         const userB = allUsersById[doc.get("user_b_id")];
-        const nextMatchParams = await nextMatchNameAndDate(latestMatchesByUserId, doc, userBId);
+        const nextMatchParams = await nextMatchNameAndDate(latestMatchesByUserId, doc.data() as IMatch, userBId, firestore);
         return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
             to: userB.phone,
             from: TWILIO_NUMBER,
@@ -102,16 +97,91 @@ export async function callStudio(mode: string, matches: QueryDocumentSnapshot[])
     await Promise.all(userAPromises.concat(userBPromises));
 }
 
-export async function nextMatchNameAndDate(matchesByUserId: Record<string, any>, currMatch: any, userId: string) {
+export async function saveRevealHelper(body: { phone: string, reveal: string, matchId: string }, firestore: Firestore) {
+    const phone = body.reveal;
+    const reveal = body.reveal.trim().toLowerCase() === "y" || body.reveal.trim().toLowerCase() === "yes";
+    const revealingUser = await firestore.getUserByPhone(phone);
+    // check if user exists in table
+    if (!revealingUser) {
+        console.error("No user with phone " + phone);
+        return;
+    }
+
+    const match = await firestore.getMatch(body.matchId);
+    if (!match) {
+        console.error("Could not find match with id " + body.matchId)
+        return;
+    }
+
+    let otherUser;
+    let otherReveal;
+    if (match.user_a_id === revealingUser.id) {
+        otherUser = await firestore.getUser(match.user_b_id);
+        otherReveal = match.user_b_revealed;
+        await firestore.updateMatch(match.id, { user_a_revealed: reveal });
+    } else if (match.user_b_id === revealingUser.id) {
+        otherUser = await firestore.getUser(match.user_a_id);
+        otherReveal = match.user_a_revealed;
+        await firestore.updateMatch(match.id, { user_b_revealed: reveal });
+    }
+
+    if (!otherUser) {
+        console.error("Requested match doesnt have the requested users");
+        return;
+    }
+    const latestMatchOther = await firestore.latestMatchForUser(otherUser.id)
+    const otherNextMatch = await nextMatchNameAndDate(
+        { [otherUser.id]: latestMatchOther! }, match, otherUser.id, firestore);
+
+    const otherData = {
+        userId: otherUser.id,
+        firstName: otherUser.firstName,
+        matchName: revealingUser.firstName,
+        matchPhone: revealingUser.phone.substring(2),
+    };
+
+    if (reveal && otherReveal) {
+        await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+            to: otherUser.phone,
+            from: TWILIO_NUMBER,
+            parameters: {
+                mode: "reveal",
+                ...otherData,
+                ...otherNextMatch,
+            }
+        });
+        return { next: "reveal" };
+    } else if (reveal && otherReveal === false) {
+        return { next: "reveal_other_no" };
+    } else if (reveal && otherReveal === undefined) {
+        return { next: "reveal_other_pending" };
+    } else if (!reveal) {
+        if (otherReveal) {
+            await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+                to: otherUser.phone,
+                from: TWILIO_NUMBER,
+                parameters: {
+                    mode: "reveal_other_no",
+                    ...otherData,
+                    ...otherNextMatch,
+                },
+            });
+        }
+        return { next: "no_reveal" };
+    }
+    return;
+}
+
+async function nextMatchNameAndDate(matchesByUserId: Record<string, IMatch>, currMatch: IMatch, userId: string, firestore: Firestore) {
     const nextMatch = matchesByUserId[userId];
     if (nextMatch && nextMatch.id === currMatch.id) {
         return {};
     }
-    const nextMatchUserId = nextMatch.get("user_a_id") === userId ? nextMatch.get("user_b_id") : nextMatch.get("user_a_id");
+    const nextMatchUserId = nextMatch.user_a_id === userId ? nextMatch.user_b_id : nextMatch.user_a_id;
     console.log(nextMatchUserId);
-    const nextMatchUser = await admin.firestore().collection("users").doc(nextMatchUserId).get();
+    const nextMatchUser = await firestore.getUser(nextMatchUserId);
     return {
-        nextMatchName: nextMatchUser.get("firstName"),
-        nextMatchDate: moment(nextMatch.get("created_at")).format("dddd"),
+        nextMatchName: nextMatchUser!.firstName,
+        nextMatchDate: moment(nextMatch.created_at).format("dddd"),
     }
 }

@@ -1,7 +1,0 @@
-it("getConferenceTwilForPhone", () => {
-
-});
-
-it("callStudio", () => {
-
-});

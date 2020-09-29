@@ -1,5 +1,6 @@
-import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
-import { client, TWILIO_NUMBER } from "./twilio";
+import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "../src/csv";
+import { client, TWILIO_NUMBER } from "../src/twilio";
+import { firestore, match, user } from "./mock";
 
 // TODO(gracew): pass around the twilio client explicitly to avoid this
 jest.mock("twilio", () => {
@@ -7,12 +8,6 @@ jest.mock("twilio", () => {
         return { messages: { create: jest.fn() } };
     })
 });
-
-const firestore = {
-    getUser: jest.fn(),
-    createMatch: jest.fn(),
-    getUsersForMatches: jest.fn(),
-};
 
 beforeEach(() => jest.resetAllMocks());
 
@@ -28,8 +23,8 @@ another line
 });
 
 it("processAvailabilityCsv", async () => {
-    const user1 = { exists: true, firstName: "Anna", phone: "+1234567890" };
-    const user2 = { exists: true, firstName: "Grace", phone: "+10123456789" };
+    const user1 = user("Anna");
+    const user2 = user("Grace");
     firestore.getUser = jest.fn()
         .mockResolvedValueOnce(user1)
         .mockResolvedValueOnce(user2);
@@ -49,18 +44,8 @@ it("processAvailabilityCsv", async () => {
 
 
 it("processMatchCsv", async () => {
-    const match1 = {
-        user_a_id: "UqS4ivx8v9xcUcrAKt3B",
-        user_b_id: "wz931t4yTP2F5xvOW0QI",
-        user_ids: ["UqS4ivx8v9xcUcrAKt3B", "wz931t4yTP2F5xvOW0QI"],
-        created_at: new Date("2020-09-23T20:00:00-04:00"),
-    };
-    const match2 = {
-        user_a_id: "oS89cjnV1wRP5kKvHGoP",
-        user_b_id: "zV4nHElSwPWNvFP0aVYs",
-        user_ids: ["oS89cjnV1wRP5kKvHGoP", "zV4nHElSwPWNvFP0aVYs"],
-        created_at: new Date("2020-09-23T20:00:00-07:00"),
-    };
+    const match1 = match("UqS4ivx8v9xcUcrAKt3B", "wz931t4yTP2F5xvOW0QI", "2020-09-23T20:00:00-04:00");
+    const match2 = match("oS89cjnV1wRP5kKvHGoP", "zV4nHElSwPWNvFP0aVYs", "2020-09-23T20:00:00-07:00");
     firestore.getUser.mockResolvedValue({ exists: true });
     firestore.getUsersForMatches.mockResolvedValue({
         UqS4ivx8v9xcUcrAKt3B: {},
@@ -76,18 +61,8 @@ it("processMatchCsv", async () => {
 });
 
 it("processMatchCsv - multiple dates", async () => {
-    const match1 = {
-        user_a_id: "UqS4ivx8v9xcUcrAKt3B",
-        user_b_id: "wz931t4yTP2F5xvOW0QI",
-        user_ids: ["UqS4ivx8v9xcUcrAKt3B", "wz931t4yTP2F5xvOW0QI"],
-        created_at: new Date("2020-09-23T20:00:00-04:00"),
-    };
-    const match2 = {
-        user_a_id: "UqS4ivx8v9xcUcrAKt3B",
-        user_b_id: "zV4nHElSwPWNvFP0aVYs",
-        user_ids: ["UqS4ivx8v9xcUcrAKt3B", "zV4nHElSwPWNvFP0aVYs"],
-        created_at: new Date("2020-09-23T20:00:00-07:00"),
-    };
+    const match1 = match("UqS4ivx8v9xcUcrAKt3B", "wz931t4yTP2F5xvOW0QI", "2020-09-23T20:00:00-04:00");
+    const match2 = match("UqS4ivx8v9xcUcrAKt3B", "zV4nHElSwPWNvFP0aVYs", "2020-09-23T20:00:00-07:00");
     firestore.getUser.mockResolvedValue({ exists: true });
     firestore.getUsersForMatches.mockResolvedValue({
         UqS4ivx8v9xcUcrAKt3B: {},
@@ -102,18 +77,8 @@ it("processMatchCsv - multiple dates", async () => {
 });
 
 it("processMatchCsv - multiple texts per user", async () => {
-    const match1 = {
-        user_a_id: "UqS4ivx8v9xcUcrAKt3B",
-        user_b_id: "wz931t4yTP2F5xvOW0QI",
-        user_ids: ["UqS4ivx8v9xcUcrAKt3B", "wz931t4yTP2F5xvOW0QI"],
-        created_at: new Date("2020-09-23T20:00:00-04:00"),
-    };
-    const match2 = {
-        user_a_id: "UqS4ivx8v9xcUcrAKt3B",
-        user_b_id: "zV4nHElSwPWNvFP0aVYs",
-        user_ids: ["UqS4ivx8v9xcUcrAKt3B", "zV4nHElSwPWNvFP0aVYs"],
-        created_at: new Date("2020-09-23T20:00:00-07:00"),
-    };
+    const match1 = match("UqS4ivx8v9xcUcrAKt3B", "wz931t4yTP2F5xvOW0QI", "2020-09-23T20:00:00-04:00");
+    const match2 = match("UqS4ivx8v9xcUcrAKt3B", "zV4nHElSwPWNvFP0aVYs", "2020-09-23T20:00:00-07:00");
     firestore.getUser.mockResolvedValue({ exists: true });
     firestore.getUsersForMatches.mockResolvedValue({
         UqS4ivx8v9xcUcrAKt3B: { funFacts: "funFacts" },
