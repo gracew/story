@@ -11,6 +11,11 @@ export interface IMatch {
     user_b_id: string;
     user_ids: string[];
     created_at: Date;
+    reminded?: boolean;
+    called?: boolean;
+    revealRequested?: boolean;
+    warned5Min?: boolean;
+    warned1Min?: boolean;
 }
 
 export class Firestore {
