@@ -13,9 +13,9 @@ export interface IMatch {
     created_at: Date;
     reminded?: boolean;
     called?: boolean;
-    revealRequested?: boolean;
     warned5Min?: boolean;
     warned1Min?: boolean;
+    revealRequested?: boolean;
 }
 
 export class Firestore {
