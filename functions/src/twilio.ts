@@ -2,7 +2,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { QueryDocumentSnapshot } from "firebase-functions/lib/providers/firestore";
 import * as twilio from "twilio";
-import moment = require("moment");
+import * as moment from "moment";
 import { Firestore, IMatch } from "./firestore";
 
 export const TWILIO_NUMBER = '+12036338466';
