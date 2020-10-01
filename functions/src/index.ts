@@ -424,13 +424,13 @@ export const call5MinWarning = functions.pubsub.schedule('25 * * * *').onRun(asy
         .firestore()
         .collection("matches")
         .where("ongoing", "==", true)
-        .where("warned5min", "==", false)
+        .where("warned5Min", "==", false)
         .get();
     await Promise.all(ongoingCalls.docs.map(doc =>
         client.conferences(doc.get("twilioSid"))
             .update({ announceUrl: BASE_URL + "announce5Min" })));
     // TODO(gracew): switch to a batched write later
-    await Promise.all(ongoingCalls.docs.map(doc => doc.ref.update("warned5min", true)))
+    await Promise.all(ongoingCalls.docs.map(doc => doc.ref.update("warned5Min", true)))
 });
 
 // runs every hour at 29 minutes past
@@ -439,11 +439,11 @@ export const call1MinWarning = functions.pubsub.schedule('29 * * * *').onRun(asy
         .firestore()
         .collection("matches")
         .where("ongoing", "==", true)
-        .where("warned1min", "==", false)
+        .where("warned1Min", "==", false)
         .get();
     await Promise.all(ongoingCalls.docs.map(doc =>
         client.conferences(doc.get("twilioSid"))
             .update({ announceUrl: BASE_URL + "announce1Min" })));
     // TODO(gracew): switch to a batched write later
-    await Promise.all(ongoingCalls.docs.map(doc => doc.ref.update("warned1min", true)))
+    await Promise.all(ongoingCalls.docs.map(doc => doc.ref.update("warned1Min", true)))
 });
