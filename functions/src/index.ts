@@ -160,15 +160,16 @@ export const createMatches = functions.storage.object().onFinalize(async (object
 
 // runs every hour
 export const sendReminderTexts = functions.pubsub.schedule('0 * * * *').onRun(async (context) => {
-    const todaysMatches = await admin
+    const matches = await admin
         .firestore()
         .collection("matches")
         .where("created_at", "==", moment().utc().startOf("hour").add(1, "hour"))
+        .where("reminded", "==", false)
         .get();
-    console.log("found the following matches: " + todaysMatches.docs.map(doc => doc.id));
+    console.log("found the following matches: " + matches.docs.map(doc => doc.id));
 
-    const userAIds = todaysMatches.docs.map(doc => doc.get("user_a_id"));
-    const userBIds = todaysMatches.docs.map(doc => doc.get("user_b_id"));
+    const userAIds = matches.docs.map(doc => doc.get("user_a_id"));
+    const userBIds = matches.docs.map(doc => doc.get("user_b_id"));
     const userIds = userAIds.concat(userBIds);
     console.log("sending texts to the following users: " + userIds);
 
@@ -176,7 +177,7 @@ export const sendReminderTexts = functions.pubsub.schedule('0 * * * *').onRun(as
     const usersById = Object.assign({}, ...users.map(user => ({ [user.id]: user.data() })));
 
     const allPromises: Array<Promise<any>> = []
-    todaysMatches.docs.forEach(doc => {
+    matches.docs.forEach(doc => {
         const userA = usersById[doc.get("user_a_id")];
         const userB = usersById[doc.get("user_b_id")];
         allPromises.push(textUserHelper(userA, userB))
@@ -184,6 +185,8 @@ export const sendReminderTexts = functions.pubsub.schedule('0 * * * *').onRun(as
     })
 
     await Promise.all(allPromises);
+    // TODO(gracew): switch to a batched write later
+    await Promise.all(matches.docs.map(doc => doc.ref.update("reminded", true)))
 });
 
 async function textUserHelper(userA: IUser, userB: IUser) {
@@ -197,7 +200,12 @@ async function textUserHelper(userA: IUser, userB: IUser) {
 
 // runs every hour
 export const issueCalls = functions.pubsub.schedule('0 * * * *').onRun(async (context) => {
-    const matches = await matchesThisHour();
+    const matches = await admin
+        .firestore()
+        .collection("matches")
+        .where("created_at", "==", moment().utc().startOf("hour"))
+        .where("called", "==", false)
+        .get();
     console.log("found the following matches: " + matches.docs.map(doc => doc.id));
 
     const userAIds = matches.docs.map(doc => doc.get("user_a_id"));
@@ -206,6 +214,8 @@ export const issueCalls = functions.pubsub.schedule('0 * * * *').onRun(async (co
     console.log("issuing calls to the following users: " + userIds);
 
     await Promise.all(userIds.map(id => callUserHelper(id)));
+    // TODO(gracew): switch to a batched write later
+    await Promise.all(matches.docs.map(doc => doc.ref.update("called", true)))
 });
 
 export const callStudioManual = functions.https.onRequest(
@@ -222,9 +232,16 @@ export const callStudioManual = functions.https.onRequest(
 
 // runs every hour at 35 minutes past
 export const revealRequest = functions.pubsub.schedule('35 * * * *').onRun(async (context) => {
-    const matches = await matchesThisHour();
+    const matches = await admin
+        .firestore()
+        .collection("matches")
+        .where("created_at", "==", moment().utc().startOf("hour"))
+        .where("revealRequested", "==", false)
+        .get();
     const connectedMatches = matches.docs.filter(m => m.get("twilioSid") !== undefined);
-    return callStudio("reveal_request", connectedMatches)
+    await callStudio("reveal_request", connectedMatches)
+    // TODO(gracew): switch to a batched write later
+    await Promise.all(connectedMatches.map(doc => doc.ref.update("revealRequested", true)))
 });
 
 export const saveReveal = functions.https.onRequest(
@@ -407,10 +424,13 @@ export const call5MinWarning = functions.pubsub.schedule('25 * * * *').onRun(asy
         .firestore()
         .collection("matches")
         .where("ongoing", "==", true)
+        .where("warned5min", "==", false)
         .get();
     await Promise.all(ongoingCalls.docs.map(doc =>
         client.conferences(doc.get("twilioSid"))
             .update({ announceUrl: BASE_URL + "announce5Min" })));
+    // TODO(gracew): switch to a batched write later
+    await Promise.all(ongoingCalls.docs.map(doc => doc.ref.update("warned5min", true)))
 });
 
 // runs every hour at 29 minutes past
@@ -419,8 +439,11 @@ export const call1MinWarning = functions.pubsub.schedule('29 * * * *').onRun(asy
         .firestore()
         .collection("matches")
         .where("ongoing", "==", true)
+        .where("warned1min", "==", false)
         .get();
     await Promise.all(ongoingCalls.docs.map(doc =>
         client.conferences(doc.get("twilioSid"))
             .update({ announceUrl: BASE_URL + "announce1Min" })));
+    // TODO(gracew): switch to a batched write later
+    await Promise.all(ongoingCalls.docs.map(doc => doc.ref.update("warned1min", true)))
 });
