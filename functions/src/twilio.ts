@@ -98,7 +98,12 @@ export async function callStudio(mode: string, matches: IMatch[], firestore: Fir
 
 export async function saveRevealHelper(body: { phone: string, reveal: string, matchId: string }, firestore: Firestore) {
     const phone = body.phone;
-    const reveal = body.reveal.trim().toLowerCase() === "y" || body.reveal.trim().toLowerCase() === "yes";
+    const reveal = parseUserReveal(body.reveal);
+    if (reveal === undefined) {
+        console.warn("Could not parse reveal response");
+        return;
+    }
+
     const revealingUser = await firestore.getUserByPhone(phone);
     // check if user exists in table
     if (!revealingUser) {
@@ -169,6 +174,17 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
         return { next: "no_reveal" };
     }
     return;
+}
+
+function parseUserReveal(reveal: string) {
+    const normalized = reveal.trim().toLowerCase();
+    if (normalized === "y" || normalized === "yes") {
+        return true;
+    }
+    if (normalized === "n" || normalized === "no") {
+        return false;
+    }
+    return undefined;
 }
 
 async function nextMatchNameAndDate(matchesByUserId: Record<string, IMatch>, currMatch: IMatch, userId: string, firestore: Firestore) {
