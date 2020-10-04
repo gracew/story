@@ -68,8 +68,8 @@ export async function generateAvailableMatches(view: string, tz: string) {
 
     const usersInTZ = await Promise.all(users
         .filter((record: any) => {
-            let userId = record.get('UserID');
-            let timezone = record.get("Timezone")?.[0];
+            const userId = record.get('UserID');
+            const timezone = record.get("Timezone")?.[0];
             return userId && usersInRound.includes(userId) && timezone === tz;
         }).map((record: any) => formatAirtableUserRecord(record)));
 
@@ -90,7 +90,6 @@ function generatePairs(array: any[]) {
         acc.concat(array.slice(i + 1).map(w => [v, w])),
         []);
 }
-
 
 function defaultMatchMax(match_gender: string, match_age: number) {
     return match_gender === "Female" ? match_age + 7 : match_age + 4
