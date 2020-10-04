@@ -334,7 +334,7 @@ export const conferenceStatusWebhook = functions.https.onRequest(
 export const announce5Min = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
-        twiml.say({ 'voice': 'alice' }, "Your call will end in 5 minutes.");
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media");
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
@@ -343,7 +343,7 @@ export const announce5Min = functions.https.onRequest(
 export const announce1Min = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
-        twiml.say({ 'voice': 'alice' }, "Your call will end in 1 minute.");
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media");
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
