@@ -1,8 +1,11 @@
-name: Run tests
+name: Run functions tests
 on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
     strategy:
       matrix:
         node-version: [10.x]
