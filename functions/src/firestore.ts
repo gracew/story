@@ -20,7 +20,8 @@ export class Firestore {
     }
 
     public createMatch(match: IMatch) {
-        return admin.firestore().collection("matches").doc().set(match);
+        const ref = admin.firestore().collection("matches").doc();
+        return ref.set({ ...match, id: ref.id });
     }
 
     public async getUsersForMatches(matches: IMatch[]): Promise<Record<string, IUser>> {
