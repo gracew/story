@@ -1,6 +1,8 @@
+import * as test from "firebase-functions-test";
+test().mockConfig({ twilio: { auth_token: "token" } });
 import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "../src/csv";
-import { TWILIO_NUMBER } from "../src/twilio";
 import { firestore, match, user } from "./mock";
+import { TWILIO_NUMBER } from "../src/twilio";
 
 const mockSendSms = jest.fn();
 beforeEach(() => jest.resetAllMocks());

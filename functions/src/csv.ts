@@ -3,8 +3,6 @@ import * as moment from "moment-timezone";
 import { Firestore, IMatch } from "./firestore";
 import { availability, matchNotification } from "./smsCopy";
 import * as neatCsv from 'neat-csv';
-import * as test from "firebase-functions-test";
-test().mockConfig({ twilio: { auth_token: "token" } });
 import {  TWILIO_NUMBER } from './twilio';
 
 export async function processBulkSmsCsv(tempFilePath: string, sendSms: (opts: any) => Promise<any>) {
