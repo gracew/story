@@ -73,15 +73,27 @@ export async function generateAvailableMatches(view: string, tz: string) {
             return userId && usersInRound.includes(userId) && timezone === tz;
         }).map((record: any) => formatAirtableUserRecord(record)));
 
-    return generatePairs(usersInTZ)
-        .filter(([userA, userB]: [IAirtableUser, IAirtableUser]) => {
-            return findCommonElements(availabilityByUserId[userA.id], availabilityByUserId[userB.id]) && areUsersCompatible(userA, userB);
-        })
-        .map(([userA, userB]: [IAirtableUser, IAirtableUser]) => ({ userA: userA.name, userB: userB.name }));
+    const pairs = [];
+    for (const [userA, userB] of generatePairs(usersInTZ)) {
+        if (!areUsersCompatible(userA, userB)) {
+            continue;
+        }
+        const sharedAvailability = findCommonElements(availabilityByUserId[userA.id], availabilityByUserId[userB.id]);
+        if (sharedAvailability.length > 0) {
+            pairs.push({
+                userA: userA.name,
+                userB: userB.name,
+                userAId: userA.id,
+                userBId: userB.id,
+                days: sharedAvailability
+            });
+        }
+    }
+    return pairs;
 }
 
 function findCommonElements(arr1: any[], arr2: any[]) {
-    return arr1.some(item => arr2.includes(item))
+    return arr1.filter(item => arr2.includes(item))
 }
 
 // returns all possible pairings of an array
