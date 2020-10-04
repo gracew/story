@@ -1,22 +1,23 @@
 import * as uuid from "uuid";
-import { client, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
+import { callStudio, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
 import { firestore, match, user } from "./mock";
 
+const mockCreate = jest.fn();
 jest.mock("twilio", () => {
     return jest.fn().mockImplementation(() => {
-        const create = jest.fn();
         return {
             studio: {
-                flows() { return { executions: { create } } }
+                flows() { return { executions: { create: mockCreate } } }
             }
         };
     })
 });
+
 const user1 = user(uuid.v4());
 const user2 = user(uuid.v4());
 const user3 = user(uuid.v4());
 const m1 = match(user1.id, user2.id, "2020-09-23T20:00:00-04:00");
-const m2 = match(user3.id, user2.id, "2020-09-23T20:00:00-04:00");
+const m2 = match(user3.id, user2.id, "2020-09-24T20:00:00-04:00");
 
 beforeEach(() => {
     jest.resetAllMocks();
@@ -32,9 +33,48 @@ beforeEach(() => {
         }
         return undefined;
     });
-    firestore.latestMatchForUser.mockResolvedValue(m1)
+    firestore.latestMatchForUser.mockResolvedValue(m1);
 });
+
 it("callStudio", async () => {
+    firestore.getUsersForMatches.mockReturnValue({ [user1.id]: user1, [user2.id]: user2 });
+    firestore.latestMatchForUser.mockImplementation(id => {
+        if (id === user1.id) {
+            return m1;
+        }
+        if (id === user2.id) {
+            return m2;
+        }
+        return undefined;
+    });
+    await callStudio("reveal_request", [m1], firestore);
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+    expect(mockCreate).toHaveBeenCalledWith({
+        to: user1.phone,
+        from: TWILIO_NUMBER,
+        parameters: {
+            mode: "reveal_request",
+            userId: user1.id,
+            matchId: m1.id,
+            firstName: user1.firstName,
+            matchName: user2.firstName,
+            matchPhone: user2.phone.substring(2),
+        }
+    });
+    expect(mockCreate).toHaveBeenCalledWith({
+        to: user2.phone,
+        from: TWILIO_NUMBER,
+        parameters: {
+            mode: "reveal_request",
+            userId: user2.id,
+            matchId: m1.id,
+            firstName: user2.firstName,
+            matchName: user1.firstName,
+            matchPhone: user1.phone.substring(2),
+            nextMatchName: user3.firstName,
+            nextMatchDate: "Thursday",
+        }
+    });
 });
 
 it("saveReveal Y, other pending", async () => {
@@ -58,8 +98,8 @@ it("saveReveal Y, other Y", async () => {
     expect(res).toEqual({ next: "reveal" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: true });
-    expect(client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create).toHaveBeenCalledTimes(1);
-    expect(client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create).toHaveBeenCalledWith({
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(mockCreate).toHaveBeenCalledWith({
         to: user2.phone,
         from: TWILIO_NUMBER,
         parameters: {
@@ -79,8 +119,8 @@ it("saveReveal Y, other Y next match", async () => {
     expect(res).toEqual({ next: "reveal" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: true });
-    expect(client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create).toHaveBeenCalledTimes(1);
-    expect(client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create).toHaveBeenCalledWith({
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(mockCreate).toHaveBeenCalledWith({
         to: user2.phone,
         from: TWILIO_NUMBER,
         parameters: {
@@ -90,7 +130,7 @@ it("saveReveal Y, other Y next match", async () => {
             matchName: user1.firstName,
             matchPhone: user1.phone.substring(2),
             nextMatchName: user3.firstName,
-            nextMatchDate: "Wednesday",
+            nextMatchDate: "Thursday",
         }
     })
 });
@@ -108,8 +148,8 @@ it("saveReveal N, other Y", async () => {
     expect(res).toEqual({ next: "no_reveal" })
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: false });
-    expect(client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create).toHaveBeenCalledTimes(1);
-    expect(client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create).toHaveBeenCalledWith({
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(mockCreate).toHaveBeenCalledWith({
         to: user2.phone,
         from: TWILIO_NUMBER,
         parameters: {
@@ -129,8 +169,8 @@ it("saveReveal N, other Y next match", async () => {
     expect(res).toEqual({ next: "no_reveal" })
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: false });
-    expect(client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create).toHaveBeenCalledTimes(1);
-    expect(client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create).toHaveBeenCalledWith({
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(mockCreate).toHaveBeenCalledWith({
         to: user2.phone,
         from: TWILIO_NUMBER,
         parameters: {
@@ -140,7 +180,7 @@ it("saveReveal N, other Y next match", async () => {
             matchName: user1.firstName,
             matchPhone: user1.phone.substring(2),
             nextMatchName: user3.firstName,
-            nextMatchDate: "Wednesday",
+            nextMatchDate: "Thursday",
         }
     })
 });

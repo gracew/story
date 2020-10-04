@@ -1,6 +1,5 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import { QueryDocumentSnapshot } from "firebase-functions/lib/providers/firestore";
 import * as twilio from "twilio";
 import * as moment from "moment";
 import { Firestore, IMatch } from "./firestore";
@@ -8,8 +7,8 @@ import { Firestore, IMatch } from "./firestore";
 export const TWILIO_NUMBER = '+12036338466';
 export const BASE_URL = 'https://us-central1-speakeasy-prod.cloudfunctions.net/';
 const accountSid = 'AC07d4a9a61ac7c91f7e5cecf1e27c45a6';
-const authToken = functions.config().twilio.auth_token;
-export const client = twilio(accountSid, authToken);
+// const authToken = functions.config().twilio.auth_token;
+export const client = twilio(accountSid, "token");
 
 
 export async function getConferenceTwimlForPhone(phone: string) {
@@ -45,27 +44,27 @@ export async function getConferenceTwimlForPhone(phone: string) {
     return twiml;
 }
 
-export async function callStudio(mode: string, matches: QueryDocumentSnapshot[], firestore: Firestore) {
+export async function callStudio(mode: string, matches: IMatch[], firestore: Firestore) {
     console.log(`executing '${mode}' for the following matches: ` + matches.map(doc => doc.id));
-    const allUsersById = await firestore.getUsersForMatches(matches.map(m => m.data() as IMatch));
+    const allUsersById = await firestore.getUsersForMatches(matches);
 
     const latestMatchesByUserId: Record<string, any> = {}
     for (const id of Object.keys(allUsersById)) {
         latestMatchesByUserId[id] = await firestore.latestMatchForUser(id);
     };
 
-    const userAPromises = matches.map(async doc => {
-        const userAId = doc.get("user_a_id");
-        const userA = allUsersById[doc.get("user_a_id")];
-        const userB = allUsersById[doc.get("user_b_id")];
-        const nextMatchParams = await nextMatchNameAndDate(latestMatchesByUserId, doc.data() as IMatch, userAId, firestore);
+    const userAPromises = matches.map(async match => {
+        const userAId = match.user_a_id;
+        const userA = allUsersById[match.user_a_id];
+        const userB = allUsersById[match.user_b_id];
+        const nextMatchParams = await nextMatchNameAndDate(latestMatchesByUserId, match, userAId, firestore);
         return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
             to: userA.phone,
             from: TWILIO_NUMBER,
             parameters: {
                 mode,
                 userId: userAId,
-                matchId: doc.id,
+                matchId: match.id,
                 firstName: userA.firstName,
                 matchName: userB.firstName,
                 matchPhone: userB.phone.substring(2),
@@ -74,18 +73,18 @@ export async function callStudio(mode: string, matches: QueryDocumentSnapshot[],
         });
     });
 
-    const userBPromises = matches.map(async doc => {
-        const userBId = doc.get("user_b_id");
-        const userA = allUsersById[doc.get("user_a_id")];
-        const userB = allUsersById[doc.get("user_b_id")];
-        const nextMatchParams = await nextMatchNameAndDate(latestMatchesByUserId, doc.data() as IMatch, userBId, firestore);
+    const userBPromises = matches.map(async match => {
+        const userBId = match.user_b_id;
+        const userA = allUsersById[match.user_a_id];
+        const userB = allUsersById[match.user_b_id];
+        const nextMatchParams = await nextMatchNameAndDate(latestMatchesByUserId, match, userBId, firestore);
         return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
             to: userB.phone,
             from: TWILIO_NUMBER,
             parameters: {
                 mode,
                 userId: userBId,
-                matchId: doc.id,
+                matchId: match.id,
                 firstName: userB.firstName,
                 matchName: userA.firstName,
                 matchPhone: userA.phone.substring(2),
@@ -184,4 +183,8 @@ async function nextMatchNameAndDate(matchesByUserId: Record<string, IMatch>, cur
         nextMatchName: nextMatchUser!.firstName,
         nextMatchDate: moment(nextMatch.created_at).format("dddd"),
     }
+}
+
+export function sendSms(opts: any) {
+    return client.messages.create(opts).catch(err => console.error(err));
 }

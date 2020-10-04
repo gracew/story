@@ -5,9 +5,9 @@ import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
 import { addUserToAirtable } from './airtable';
-import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, TWILIO_NUMBER } from "./twilio";
+import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
 import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
-import { Firestore, IUser, matchesThisHour } from "./firestore";
+import { Firestore, IMatch, IUser, matchesThisHour } from "./firestore";
 import { reminder } from "./smsCopy";
 import { generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
 
@@ -142,7 +142,7 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    await processBulkSmsCsv(tempFilePath)
+    await processBulkSmsCsv(tempFilePath, opts => sendSms(opts))
 });
 
 /**
@@ -155,7 +155,7 @@ export const sendAvailabilityTexts = functions.storage.object().onFinalize(async
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    await processAvailabilityCsv(tempFilePath, new Firestore());
+    await processAvailabilityCsv(tempFilePath, new Firestore(), opts => sendSms(opts));
 });
 
 /**
@@ -170,7 +170,7 @@ export const createMatches = functions.storage.object().onFinalize(async (object
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
 
-    await processMatchCsv(tempFilePath, new Firestore());
+    await processMatchCsv(tempFilePath, new Firestore(), opts => sendSms(opts));
 });
 
 // runs every hour
@@ -238,7 +238,9 @@ export const callStudioManual = functions.https.onRequest(
 // runs every hour at 35 minutes past
 export const revealRequest = functions.pubsub.schedule('35 * * * *').onRun(async (context) => {
     const matches = await matchesThisHour();
-    const connectedMatches = matches.docs.filter(m => m.get("twilioSid") !== undefined);
+    const connectedMatches = matches.docs
+        .filter(doc => doc.get("twilioSid") !== undefined)
+        .map(doc => doc.data() as IMatch);
     return callStudio("reveal_request", connectedMatches, new Firestore())
 });
 
