@@ -1,7 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as twilio from "twilio";
-import * as moment from "moment";
+import * as moment from "moment-timezone";
 import { Firestore, IMatch } from "./firestore";
 
 export const TWILIO_NUMBER = '+12036338466';
@@ -197,7 +197,7 @@ async function nextMatchNameAndDate(matchesByUserId: Record<string, IMatch>, cur
     const nextMatchUser = await firestore.getUser(nextMatchUserId);
     return {
         nextMatchName: nextMatchUser!.firstName,
-        nextMatchDate: moment(nextMatch.created_at).format("dddd"),
+        nextMatchDate: moment(nextMatch.created_at).tz("America/New_York").format("dddd"),
     }
 }
 
