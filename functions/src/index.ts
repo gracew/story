@@ -9,7 +9,7 @@ import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchName
 import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
 import { Firestore, IUser, matchesThisHour } from "./firestore";
 import { reminder } from "./smsCopy";
-import { generateRemainingMatchCount } from "./remainingMatches";
+import { generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
 
 admin.initializeApp();
 
@@ -118,9 +118,17 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     response.send({ 'success': 'true' })
 });
 
+/** Used in each round to determine which users should be included (based on number of potential matches). */
 export const generateRemainingMatchReport = functions.https.onRequest(
     async (request, response) => {
-        const result = await generateRemainingMatchCount();
+        const result = await generateRemainingMatchCount(request.body.excludeNames || []);
+        response.send(result);
+    });
+
+/** Used in each round after obtaining availability to generate matches. */
+export const generateMatchesUsingAvailability = functions.https.onRequest(
+    async (request, response) => {
+        const result = await generateAvailableMatches(request.body.schedulingView, request.body.tz);
         response.send(result);
     });
 
