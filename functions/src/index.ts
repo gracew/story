@@ -9,6 +9,7 @@ import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchName
 import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
 import { Firestore, IUser, matchesThisHour } from "./firestore";
 import { reminder } from "./smsCopy";
+import { generateRemainingMatchCount } from "./remainingMatches";
 
 admin.initializeApp();
 
@@ -116,6 +117,12 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
 
     response.send({ 'success': 'true' })
 });
+
+export const generateRemainingMatchReport = functions.https.onRequest(
+    async (request, response) => {
+        const result = await generateRemainingMatchCount();
+        response.send(result);
+    });
 
 /**
  * Sends an SMS for each row in a CSV. The CSV should be in the format: phone,textBody. There should not be a header
