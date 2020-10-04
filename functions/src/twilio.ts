@@ -97,7 +97,7 @@ export async function callStudio(mode: string, matches: IMatch[], firestore: Fir
 }
 
 export async function saveRevealHelper(body: { phone: string, reveal: string, matchId: string }, firestore: Firestore) {
-    const phone = body.reveal;
+    const phone = body.phone;
     const reveal = body.reveal.trim().toLowerCase() === "y" || body.reveal.trim().toLowerCase() === "yes";
     const revealingUser = await firestore.getUserByPhone(phone);
     // check if user exists in table

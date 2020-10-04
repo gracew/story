@@ -1,6 +1,8 @@
 import * as uuid from "uuid";
 import { callStudio, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
 import { firestore, match, user } from "./mock";
+import * as test from "firebase-functions-test";
+test().mockConfig({ twilio: { auth_token: "token" } });
 
 const mockCreate = jest.fn();
 jest.mock("twilio", () => {
@@ -12,6 +14,7 @@ jest.mock("twilio", () => {
         };
     })
 });
+
 
 const user1 = user(uuid.v4());
 const user2 = user(uuid.v4());
