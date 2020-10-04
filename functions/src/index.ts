@@ -5,9 +5,9 @@ import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
 import { addUserToAirtable } from './airtable';
-import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchNameAndDate, TWILIO_NUMBER } from "./twilio";
+import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
 import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
-import { Firestore, IUser, matchesThisHour } from "./firestore";
+import { Firestore, IMatch, IUser, matchesThisHour } from "./firestore";
 import { reminder } from "./smsCopy";
 import { generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
 
@@ -142,7 +142,7 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    await processBulkSmsCsv(tempFilePath)
+    await processBulkSmsCsv(tempFilePath, sendSms)
 });
 
 /**
@@ -155,7 +155,7 @@ export const sendAvailabilityTexts = functions.storage.object().onFinalize(async
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    await processAvailabilityCsv(tempFilePath, new Firestore());
+    await processAvailabilityCsv(tempFilePath, new Firestore(), sendSms);
 });
 
 /**
@@ -170,7 +170,7 @@ export const createMatches = functions.storage.object().onFinalize(async (object
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
 
-    await processMatchCsv(tempFilePath, new Firestore());
+    await processMatchCsv(tempFilePath, new Firestore(), sendSms);
 });
 
 // runs every hour
@@ -238,89 +238,22 @@ export const callStudioManual = functions.https.onRequest(
 // runs every hour at 35 minutes past
 export const revealRequest = functions.pubsub.schedule('35 * * * *').onRun(async (context) => {
     const matches = await matchesThisHour();
-    const connectedMatches = matches.docs.filter(m => m.get("twilioSid") !== undefined);
-    return callStudio("reveal_request", connectedMatches)
+    const connectedMatches = matches.docs
+        .filter(doc => doc.get("twilioSid") !== undefined)
+        .map(doc => doc.data() as IMatch);
+    return callStudio("reveal_request", connectedMatches, new Firestore())
 });
 
 export const saveReveal = functions.https.onRequest(
     async (request, response) => {
-        const phone = request.body.phone;
-        const reveal = request.body.reveal.trim().toLowerCase() === "y" || request.body.reveal.trim().toLowerCase() === "yes";
-        const users = await admin.firestore().collection("users");
-        const revealingUserQuery = await users.where("phone", "==", phone).get();
-        // check if user exists in table
-        if (revealingUserQuery.empty) {
-            console.error("No user with phone " + phone);
-            response.end();
-            return;
-        }
-        const revealingUser = revealingUserQuery.docs[0];
-
-        const match = await admin.firestore().collection("matches").doc(request.body.matchId).get();
-
-        let otherUser;
-        let otherReveal;
-        if (match.get("user_a_id") === revealingUser.id) {
-            otherUser = await users.doc(match.get("user_b_id")).get();
-            otherReveal = match.get("user_b_revealed")
-            await match.ref.update({ user_a_revealed: reveal });
-        } else if (match.get("user_b_id") === revealingUser.id) {
-            otherUser = await users.doc(match.get("user_a_id")).get();
-            otherReveal = match.get("user_a_revealed")
-            await match.ref.update({ user_b_revealed: reveal });
+        const res = await saveRevealHelper(request.body, new Firestore());
+        if (res) {
+            response.send(res);
         } else {
-            console.error("Requested match doesnt have the requested users");
             response.end();
-            return;
         }
-        const latestMatchOther = await admin.firestore().collection("matches")
-            .where("user_ids", "array-contains", otherUser.id)
-            .orderBy("created_at", "desc")
-            .limit(1)
-            .get();
-        const otherNextMatch = await nextMatchNameAndDate(
-            { [otherUser.id]: latestMatchOther.docs[0] }, match, otherUser.id);
+    });
 
-        const otherData = {
-            userId: otherUser.id,
-            firstName: otherUser.data()!.firstName,
-            matchName: revealingUser.data().firstName,
-            matchPhone: revealingUser.data().phone.substring(2),
-        };
-
-        if (reveal && otherReveal) {
-            await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
-                to: otherUser.get("phone"),
-                from: TWILIO_NUMBER,
-                parameters: {
-                    mode: "reveal",
-                    ...otherData,
-                    ...otherNextMatch,
-                }
-            });
-            response.send({ next: "reveal" })
-        } else if (reveal && otherReveal === false) {
-            response.send({ next: "reveal_other_no" })
-        } else if (reveal && otherReveal === undefined) {
-            response.send({ next: "reveal_other_pending" })
-        } else if (!reveal) {
-            if (otherReveal) {
-                await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
-                    to: otherUser.get("phone"),
-                    from: TWILIO_NUMBER,
-                    parameters: {
-                        mode: "reveal_other_no",
-                        ...otherData
-                    },
-                    ...otherNextMatch,
-                });
-            }
-            response.send({ next: "no_reveal" })
-        }
-
-        response.end();
-    }
-);
 
 export const markActive = functions.https.onRequest(
     async (request, response) => {
