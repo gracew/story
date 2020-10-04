@@ -19,7 +19,6 @@ admin.initializeApp();
 admin
   .firestore()
   .collection("matches")
-  .where("created_at", ">=", moment("2020-09-01"))
   .get()
   .then(async (res) => {
     var invalidCount = 0;

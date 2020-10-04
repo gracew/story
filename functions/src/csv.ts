@@ -14,7 +14,7 @@ export async function processBulkSmsCsv(tempFilePath: string) {
                 body: data.body,
                 from: TWILIO_NUMBER,
                 to: data.phone,
-            }, /* TODO(gracew): log on error */ );
+            }).catch(err => console.error(err));
     }))
 }
 
@@ -32,7 +32,7 @@ export async function processAvailabilityCsv(tempFilePath: string, firestore: Fi
                 body: availability(user, data.timezone),
                 from: TWILIO_NUMBER,
                 to: user.phone,
-            });
+            }).catch(err => console.error(err));
     }));
 }
 
@@ -110,7 +110,7 @@ async function sendMatchNotificationTexts(matches: IMatch[], firestore: Firestor
                         body: t,
                         from: TWILIO_NUMBER,
                         to: usersById[userId].phone,
-                    });
+                    }).catch(err => console.error(err));
             }
         })
     )
