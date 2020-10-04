@@ -72,6 +72,6 @@ function day(match: IMatch) {
 
 export function reminder(userA: IUser, userB: IUser) {
     const prompt = "What are the open tabs on your phone?";
-    return `Hi ${userA.firstName}! This is Voicebar. Just a reminder that you’ll be speaking with ${userB.firstName} in an hour. Try out this prompt: "${prompt}" Hope you two have a good conversation!`;
+    return `Hi ${userA.firstName}! This is Voicebar. Just a reminder that you’ll be speaking with ${userB.firstName} in an hour. Here's one idea to get the conversation started: "${prompt}" Hope you two have a good date!`;
 }
 
