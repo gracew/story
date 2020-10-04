@@ -2,6 +2,7 @@ import * as uuid from "uuid";
 import { callStudio, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
 import { firestore, match, user } from "./mock";
 import * as test from "firebase-functions-test";
+import { IMatch } from "../src/firestore";
 test().mockConfig({ twilio: { auth_token: "token" } });
 
 const mockCreate = jest.fn();
@@ -19,10 +20,13 @@ jest.mock("twilio", () => {
 const user1 = user(uuid.v4());
 const user2 = user(uuid.v4());
 const user3 = user(uuid.v4());
-const m1 = match(user1.id, user2.id, "2020-09-23T20:00:00-04:00");
-const m2 = match(user3.id, user2.id, "2020-09-24T20:00:00-04:00");
+let m1: IMatch;
+let m2: IMatch;
 
 beforeEach(() => {
+    m1 = match(user1.id, user2.id, "2020-09-23T20:00:00-04:00");
+    m2 = match(user3.id, user2.id, "2020-09-24T20:00:00-04:00");
+
     jest.resetAllMocks();
     firestore.getUserByPhone.mockResolvedValue(user1);
     firestore.getMatch.mockResolvedValue(m1);
@@ -37,6 +41,7 @@ beforeEach(() => {
         return undefined;
     });
     firestore.latestMatchForUser.mockResolvedValue(m1);
+
 });
 
 it("callStudio", async () => {
@@ -186,4 +191,30 @@ it("saveReveal N, other Y next match", async () => {
             nextMatchDate: "Thursday",
         }
     })
+});
+
+it("saveReveal accepts a variety of inputs", async () => {
+    const yesInputs = ["Y", "yes", "YES", "y ", " y"];
+    for (const input of yesInputs) {
+        firestore.updateMatch.mockReset();
+        const res = await saveRevealHelper({ phone: user1.phone, reveal: input, matchId: m1.id }, firestore);
+        expect(res).toEqual({ next: "reveal_other_pending" });
+        expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
+        expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: true });
+    }
+
+    const noInputs = ["N", "no", "NO", "n ", " n"];
+    for (const input of noInputs) {
+        firestore.updateMatch.mockReset();
+        const res = await saveRevealHelper({ phone: user1.phone, reveal: input, matchId: m1.id }, firestore);
+        expect(res).toEqual({ next: "no_reveal" });
+        expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
+        expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: false });
+    }
+});
+
+it("saveReveal does not save for unknown input", async () => {
+    const res = await saveRevealHelper({ phone: user1.phone, reveal: "foo", matchId: m1.id }, firestore);
+    expect(res).toBeUndefined();
+    expect(firestore.updateMatch).not.toHaveBeenCalled();
 });
