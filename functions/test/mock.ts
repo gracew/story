@@ -11,11 +11,12 @@ export const firestore = {
     latestMatchForUser: jest.fn(),
 };
 
-export function user(firstName: string): IUser {
+export function user(firstName: string, funFacts?: string): IUser {
     return {
         id: uuid.v4(),
         firstName,
         phone: uuid.v4(),
+        funFacts,
     }
 }
 

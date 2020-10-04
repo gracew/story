@@ -1,15 +1,6 @@
-import { IMatch, IUser } from "../src/firestore";
 import * as uuid from "uuid";
 import { matchNotification } from "../src/smsCopy";
-
-function user(firstName: string, funFacts?: string): IUser {
-    return {
-        id: uuid.v4(),
-        firstName: firstName,
-        phone: uuid.v4(),
-        funFacts
-    }
-}
+import { match, user } from "./mock";
 
 const userId1 = uuid.v4();
 const userId2 = uuid.v4();
@@ -20,14 +11,8 @@ const expectedSimple = "Hi Anna, your match Grace has confirmed. At 8pm PT Wedne
 it("matchNotification for a single match - ET", async () => {
     const user1 = user("Anna");
     const user2 = user("Grace");
-    const match: IMatch = {
-        id: uuid.v4(),
-        user_a_id: userId1,
-        user_b_id: userId2,
-        user_ids: [userId1, userId2],
-        created_at: new Date("2020-09-23T20:00:00-04:00")
-    }
-    const res = matchNotification(userId1, [match], { [userId1]: user1, [userId2]: user2 })
+    const m = match(userId1, userId2, "2020-09-23T20:00:00-04:00");
+    const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
     expect(res).toHaveLength(1);
     expect(res[0]).toEqual(expectedSimpleET);
 });
@@ -35,14 +20,8 @@ it("matchNotification for a single match - ET", async () => {
 it("matchNotification for a single match - PT", async () => {
     const user1 = user("Anna");
     const user2 = user("Grace");
-    const match: IMatch = {
-        id: uuid.v4(),
-        user_a_id: userId1,
-        user_b_id: userId2,
-        user_ids: [userId1, userId2],
-        created_at: new Date("2020-09-23T20:00:00-07:00")
-    }
-    const res = matchNotification(userId1, [match], { [userId1]: user1, [userId2]: user2 })
+    const m = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
+    const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
     expect(res).toHaveLength(1);
     expect(res[0]).toEqual(expectedSimple);
 });
@@ -50,14 +29,8 @@ it("matchNotification for a single match - PT", async () => {
 it("matchNotification for a single match - no fun facts for user", async () => {
     const user1 = user("Anna");
     const user2 = user("Grace", "funFacts");
-    const match: IMatch = {
-        id: uuid.v4(),
-        user_a_id: userId1,
-        user_b_id: userId2,
-        user_ids: [userId1, userId2],
-        created_at: new Date("2020-09-23T20:00:00-07:00")
-    }
-    const res = matchNotification(userId1, [match], { [userId1]: user1, [userId2]: user2 })
+    const m = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
+    const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
     expect(res).toHaveLength(1);
     expect(res[0]).toEqual(expectedSimple);
 });
@@ -65,14 +38,8 @@ it("matchNotification for a single match - no fun facts for user", async () => {
 it("matchNotification for a single match - no fun facts for match", async () => {
     const user1 = user("Anna", "funFacts");
     const user2 = user("Grace");
-    const match: IMatch = {
-        id: uuid.v4(),
-        user_a_id: userId1,
-        user_b_id: userId2,
-        user_ids: [userId1, userId2],
-        created_at: new Date("2020-09-23T20:00:00-07:00")
-    }
-    const res = matchNotification(userId1, [match], { [userId1]: user1, [userId2]: user2 })
+    const m = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
+    const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
     expect(res).toHaveLength(1);
     expect(res[0]).toEqual(expectedSimple);
 });
@@ -80,14 +47,8 @@ it("matchNotification for a single match - no fun facts for match", async () => 
 it("matchNotification for a single match - fun facts for both", async () => {
     const user1 = user("Anna", "funFacts");
     const user2 = user("Grace", "funFactsGrace");
-    const match: IMatch = {
-        id: uuid.v4(),
-        user_a_id: userId1,
-        user_b_id: userId2,
-        user_ids: [userId1, userId2],
-        created_at: new Date("2020-09-23T20:00:00-07:00")
-    }
-    const res = matchNotification(userId1, [match], { [userId1]: user1, [userId2]: user2 })
+    const m = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
+    const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
     expect(res).toHaveLength(2);
     expect(res[0]).toEqual(expectedSimple);
     expect(res[1]).toEqual(`Here are a few fun facts about Grace: "funFactsGrace"
@@ -99,20 +60,8 @@ it("matchNotification for two matches", async () => {
     const user1 = user("Anna");
     const user2 = user("Grace");
     const user3 = user("Rachael");
-    const matchUser2: IMatch = {
-        id: uuid.v4(),
-        user_a_id: userId1,
-        user_b_id: userId2,
-        user_ids: [userId1, userId2],
-        created_at: new Date("2020-09-23T20:00:00-07:00")
-    }
-    const matchUser3: IMatch = {
-        id: uuid.v4(),
-        user_a_id: userId1,
-        user_b_id: userId3,
-        user_ids: [userId1, userId3],
-        created_at: new Date("2020-09-24T20:00:00-07:00")
-    }
+    const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
+    const matchUser3 = match(userId1, userId3, "2020-09-24T20:00:00-07:00");
     const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
     expect(res).toHaveLength(1);
     expect(res[0].startsWith("Hi Anna, we have two Voicebar matches for you! On Wednesday you'll be chatting with Grace and on Thursday you'll be chatting with Rachael. At 8pm PT both nights you’ll receive a phone call connecting you with your match."))
@@ -123,20 +72,8 @@ it("matchNotification for two matches - no fun facts for user", async () => {
     const user1 = user("Anna");
     const user2 = user("Grace", "funFacts");
     const user3 = user("Rachael", "funFacts");
-    const matchUser2: IMatch = {
-        id: uuid.v4(),
-        user_a_id: userId1,
-        user_b_id: userId2,
-        user_ids: [userId1, userId2],
-        created_at: new Date("2020-09-23T20:00:00-07:00")
-    }
-    const matchUser3: IMatch = {
-        id: uuid.v4(),
-        user_a_id: userId1,
-        user_b_id: userId3,
-        user_ids: [userId1, userId3],
-        created_at: new Date("2020-09-24T20:00:00-07:00")
-    }
+    const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
+    const matchUser3 = match(userId1, userId3, "2020-09-24T20:00:00-07:00");
     const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
     expect(res).toHaveLength(1);
     expect(res[0].startsWith("Hi Anna, we have two Voicebar matches for you! On Wednesday you'll be chatting with Grace and on Thursday you'll be chatting with Rachael. At 8pm PT both nights you’ll receive a phone call connecting you with your match."))
@@ -147,20 +84,8 @@ it("matchNotification for two matches - fun facts", async () => {
     const user1 = user("Anna", "funFacts");
     const user2 = user("Grace");
     const user3 = user("Rachael", "funFactsRachael");
-    const matchUser2: IMatch = {
-        id: uuid.v4(),
-        user_a_id: userId1,
-        user_b_id: userId2,
-        user_ids: [userId1, userId2],
-        created_at: new Date("2020-09-23T20:00:00-07:00")
-    }
-    const matchUser3: IMatch = {
-        id: uuid.v4(),
-        user_a_id: userId1,
-        user_b_id: userId3,
-        user_ids: [userId1, userId3],
-        created_at: new Date("2020-09-24T20:00:00-07:00")
-    }
+    const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
+    const matchUser3 = match(userId1, userId3, "2020-09-24T20:00:00-07:00");
     const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
     expect(res).toHaveLength(2);
     expect(res[0].startsWith("Hi Anna, we have two Voicebar matches for you! On Wednesday you'll be chatting with Grace and on Thursday you'll be chatting with Rachael. At 8pm PT both nights you’ll receive a phone call connecting you with your match."))
