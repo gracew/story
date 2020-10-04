@@ -1,23 +1,29 @@
+import * as admin from "firebase-admin";
+import * as functions from "firebase-functions";
+
+
 const Airtable = require('airtable');
-const baseId = "appWqzrY3SZ09xjYO"
-const apiKey = "key8rNmGaRXvRhHaD";
+const baseId = functions.config().airtable.id;
+const apiKey = functions.config().airtable.key;
 
 export async function generateRemainingMatchCount() {
     const base = new Airtable({ apiKey: apiKey }).base(baseId);
     const records = await base("Users").select({ view: "Available Users" }).all();
-    const users = records.map((record: any) => {
+    const users: any[] = await Promise.all(records.map(async (record: any) => {
+        const firebaseId = record.get("UserID");
         const age = record.get("Age");
         const gender = record.get("Gender");
 
         // these contain airtable IDs
-        const prevMatches = (record.get("Previous Matches A") || []).concat(record.get("Previous Matches B") || []);
+        const prevMatches = await getPreviousMatches(firebaseId);
         const blocklist = record.get("Blocklist") || [];
         return {
             name: record.get("Label"),
-            id: record.get("UserID"),
+            id: firebaseId,
             airtableId: record.id,
             age,
             gender,
+            phone: record.get("Phone"),
             status: record.get("Status"),
             matchMax: record.get("Max Match Age") || defaultMatchMax(gender, age),
             matchMin: record.get("Min Match Age") || defaultMatchMin(gender, age),
@@ -29,7 +35,7 @@ export async function generateRemainingMatchCount() {
             prevMatches,
             blocklist,
         };
-    })
+    }));
 
     const results = [];
     for (const user of users) {
@@ -69,7 +75,7 @@ export async function generateRemainingMatchCount() {
             }
 
             // If user has previous matches or blocklist, filter them out of results
-            if (user.prevMatches.includes(match.airtableId)) {
+            if (user.prevMatches.includes(match.id)) {
                 return false;
             }
             if (user.blocklist.includes(match.airtableId)) {
@@ -85,7 +91,8 @@ export async function generateRemainingMatchCount() {
             age: user.age,
             timezone: user.timezone,
             location: user.location,
-            remainingMatches: matches.length,
+            phone: user.phone,
+            remainingMatches: matches.map(m => m.name),
             status: user.status,
             previousMatches: user.prevMatches.length
         });
@@ -100,4 +107,13 @@ function defaultMatchMax(match_gender: string, match_age: number) {
 
 function defaultMatchMin(match_gender: string, match_age: number) {
     return match_gender === "Female" ? match_age - 1 : match_age - 5
+}
+
+async function getPreviousMatches(id: string) {
+    if (!id) {
+        return [];
+    }
+    const matches = await admin.firestore().collection("matches")
+        .where("user_ids", "array-contains", id).get();
+    return matches.docs.map(doc => doc.get("user_a_id") === id ? doc.get("user_b_id") : doc.get("user_a_id"));
 }
