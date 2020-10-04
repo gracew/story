@@ -142,7 +142,7 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    await processBulkSmsCsv(tempFilePath, opts => sendSms(opts))
+    await processBulkSmsCsv(tempFilePath, sendSms)
 });
 
 /**
@@ -155,7 +155,7 @@ export const sendAvailabilityTexts = functions.storage.object().onFinalize(async
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    await processAvailabilityCsv(tempFilePath, new Firestore(), opts => sendSms(opts));
+    await processAvailabilityCsv(tempFilePath, new Firestore(), sendSms);
 });
 
 /**
@@ -170,7 +170,7 @@ export const createMatches = functions.storage.object().onFinalize(async (object
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
 
-    await processMatchCsv(tempFilePath, new Firestore(), opts => sendSms(opts));
+    await processMatchCsv(tempFilePath, new Firestore(), sendSms);
 });
 
 // runs every hour

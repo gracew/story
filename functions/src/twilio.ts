@@ -7,8 +7,8 @@ import { Firestore, IMatch } from "./firestore";
 export const TWILIO_NUMBER = '+12036338466';
 export const BASE_URL = 'https://us-central1-speakeasy-prod.cloudfunctions.net/';
 const accountSid = 'AC07d4a9a61ac7c91f7e5cecf1e27c45a6';
-// const authToken = functions.config().twilio.auth_token;
-export const client = twilio(accountSid, "token");
+const authToken = functions.config().twilio.auth_token;
+export const client = twilio(accountSid, authToken);
 
 
 export async function getConferenceTwimlForPhone(phone: string) {
