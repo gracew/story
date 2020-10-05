@@ -62,7 +62,7 @@ export async function generateAvailableMatches(view: string, tz: string) {
     const availabilityByUserId: Record<string, string[]> = {}
     const usersInRound = availability.map((record: any) => {
         const id = record.get('UserID')[0];
-        availabilityByUserId[id] = record.get('Response');
+        availabilityByUserId[id] = record.get('Response') || [];
         return id;
     })
 
@@ -83,6 +83,11 @@ export async function generateAvailableMatches(view: string, tz: string) {
             pairs.push({
                 userA: userA.name,
                 userB: userB.name,
+                sameLocation: userA.location === userB.location,
+                userAFlexible: userA.flexible,
+                userBFlexible: userB.flexible,
+                userAPrevMatches: userA.prevMatches.length,
+                userBPrevMatches: userB.prevMatches.length,
                 userAId: userA.id,
                 userBId: userB.id,
                 days: sharedAvailability

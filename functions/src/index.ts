@@ -4,6 +4,7 @@ import * as moment from "moment-timezone";
 import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
+import * as util from "util";
 import { addUserToAirtable } from './airtable';
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
 import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
@@ -294,7 +295,7 @@ export const screenCall = functions.https.onRequest(
     async (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
         const gather = twiml.gather({ numDigits: 1, action: BASE_URL + "addUserToCall" });
-        gather.say({ voice: "alice" }, 'Welcome to Voicebar. Press any key to continue.');
+        gather.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fvoicebar_screen.mp3?alt=media");
 
         // If the user doesn't enter input, loop
         twiml.redirect('/screenCall');
@@ -323,11 +324,24 @@ export const conferenceStatusWebhook = functions.https.onRequest(
             }
             await admin.firestore().collection("matches").doc(request.body.FriendlyName)
                 .update({ "ongoing": true, "twilioSid": conferenceSid })
+            await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "announceUser" })
+            await util.promisify(setTimeout)(29_000);
+            await Promise.all(participants.map(participant =>
+                client.conferences(conferenceSid).participants(participant.callSid).update({ muted: false })))
         } else if (request.body.StatusCallbackEvent === "conference-end") {
             await admin.firestore().collection("matches").doc(request.body.FriendlyName)
                 .update({ "ongoing": false })
         }
         response.end();
+    }
+);
+
+export const announceUser = functions.https.onRequest(
+    (request, response) => {
+        const twiml = new twilio.twiml.VoiceResponse();
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fvoicebar_intro.mp3?alt=media");
+        response.set('Content-Type', 'text/xml');
+        response.send(twiml.toString());
     }
 );
 
