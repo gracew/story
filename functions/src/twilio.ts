@@ -194,11 +194,12 @@ async function nextMatchNameAndDate(matchesByUserId: Record<string, IMatch>, cur
         return {};
     }
     const nextMatchUserId = nextMatch.user_a_id === userId ? nextMatch.user_b_id : nextMatch.user_a_id;
-    console.log(nextMatchUserId);
     const nextMatchUser = await firestore.getUser(nextMatchUserId);
+    const nextMatchDate = moment(nextMatch.created_at).tz("America/New_York").format("dddd");
+    console.log(`next match ${nextMatch.id} for user ${userId}: created_at ${nextMatch.created_at}, formatted day ${nextMatchDate}`);
     return {
         nextMatchName: nextMatchUser!.firstName,
-        nextMatchDate: moment(nextMatch.created_at).tz("America/New_York").format("dddd"),
+        nextMatchDate,
     }
 }
 
