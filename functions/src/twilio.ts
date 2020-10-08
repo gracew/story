@@ -196,7 +196,7 @@ async function nextMatchNameAndDate(matchesByUserId: Record<string, IMatch>, cur
     const nextMatchUserId = nextMatch.user_a_id === userId ? nextMatch.user_b_id : nextMatch.user_a_id;
     const nextMatchUser = await firestore.getUser(nextMatchUserId);
     const nextMatchDate = moment(nextMatch.created_at).tz("America/New_York").format("dddd");
-    console.log(`next match ${nextMatch.id} for user ${userId}: created_at ${nextMatch.created_at}, formatted day ${nextMatchDate}`);
+    console.log(`next match ${nextMatch.id} for user ${userId}: created_at ${moment(nextMatch.created_at).format()}, formatted day ${nextMatchDate}`);
     return {
         nextMatchName: nextMatchUser!.firstName,
         nextMatchDate,
