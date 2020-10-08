@@ -68,11 +68,3 @@ export class Firestore {
         return Object.assign({}, ...allUsers.map(user => ({ [user.id]: user.data() })));
     }
 }
-
-export async function matchesThisHour() {
-    return await admin
-        .firestore()
-        .collection("matches")
-        .where("created_at", "==", moment().utc().startOf("hour"))
-        .get();
-}
