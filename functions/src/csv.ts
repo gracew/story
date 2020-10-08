@@ -60,7 +60,12 @@ export async function processMatchCsv(tempFilePath: string, firestore: Firestore
             user_a_id: data.userAId,
             user_b_id: data.userBId,
             user_ids: [data.userAId, data.userBId],
-            created_at: createdAt.toDate()
+            created_at: createdAt.toDate(),
+            reminded: false,
+            called: false,
+            warned5Min: false,
+            warned1Min: false,
+            revealRequested: false,
         };
         await firestore.createMatch(match);
         return match;

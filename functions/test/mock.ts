@@ -27,5 +27,10 @@ export function match(userIdA: string, userIdB: string, createdAt: string): IMat
         user_b_id: userIdB,
         user_ids: [userIdA, userIdB],
         created_at: new Date(createdAt),
+        reminded: false,
+        called: false,
+        warned5Min: false,
+        warned1Min: false,
+        revealRequested: false,
     }
 }
