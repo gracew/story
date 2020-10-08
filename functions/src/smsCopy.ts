@@ -13,12 +13,13 @@ export function matchNotification(userId: string, matches: IMatch[], usersById: 
     }
 
     const tz = timezone(matches[0]);
+    const formattedTime = moment(matches[0].created_at).tz(tz).format("h:mma z");
     if (matches.length === 1) {
         const match = matches[0];
         const matchUserId = match.user_a_id === userId ? match.user_b_id : match.user_a_id;
         const matchUser = usersById[matchUserId];
         const texts = [
-            `Hi ${user.firstName}, your match ${matchUser.firstName} has confirmed. At 8pm ${tz} ${day(match)}, you’ll receive a phone call connecting you with your match. ${phoneSwapText}`
+            `Hi ${user.firstName}, your match ${matchUser.firstName} has confirmed. At ${formattedTime} ${day(match)}, you’ll receive a phone call connecting you with your match. ${phoneSwapText}`
         ];
         if (user.funFacts && matchUser.funFacts) {
             texts.push(
@@ -35,8 +36,9 @@ Happy chatting!`
         const match2 = matches[1];
         const matchUser2Id = match2.user_a_id === userId ? match2.user_b_id : match2.user_a_id;
         const match2User = usersById[matchUser2Id];
+        // NOTE: this assumes both dates are at the same time
         const texts = [
-            `Hi ${user.firstName}, we have two Voicebar matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. At 8pm ${tz} both nights you’ll receive a phone call connecting you with your match. ${phoneSwapText}`
+            `Hi ${user.firstName}, we have two Voicebar matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. At ${formattedTime} both nights you’ll receive a phone call connecting you with your match. ${phoneSwapText}`
         ];
         if (user.funFacts && match1User.funFacts) {
             texts.push(
@@ -55,14 +57,14 @@ Happy chatting!`
 function timezone(match: IMatch) {
     const matchTime = moment(match.created_at).tz("America/Los_Angeles")
     if (matchTime.hour() === 17) {
-        return "ET";
+        return "America/New_York";
     } else if (matchTime.hour() === 18) {
-        return "CT";
+        return "America/Chicago";
     } else if (matchTime.hour() === 19) {
-        return "MT";
+        return "America/Denver";
     }
     // TODO(gracew): should probably not return this by default
-    return "PT";
+    return "America/Los_Angeles";
 }
 
 function day(match: IMatch) {
@@ -71,6 +73,7 @@ function day(match: IMatch) {
 }
 
 export function reminder(userA: IUser, userB: IUser) {
-    return `Hi ${userA.firstName}! This is Voicebar. Just a reminder that you’ll be speaking with ${userB.firstName} in an hour. Hope you two have a good conversation!`;
-
+    const prompt = "What are the open tabs on your phone?";
+    return `Hi ${userA.firstName}! This is Voicebar. Just a reminder that you’ll be speaking with ${userB.firstName} in an hour. Here's one idea to get the conversation started: "${prompt}" Hope you two have a good date!`;
 }
+

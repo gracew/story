@@ -3,22 +3,21 @@ import * as moment from "moment-timezone";
 import { Firestore, IMatch } from "./firestore";
 import { availability, matchNotification } from "./smsCopy";
 import * as neatCsv from 'neat-csv';
-import { client, TWILIO_NUMBER } from './twilio';
+import {  TWILIO_NUMBER } from './twilio';
 
-export async function processBulkSmsCsv(tempFilePath: string) {
+export async function processBulkSmsCsv(tempFilePath: string, sendSms: (opts: any) => Promise<any>) {
     const contents = fs.readFileSync(tempFilePath).toString();
     const rows = await neatCsv(contents, { headers: ["phone", "body"] });
     return Promise.all(rows.map(async data => {
-        return client.messages
-            .create({
-                body: data.body,
-                from: TWILIO_NUMBER,
-                to: data.phone,
-            }).catch(err => console.error(err));
+        return sendSms({
+            body: data.body,
+            from: TWILIO_NUMBER,
+            to: data.phone,
+        });
     }))
 }
 
-export async function processAvailabilityCsv(tempFilePath: string, firestore: Firestore) {
+export async function processAvailabilityCsv(tempFilePath: string, firestore: Firestore, sendSms: (opts: any) => Promise<any>) {
     const contents = fs.readFileSync(tempFilePath).toString();
     const rows = await neatCsv(contents, { headers: ["userId", "timezone"] });
     return Promise.all(rows.map(async data => {
@@ -27,16 +26,15 @@ export async function processAvailabilityCsv(tempFilePath: string, firestore: Fi
             console.error("cannot find user with id " + data.userId);
             return;
         }
-        return client.messages
-            .create({
-                body: availability(user, data.timezone),
-                from: TWILIO_NUMBER,
-                to: user.phone,
-            }).catch(err => console.error(err));
+        return sendSms({
+            body: availability(user, data.timezone),
+            from: TWILIO_NUMBER,
+            to: user.phone,
+        });
     }));
 }
 
-export async function processMatchCsv(tempFilePath: string, firestore: Firestore) {
+export async function processMatchCsv(tempFilePath: string, firestore: Firestore, sendSms: (opts: any) => Promise<any>) {
     const contents = fs.readFileSync(tempFilePath).toString();
     const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "date", "time", "timezone"] })
     const matches = await Promise.all(rows.map(async data => {
@@ -74,7 +72,8 @@ export async function processMatchCsv(tempFilePath: string, firestore: Firestore
     }));
     return sendMatchNotificationTexts(
         matches.filter(m => m !== undefined) as IMatch[],
-        firestore);
+        firestore,
+        sendSms);
 }
 
 function processTimeZone(tz: string) {
@@ -88,7 +87,7 @@ function processTimeZone(tz: string) {
     return undefined;
 }
 
-async function sendMatchNotificationTexts(matches: IMatch[], firestore: Firestore) {
+async function sendMatchNotificationTexts(matches: IMatch[], firestore: Firestore, sendSms: (opts: any) => Promise<any>) {
     // create map from userId to matches
     const userToMatches: Record<string, IMatch[]> = {};
     matches.forEach(m => {
@@ -110,12 +109,11 @@ async function sendMatchNotificationTexts(matches: IMatch[], firestore: Firestor
             const texts = matchNotification(userId, userToMatches[userId], usersById)
             // send these linearly
             for (const t of texts) {
-                await client.messages
-                    .create({
-                        body: t,
-                        from: TWILIO_NUMBER,
-                        to: usersById[userId].phone,
-                    }).catch(err => console.error(err));
+                await sendSms({
+                    body: t,
+                    from: TWILIO_NUMBER,
+                    to: usersById[userId].phone,
+                });
             }
         })
     )

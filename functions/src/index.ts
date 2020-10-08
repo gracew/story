@@ -4,11 +4,13 @@ import * as moment from "moment-timezone";
 import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
+import * as util from "util";
 import { addUserToAirtable } from './airtable';
-import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, nextMatchNameAndDate, TWILIO_NUMBER } from "./twilio";
+import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
 import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
-import { Firestore, IUser, matchesThisHour } from "./firestore";
+import { Firestore, IMatch, IUser, matchesThisHour } from "./firestore";
 import { reminder } from "./smsCopy";
+import { generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
 
 admin.initializeApp();
 
@@ -117,6 +119,20 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     response.send({ 'success': 'true' })
 });
 
+/** Used in each round to determine which users should be included (based on number of potential matches). */
+export const generateRemainingMatchReport = functions.https.onRequest(
+    async (request, response) => {
+        const result = await generateRemainingMatchCount(request.body.excludeNames || []);
+        response.send(result);
+    });
+
+/** Used in each round after obtaining availability to generate matches. */
+export const generateMatchesUsingAvailability = functions.https.onRequest(
+    async (request, response) => {
+        const result = await generateAvailableMatches(request.body.schedulingView, request.body.tz);
+        response.send(result);
+    });
+
 /**
  * Sends an SMS for each row in a CSV. The CSV should be in the format: phone,textBody. There should not be a header
  * line.
@@ -127,7 +143,7 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    await processBulkSmsCsv(tempFilePath)
+    await processBulkSmsCsv(tempFilePath, sendSms)
 });
 
 /**
@@ -140,7 +156,7 @@ export const sendAvailabilityTexts = functions.storage.object().onFinalize(async
     }
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
-    await processAvailabilityCsv(tempFilePath, new Firestore());
+    await processAvailabilityCsv(tempFilePath, new Firestore(), sendSms);
 });
 
 /**
@@ -155,7 +171,7 @@ export const createMatches = functions.storage.object().onFinalize(async (object
     const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
     await admin.storage().bucket(object.bucket).file(object.name).download({ destination: tempFilePath });
 
-    await processMatchCsv(tempFilePath, new Firestore());
+    await processMatchCsv(tempFilePath, new Firestore(), sendSms);
 });
 
 // runs every hour
@@ -238,91 +254,22 @@ export const revealRequest = functions.pubsub.schedule('35 * * * *').onRun(async
         .where("created_at", "==", moment().utc().startOf("hour"))
         .where("revealRequested", "==", false)
         .get();
-    const connectedMatches = matches.docs.filter(m => m.get("twilioSid") !== undefined);
-    await callStudio("reveal_request", connectedMatches)
+    const connectedMatches = matches.docs.filter(m => m.get("twilioSid") !== undefined)
+    await callStudio("reveal_request", connectedMatches.map(doc => doc.data() as IMatch), new Firestore())
     // TODO(gracew): switch to a batched write later
     await Promise.all(connectedMatches.map(doc => doc.ref.update("revealRequested", true)))
 });
 
 export const saveReveal = functions.https.onRequest(
     async (request, response) => {
-        const phone = request.body.phone;
-        const reveal = request.body.reveal.trim().toLowerCase() === "y" || request.body.reveal.trim().toLowerCase() === "yes";
-        const users = await admin.firestore().collection("users");
-        const revealingUserQuery = await users.where("phone", "==", phone).get();
-        // check if user exists in table
-        if (revealingUserQuery.empty) {
-            console.error("No user with phone " + phone);
-            response.end();
-            return;
-        }
-        const revealingUser = revealingUserQuery.docs[0];
-
-        const match = await admin.firestore().collection("matches").doc(request.body.matchId).get();
-
-        let otherUser;
-        let otherReveal;
-        if (match.get("user_a_id") === revealingUser.id) {
-            otherUser = await users.doc(match.get("user_b_id")).get();
-            otherReveal = match.get("user_b_revealed")
-            await match.ref.update({ user_a_revealed: reveal });
-        } else if (match.get("user_b_id") === revealingUser.id) {
-            otherUser = await users.doc(match.get("user_a_id")).get();
-            otherReveal = match.get("user_a_revealed")
-            await match.ref.update({ user_b_revealed: reveal });
+        const res = await saveRevealHelper(request.body, new Firestore());
+        if (res) {
+            response.send(res);
         } else {
-            console.error("Requested match doesnt have the requested users");
             response.end();
-            return;
         }
-        const latestMatchOther = await admin.firestore().collection("matches")
-            .where("user_ids", "array-contains", otherUser.id)
-            .orderBy("created_at", "desc")
-            .limit(1)
-            .get();
-        const otherNextMatch = await nextMatchNameAndDate(
-            { [otherUser.id]: latestMatchOther.docs[0] }, match, otherUser.id);
+    });
 
-        const otherData = {
-            userId: otherUser.id,
-            firstName: otherUser.data()!.firstName,
-            matchName: revealingUser.data().firstName,
-            matchPhone: revealingUser.data().phone.substring(2),
-        };
-
-        if (reveal && otherReveal) {
-            await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
-                to: otherUser.get("phone"),
-                from: TWILIO_NUMBER,
-                parameters: {
-                    mode: "reveal",
-                    ...otherData,
-                    ...otherNextMatch,
-                }
-            });
-            response.send({ next: "reveal" })
-        } else if (reveal && otherReveal === false) {
-            response.send({ next: "reveal_other_no" })
-        } else if (reveal && otherReveal === undefined) {
-            response.send({ next: "reveal_other_pending" })
-        } else if (!reveal) {
-            if (otherReveal) {
-                await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
-                    to: otherUser.get("phone"),
-                    from: TWILIO_NUMBER,
-                    parameters: {
-                        mode: "reveal_other_no",
-                        ...otherData
-                    },
-                    ...otherNextMatch,
-                });
-            }
-            response.send({ next: "no_reveal" })
-        }
-
-        response.end();
-    }
-);
 
 export const markActive = functions.https.onRequest(
     async (request, response) => {
@@ -363,7 +310,7 @@ export const screenCall = functions.https.onRequest(
     async (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
         const gather = twiml.gather({ numDigits: 1, action: BASE_URL + "addUserToCall" });
-        gather.say({ voice: "alice" }, 'Welcome to Voicebar. Press any key to continue.');
+        gather.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fvoicebar_screen.mp3?alt=media");
 
         // If the user doesn't enter input, loop
         twiml.redirect('/screenCall');
@@ -392,6 +339,10 @@ export const conferenceStatusWebhook = functions.https.onRequest(
             }
             await admin.firestore().collection("matches").doc(request.body.FriendlyName)
                 .update({ "ongoing": true, "twilioSid": conferenceSid })
+            await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "announceUser" })
+            await util.promisify(setTimeout)(29_000);
+            await Promise.all(participants.map(participant =>
+                client.conferences(conferenceSid).participants(participant.callSid).update({ muted: false })))
         } else if (request.body.StatusCallbackEvent === "conference-end") {
             await admin.firestore().collection("matches").doc(request.body.FriendlyName)
                 .update({ "ongoing": false })
@@ -400,10 +351,19 @@ export const conferenceStatusWebhook = functions.https.onRequest(
     }
 );
 
+export const announceUser = functions.https.onRequest(
+    (request, response) => {
+        const twiml = new twilio.twiml.VoiceResponse();
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fvoicebar_intro.mp3?alt=media");
+        response.set('Content-Type', 'text/xml');
+        response.send(twiml.toString());
+    }
+);
+
 export const announce5Min = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
-        twiml.say({ 'voice': 'alice' }, "Your call will end in 5 minutes.");
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media");
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
@@ -412,7 +372,7 @@ export const announce5Min = functions.https.onRequest(
 export const announce1Min = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
-        twiml.say({ 'voice': 'alice' }, "Your call will end in 1 minute.");
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media");
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
