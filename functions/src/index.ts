@@ -5,6 +5,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
 import * as util from "util";
+import * as firestore from "@google-cloud/firestore";
 import { addUserToAirtable } from './airtable';
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
 import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
@@ -418,5 +419,19 @@ export const call1MinWarning = functions.pubsub.schedule('29,59 * * * *').onRun(
             client.conferences(doc.get("twilioSid"))
                 .update({ announceUrl: BASE_URL + "announce1Min" })));
         await Promise.all(ongoingCalls.docs.map(doc => txn.update(doc.ref, "warned1Min", true)));
+    });
+});
+
+export const backupFirestore = functions.pubsub.schedule('every 24 hours').onRun((context) => {
+    const fClient = new firestore.v1.FirestoreAdminClient();
+    const projectId = process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT;
+    const databaseName = fClient.databasePath(projectId, '(default)');
+
+    const outputUriPrefix = "gs://" + admin.storage().bucket().name + "/backups";
+    console.log("backing up to " + outputUriPrefix);
+    return fClient.exportDocuments({
+        name: databaseName,
+        outputUriPrefix,
+        collectionIds: [] // leave collectionIds empty to export all collections
     });
 });

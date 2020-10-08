@@ -18,3 +18,4 @@ jobs:
     - run: yarn
     - run: yarn tslint --project tsconfig.json
     - run: yarn jest
+    - run: yarn tsc
