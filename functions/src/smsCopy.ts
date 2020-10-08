@@ -13,7 +13,7 @@ export function matchNotification(userId: string, matches: IMatch[], usersById: 
     }
 
     const tz = timezone(matches[0]);
-    const formattedTime = moment(matches[0].created_at).tz(tz).format("h:mma z");
+    const formattedTime = moment(matches[0].created_at.toDate()).tz(tz).format("h:mma z");
     if (matches.length === 1) {
         const match = matches[0];
         const matchUserId = match.user_a_id === userId ? match.user_b_id : match.user_a_id;
@@ -55,7 +55,7 @@ Happy chatting!`
 }
 
 function timezone(match: IMatch) {
-    const matchTime = moment(match.created_at).tz("America/Los_Angeles")
+    const matchTime = moment(match.created_at.toDate()).tz("America/Los_Angeles")
     if (matchTime.hour() === 17) {
         return "America/New_York";
     } else if (matchTime.hour() === 18) {
@@ -68,7 +68,7 @@ function timezone(match: IMatch) {
 }
 
 function day(match: IMatch) {
-    const matchTime = moment(match.created_at).tz("America/Los_Angeles")
+    const matchTime = moment(match.created_at.toDate()).tz("America/Los_Angeles")
     return matchTime.format("dddd");
 }
 
