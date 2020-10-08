@@ -1,5 +1,4 @@
 import * as admin from "firebase-admin";
-import * as moment from "moment";
 
 export interface IUser {
     id: string;
