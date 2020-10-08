@@ -4,6 +4,7 @@ import { Firestore, IMatch } from "./firestore";
 import { availability, matchNotification } from "./smsCopy";
 import * as neatCsv from 'neat-csv';
 import {  TWILIO_NUMBER } from './twilio';
+import admin = require('firebase-admin');
 
 export async function processBulkSmsCsv(tempFilePath: string, sendSms: (opts: any) => Promise<any>) {
     const contents = fs.readFileSync(tempFilePath).toString();
@@ -60,7 +61,7 @@ export async function processMatchCsv(tempFilePath: string, firestore: Firestore
             user_a_id: data.userAId,
             user_b_id: data.userBId,
             user_ids: [data.userAId, data.userBId],
-            created_at: createdAt.toDate(),
+            created_at: new admin.firestore.Timestamp(createdAt.unix(), 0),
             reminded: false,
             called: false,
             warned5Min: false,

@@ -1,3 +1,5 @@
+import admin = require("firebase-admin");
+import * as moment from "moment";
 import * as uuid from "uuid";
 import { IMatch, IUser } from "../src/firestore";
 
@@ -26,7 +28,7 @@ export function match(userIdA: string, userIdB: string, createdAt: string): IMat
         user_a_id: userIdA,
         user_b_id: userIdB,
         user_ids: [userIdA, userIdB],
-        created_at: new Date(createdAt),
+        created_at: new admin.firestore.Timestamp(moment(createdAt).unix(), 0),
         reminded: false,
         called: false,
         warned5Min: false,

@@ -14,7 +14,7 @@ export interface IMatch {
     user_b_id: string;
     user_b_revealed?: boolean;
     user_ids: string[];
-    created_at: Date;
+    created_at: admin.firestore.Timestamp;
     reminded?: boolean;
     called?: boolean;
     warned5Min?: boolean;
