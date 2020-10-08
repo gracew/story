@@ -175,11 +175,15 @@ export const createMatches = functions.storage.object().onFinalize(async (object
 });
 
 // runs every hour
-export const sendReminderTexts = functions.pubsub.schedule('0 * * * *').onRun(async (context) => {
+export const sendReminderTexts = functions.pubsub.schedule('0,30 * * * *').onRun(async (context) => {
+    const createdAt = moment().utc().startOf("hour").add(1, "hour");
+    if (moment().minutes() >= 30) {
+        createdAt.add(30, "minutes");
+    }
     await admin.firestore().runTransaction(async txn => {
         const matches = await txn.get(admin.firestore()
             .collection("matches")
-            .where("created_at", "==", moment().utc().startOf("hour").add(1, "hour"))
+            .where("created_at", "==", createdAt)
             .where("reminded", "==", false));
         console.log("found the following matches: " + matches.docs.map(doc => doc.id));
 
@@ -217,12 +221,16 @@ async function textUserHelper(userA: IUser, userB: IUser) {
 }
 
 // runs every hour
-export const issueCalls = functions.pubsub.schedule('0 * * * *').onRun(async (context) => {
+export const issueCalls = functions.pubsub.schedule('0,30 * * * *').onRun(async (context) => {
+    const createdAt = moment().utc().startOf("hour");
+    if (moment().minutes() >= 30) {
+        createdAt.add(30, "minutes");
+    }
     await admin.firestore().runTransaction(async txn => {
         const matches = await txn.get(admin
             .firestore()
             .collection("matches")
-            .where("created_at", "==", moment().utc().startOf("hour"))
+            .where("created_at", "==", createdAt)
             .where("called", "==", false));
         console.log("found the following matches: " + matches.docs.map(doc => doc.id));
 
@@ -248,12 +256,16 @@ export const callStudioManual = functions.https.onRequest(
     });
 
 // runs every hour at 35 minutes past
-export const revealRequest = functions.pubsub.schedule('35 * * * *').onRun(async (context) => {
+export const revealRequest = functions.pubsub.schedule('5,35 * * * *').onRun(async (context) => {
+    const createdAt = moment().utc().startOf("hour");
+    if (moment().minutes() < 30) {
+        createdAt.subtract(30, "minutes");
+    }
     await admin.firestore().runTransaction(async txn => {
         const matches = await txn.get(admin
             .firestore()
             .collection("matches")
-            .where("created_at", "==", moment().utc().startOf("hour"))
+            .where("created_at", "==", createdAt)
             .where("revealRequested", "==", false));
         const connectedMatches = matches.docs.filter(m => m.get("twilioSid") !== undefined);
         await callStudio("reveal_request", connectedMatches.map(doc => doc.data() as IMatch), new Firestore());
@@ -380,7 +392,7 @@ export const announce1Min = functions.https.onRequest(
 );
 
 // runs every hour at 25 minutes past
-export const call5MinWarning = functions.pubsub.schedule('25 * * * *').onRun(async (context) => {
+export const call5MinWarning = functions.pubsub.schedule('25,55 * * * *').onRun(async (context) => {
     await admin.firestore().runTransaction(async txn => {
         const ongoingCalls = await txn.get(admin
             .firestore()
@@ -395,7 +407,7 @@ export const call5MinWarning = functions.pubsub.schedule('25 * * * *').onRun(asy
 });
 
 // runs every hour at 29 minutes past
-export const call1MinWarning = functions.pubsub.schedule('29 * * * *').onRun(async (context) => {
+export const call1MinWarning = functions.pubsub.schedule('29,59 * * * *').onRun(async (context) => {
     await admin.firestore().runTransaction(async txn => {
         const ongoingCalls = await txn.get(admin
             .firestore()

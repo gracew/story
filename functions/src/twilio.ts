@@ -23,9 +23,15 @@ export async function getConferenceTwimlForPhone(phone: string) {
     }
     console.log("Finding conference for user with phone number " + phone);
     const userId = result.docs[0].id;
+
+    const createdAt = moment().utc().startOf("hour");
+    if (moment().minutes() >= 30) {
+        createdAt.add(30, "minutes");
+    }
     const match = await admin.firestore().collection("matches")
         .where("user_ids", "array-contains", userId)
-        .where("created_at", "==", moment().utc().startOf("hour")).get();
+        .where("created_at", "==", createdAt)
+        .get();
     if (match.empty) {
         return errorResponse;
     }
