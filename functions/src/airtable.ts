@@ -29,7 +29,7 @@ export const addUserToAirtable = (userData : {[key: string]: any}) =>{
             "Sign Up Date": signUpDate.format("YYYY-MM-DD"),
             "Wants": userData["genderPreference"],
             "Interests": userData["interests"] ? userData["interests"].split(",") : ["NO RESPONSE"],
-            "Referrer": userData["referrer"]
+            "Referrer": userData["referrer"] ? userData["referrer"] : userData["r"]
     }
 
     if(userData["location"] === "New York City"){
