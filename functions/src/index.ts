@@ -181,6 +181,12 @@ export const createMatch = functions.https.onRequest(
         response.send(match);
     });
 
+export const cancelMatch = functions.https.onRequest(
+    async (request, response) => {
+        await admin.firestore().collection("matches").doc(request.body.id).update("canceled", true);
+        response.end();
+    });
+
 // runs every hour
 export const sendReminderTexts = functions.pubsub.schedule('0,30 * * * *').onRun(async (context) => {
     const createdAt = moment().utc().startOf("hour").add(1, "hour");
