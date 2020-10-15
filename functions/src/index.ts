@@ -8,7 +8,7 @@ import * as util from "util";
 import * as firestore from "@google-cloud/firestore";
 import { addUserToAirtable } from './airtable';
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
-import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
+import { createMatchFirestore, processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
 import { Firestore, IMatch, IUser } from "./firestore";
 import { reminder } from "./smsCopy";
 import { generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
@@ -174,6 +174,12 @@ export const createMatches = functions.storage.object().onFinalize(async (object
 
     await processMatchCsv(tempFilePath, new Firestore(), sendSms);
 });
+
+export const createMatch = functions.https.onRequest(
+    async (request, response) => {
+        const match = await createMatchFirestore(request.body, new Firestore())
+        response.send(match);
+    });
 
 // runs every hour
 export const sendReminderTexts = functions.pubsub.schedule('0,30 * * * *').onRun(async (context) => {
