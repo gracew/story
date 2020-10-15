@@ -181,6 +181,12 @@ export const createMatch = functions.https.onRequest(
         response.send(match);
     });
 
+export const cancelMatch = functions.https.onRequest(
+    async (request, response) => {
+        await admin.firestore().collection("matches").doc(request.body.id).update("canceled", true);
+        response.end();
+    });
+
 // runs every hour
 export const sendReminderTexts = functions.pubsub.schedule('0,30 * * * *').onRun(async (context) => {
     const createdAt = moment().utc().startOf("hour").add(1, "hour");
@@ -191,7 +197,8 @@ export const sendReminderTexts = functions.pubsub.schedule('0,30 * * * *').onRun
         const matches = await txn.get(admin.firestore()
             .collection("matches")
             .where("created_at", "==", createdAt)
-            .where("reminded", "==", false));
+            .where("reminded", "==", false)
+            .where("canceled", "==", false));
         console.log("found the following matches: " + matches.docs.map(doc => doc.id));
 
         const userAIds = matches.docs.map(doc => doc.get("user_a_id"));
@@ -238,7 +245,8 @@ export const issueCalls = functions.pubsub.schedule('0,30 * * * *').onRun(async 
             .firestore()
             .collection("matches")
             .where("created_at", "==", createdAt)
-            .where("called", "==", false));
+            .where("called", "==", false)
+            .where("canceled", "==", false));
         console.log("found the following matches: " + matches.docs.map(doc => doc.id));
 
         const userAIds = matches.docs.map(doc => doc.get("user_a_id"));
