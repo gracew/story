@@ -3,7 +3,7 @@ import * as moment from "moment-timezone";
 import { Firestore, IMatch } from "./firestore";
 import { availability, matchNotification } from "./smsCopy";
 import * as neatCsv from 'neat-csv';
-import {  TWILIO_NUMBER } from './twilio';
+import { TWILIO_NUMBER } from './twilio';
 import admin = require('firebase-admin');
 
 export async function processBulkSmsCsv(tempFilePath: string, sendSms: (opts: any) => Promise<any>) {
@@ -38,43 +38,45 @@ export async function processAvailabilityCsv(tempFilePath: string, firestore: Fi
 export async function processMatchCsv(tempFilePath: string, firestore: Firestore, sendSms: (opts: any) => Promise<any>) {
     const contents = fs.readFileSync(tempFilePath).toString();
     const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "date", "time", "timezone"] })
-    const matches = await Promise.all(rows.map(async data => {
-        const userA = await firestore.getUser(data.userAId);
-        const userB = await firestore.getUser(data.userBId);
-
-        if (!userA) {
-            console.error("cannot find user with id " + data.userAId);
-            return;
-        }
-        if (!userB) {
-            console.error("cannot find user with id " + data.userBId);
-            return;
-        }
-
-        const timezone = processTimeZone(data.timezone.trim())
-        if (!timezone) {
-            console.error("invalid timezone, skpping row: " + data)
-            return;
-        }
-        const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
-        const match = {
-            user_a_id: data.userAId,
-            user_b_id: data.userBId,
-            user_ids: [data.userAId, data.userBId],
-            created_at: new admin.firestore.Timestamp(createdAt.unix(), 0),
-            reminded: false,
-            called: false,
-            warned5Min: false,
-            warned1Min: false,
-            revealRequested: false,
-        };
-        await firestore.createMatch(match);
-        return match;
-    }));
+    const matches = await Promise.all(rows.map(data => createMatchFirestore(data, firestore)));
     return sendMatchNotificationTexts(
         matches.filter(m => m !== undefined) as IMatch[],
         firestore,
         sendSms);
+}
+
+export async function createMatchFirestore(data: any, firestore: Firestore) {
+    const userA = await firestore.getUser(data.userAId);
+    const userB = await firestore.getUser(data.userBId);
+
+    if (!userA) {
+        console.error("cannot find user with id " + data.userAId);
+        return;
+    }
+    if (!userB) {
+        console.error("cannot find user with id " + data.userBId);
+        return;
+    }
+
+    const timezone = processTimeZone(data.timezone.trim())
+    if (!timezone) {
+        console.error("invalid timezone, skpping row: " + data)
+        return;
+    }
+    const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
+    const match = {
+        user_a_id: data.userAId,
+        user_b_id: data.userBId,
+        user_ids: [data.userAId, data.userBId],
+        created_at: new admin.firestore.Timestamp(createdAt.unix(), 0),
+        reminded: false,
+        called: false,
+        warned5Min: false,
+        warned1Min: false,
+        revealRequested: false,
+    };
+    await firestore.createMatch(match);
+    return match;
 }
 
 function processTimeZone(tz: string) {
