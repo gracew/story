@@ -11,7 +11,7 @@ admin
   .get()
   .then(res => {
     for (const doc of res.docs) {
-      if (!doc.get("canceled")) {
+      if (doc.get("canceled") === undefined) {
         console.log("setting canceled for match " + doc.id);
         doc.ref.update("canceled", false);
       }

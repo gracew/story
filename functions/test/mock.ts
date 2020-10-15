@@ -29,6 +29,7 @@ export function match(userIdA: string, userIdB: string, createdAt: string): IMat
         user_b_id: userIdB,
         user_ids: [userIdA, userIdB],
         created_at: new admin.firestore.Timestamp(moment(createdAt).unix(), 0),
+        canceled: false,
         reminded: false,
         called: false,
         warned5Min: false,
