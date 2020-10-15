@@ -191,7 +191,8 @@ export const sendReminderTexts = functions.pubsub.schedule('0,30 * * * *').onRun
         const matches = await txn.get(admin.firestore()
             .collection("matches")
             .where("created_at", "==", createdAt)
-            .where("reminded", "==", false));
+            .where("reminded", "==", false)
+            .where("canceled", "==", false));
         console.log("found the following matches: " + matches.docs.map(doc => doc.id));
 
         const userAIds = matches.docs.map(doc => doc.get("user_a_id"));
@@ -238,7 +239,8 @@ export const issueCalls = functions.pubsub.schedule('0,30 * * * *').onRun(async 
             .firestore()
             .collection("matches")
             .where("created_at", "==", createdAt)
-            .where("called", "==", false));
+            .where("called", "==", false)
+            .where("canceled", "==", false));
         console.log("found the following matches: " + matches.docs.map(doc => doc.id));
 
         const userAIds = matches.docs.map(doc => doc.get("user_a_id"));

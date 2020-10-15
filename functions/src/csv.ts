@@ -69,6 +69,7 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
         user_b_id: data.userBId,
         user_ids: [data.userAId, data.userBId],
         created_at: new admin.firestore.Timestamp(createdAt.unix(), 0),
+        canceled: false,
         reminded: false,
         called: false,
         warned5Min: false,
