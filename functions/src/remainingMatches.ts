@@ -141,7 +141,7 @@ async function formatAirtableUserRecord(record: any): Promise<IAirtableUser> {
         age,
         gender,
         phone: record.get("Phone"),
-        status: record.get("Status"),
+        status: record.get("Status")[0],
         matchMax: record.get("Max Match Age") || defaultMatchMax(gender, age),
         matchMin: record.get("Min Match Age") || defaultMatchMin(gender, age),
         location: record.get("Location")[0],
