@@ -271,7 +271,7 @@ export const callStudioManual = functions.https.onRequest(
     });
 
 // runs every hour at 35 minutes past
-export const revealRequest = functions.pubsub.schedule('5,35 * * * *').onRun(async (context) => {
+export const revealRequest = functions.pubsub.schedule('0,30 * * * *').onRun(async (context) => {
     const createdAt = moment().utc().startOf("hour");
     if (moment().minutes() < 30) {
         createdAt.subtract(30, "minutes");
