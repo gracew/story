@@ -210,6 +210,7 @@ export const sendReminderTexts = functions.pubsub.schedule('0,30 * * * *').onRun
             return;
         }
         const users = await txn.getAll(...userIds.map(id => admin.firestore().collection("users").doc(id)));
+
         const usersById = Object.assign({}, ...users.map(user => ({ [user.id]: user.data() })));
 
         const allPromises: Array<Promise<any>> = []
@@ -270,7 +271,6 @@ export const callStudioManual = functions.https.onRequest(
         return callStudio(request.body.mode, [match.data() as IMatch], new Firestore())
     });
 
-// runs every hour at 35 minutes past
 export const revealRequest = functions.pubsub.schedule('0,30 * * * *').onRun(async (context) => {
     const createdAt = moment().utc().startOf("hour");
     if (moment().minutes() < 30) {
@@ -282,11 +282,22 @@ export const revealRequest = functions.pubsub.schedule('0,30 * * * *').onRun(asy
             .collection("matches")
             .where("created_at", "==", createdAt)
             .where("revealRequested", "==", false));
-        const connectedMatches = matches.docs.filter(m => m.get("twilioSid") !== undefined);
-        await callStudio("reveal_request", connectedMatches.map(doc => doc.data() as IMatch), new Firestore());
-        await Promise.all(connectedMatches.map(doc => txn.update(doc.ref, "revealRequested", true)));
+        const connectedMatches = matches.docs.filter(doc => doc.get("twilioSid") !== undefined);
+        await Promise.all(connectedMatches.map(async doc => {
+            await playCallOutro(doc.data() as IMatch, doc.get("twilioSid"));
+            txn.update(doc.ref, "revealRequested", true);
+        }));
     });
 });
+
+async function playCallOutro(match: IMatch, conferenceSid: string) {
+    const participants = await client.conferences(conferenceSid).participants.list();
+    await Promise.all(participants.map(participant =>
+        client.conferences(conferenceSid).participants(participant.callSid).update({ muted: true })))
+    await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "callOutro" })
+    await util.promisify(setTimeout)(27_000);
+    await callStudio("reveal_request", [match], new Firestore());
+}
 
 export const saveReveal = functions.https.onRequest(
     async (request, response) => {
@@ -401,6 +412,16 @@ export const announce1Min = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
         twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media");
+        response.set('Content-Type', 'text/xml');
+        response.send(twiml.toString());
+    }
+);
+
+export const callOutro = functions.https.onRequest(
+    (request, response) => {
+        const twiml = new twilio.twiml.VoiceResponse();
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fvoicebar_outro.mp3?alt=media");
+        twiml.hangup();
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
