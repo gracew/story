@@ -441,7 +441,7 @@ export const backupFirestore = functions.pubsub.schedule('every 24 hours').onRun
     const projectId = process.env.GCP_PROJECT || process.env.GCLOUD_PROJECT;
     const databaseName = fClient.databasePath(projectId, '(default)');
 
-    const outputUriPrefix = "gs://" + admin.storage().bucket().name + "/backups";
+    const outputUriPrefix = "gs://" + admin.storage().bucket().name + "/backups/" + moment().format("YYYY-MM-DD");
     console.log("backing up to " + outputUriPrefix);
     return fClient.exportDocuments({
         name: databaseName,
