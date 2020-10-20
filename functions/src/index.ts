@@ -10,7 +10,7 @@ import { addUserToAirtable } from './airtable';
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
 import { createMatchFirestore, processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
 import { Firestore, IMatch, IUser } from "./firestore";
-import { reminder } from "./smsCopy";
+import { flakeApology, flakeWarning, reminder } from "./smsCopy";
 import { generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
 
 admin.initializeApp();
@@ -260,16 +260,42 @@ export const issueCalls = functions.pubsub.schedule('0,30 * * * *').onRun(async 
     })
 });
 
-export const callStudioManual = functions.https.onRequest(
-    async (request, response) => {
-        const matchId = request.body.matchId;
-        const match = await admin
+export const handleFlakes = functions.pubsub.schedule('10,40 * * * *').onRun(async (context) => {
+    const createdAt = moment().utc().startOf("hour");
+    if (moment().minutes() >= 30) {
+        createdAt.add(30, "minutes");
+    }
+    await admin.firestore().runTransaction(async txn => {
+        const matches = await txn.get(admin
             .firestore()
             .collection("matches")
-            .doc(matchId)
-            .get();
-        return callStudio(request.body.mode, [match.data() as IMatch], new Firestore())
-    });
+            .where("created_at", "==", createdAt)
+            .where("flakesHandled", "==", false)
+            .where("canceled", "==", false));
+        console.log("found the following matches: " + matches.docs.map(doc => doc.id));
+
+        const flakeMatches = matches.docs
+            .map(doc => doc.data() as IMatch)
+            .filter(m => Object.keys(m.joined || {}).length !== 2);
+        console.log("found the following flaked matches: " + flakeMatches.map(m => m.id));
+
+        const users = await new Firestore().getUsersForMatches(flakeMatches)
+        const smsPromises: Array<Promise<any>> = [];
+        flakeMatches.forEach(m => {
+            m.user_ids.forEach(userId => {
+                const user = users[userId];
+                const body = userId in (m.joined || {}) ? flakeApology(user) : flakeWarning(user);
+                smsPromises.push(sendSms({
+                    body,
+                    from: TWILIO_NUMBER,
+                    to: user.phone,
+                }));
+            })
+        })
+        await Promise.all(smsPromises);
+        await Promise.all(matches.docs.map(doc => txn.update(doc.ref, "flakesHandled", true)));
+    })
+});
 
 export const revealRequest = functions.pubsub.schedule('0,30 * * * *').onRun(async (context) => {
     const createdAt = moment().utc().startOf("hour");
@@ -373,6 +399,8 @@ export const conferenceStatusWebhook = functions.https.onRequest(
         if (request.body.StatusCallbackEvent === "participant-join") {
             const conferenceSid = request.body.ConferenceSid;
             const participants = await client.conferences(conferenceSid).participants.list();
+            const joined = Object.assign({}, ...participants.map(p => ({ [p.label]: true })));
+            await admin.firestore().collection("matches").doc(request.body.FriendlyName).update("joined", joined)
             if (participants.length === 1) {
                 return;
             }

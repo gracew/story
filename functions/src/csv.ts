@@ -72,6 +72,7 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
         canceled: data.canceled || false,
         reminded: false,
         called: false,
+        joined: {},
         warned5Min: false,
         warned1Min: false,
         revealRequested: false,
