@@ -37,7 +37,7 @@ export async function getConferenceTwimlForPhone(phone: string) {
     }
 
     const twiml = new twilio.twiml.VoiceResponse();
-    const dial = twiml.dial({ timeLimit: parseInt(functions.config().twilio.time_limit_sec) });
+    const dial = twiml.dial();
     dial.conference({
         // @ts-ignore
         jitterBufferSize: functions.config().twilio.jitter_buffer_size,
