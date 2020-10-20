@@ -295,7 +295,8 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
     await Promise.all(participants.map(participant =>
         client.conferences(conferenceSid).participants(participant.callSid).update({ muted: true })))
     await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "callOutro" })
-    await util.promisify(setTimeout)(27_000);
+    await util.promisify(setTimeout)(28_000);
+    await client.conferences(conferenceSid).update({ status: "completed" })
     await callStudio("reveal_request", [match], new Firestore());
 }
 
@@ -421,7 +422,6 @@ export const callOutro = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
         twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fvoicebar_outro.mp3?alt=media");
-        twiml.hangup();
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
