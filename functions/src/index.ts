@@ -297,6 +297,18 @@ export const handleFlakes = functions.pubsub.schedule('10,40 * * * *').onRun(asy
     })
 });
 
+export const callStudioManual = functions.https.onRequest(
+    async (request, response) => {
+        const matchId = request.body.matchId;
+        const match = await admin
+            .firestore()
+            .collection("matches")
+            .doc(matchId)
+            .get();
+        await callStudio(request.body.mode, [match.data() as IMatch], new Firestore());
+        response.end();
+    });
+
 export const revealRequest = functions.pubsub.schedule('0,30 * * * *').onRun(async (context) => {
     const createdAt = moment().utc().startOf("hour");
     if (moment().minutes() < 30) {
@@ -317,11 +329,17 @@ export const revealRequest = functions.pubsub.schedule('0,30 * * * *').onRun(asy
 });
 
 async function playCallOutro(match: IMatch, conferenceSid: string) {
-    const participants = await client.conferences(conferenceSid).participants.list();
-    await Promise.all(participants.map(participant =>
-        client.conferences(conferenceSid).participants(participant.callSid).update({ muted: true })))
-    await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "callOutro" })
-    await util.promisify(setTimeout)(27_000);
+    try {
+        // wrap in try/catch as twilio will throw if the conference has already ended
+        const participants = await client.conferences(conferenceSid).participants.list();
+        await Promise.all(participants.map(participant =>
+            client.conferences(conferenceSid).participants(participant.callSid).update({ muted: true })))
+        await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "callOutro" })
+        await util.promisify(setTimeout)(30_000);
+        await client.conferences(conferenceSid).update({ status: "completed" })
+    } catch (err) {
+        console.log(err);
+    }
     await callStudio("reveal_request", [match], new Firestore());
 }
 
@@ -449,7 +467,6 @@ export const callOutro = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
         twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fvoicebar_outro.mp3?alt=media");
-        twiml.hangup();
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
