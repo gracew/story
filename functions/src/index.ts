@@ -268,7 +268,8 @@ export const callStudioManual = functions.https.onRequest(
             .collection("matches")
             .doc(matchId)
             .get();
-        return callStudio(request.body.mode, [match.data() as IMatch], new Firestore())
+        await callStudio(request.body.mode, [match.data() as IMatch], new Firestore());
+        response.end();
     });
 
 export const revealRequest = functions.pubsub.schedule('0,30 * * * *').onRun(async (context) => {
@@ -291,12 +292,17 @@ export const revealRequest = functions.pubsub.schedule('0,30 * * * *').onRun(asy
 });
 
 async function playCallOutro(match: IMatch, conferenceSid: string) {
-    const participants = await client.conferences(conferenceSid).participants.list();
-    await Promise.all(participants.map(participant =>
-        client.conferences(conferenceSid).participants(participant.callSid).update({ muted: true })))
-    await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "callOutro" })
-    await util.promisify(setTimeout)(30_000);
-    await client.conferences(conferenceSid).update({ status: "completed" })
+    try {
+        // wrap in try/catch as twilio will throw if the conference has already ended
+        const participants = await client.conferences(conferenceSid).participants.list();
+        await Promise.all(participants.map(participant =>
+            client.conferences(conferenceSid).participants(participant.callSid).update({ muted: true })))
+        await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "callOutro" })
+        await util.promisify(setTimeout)(30_000);
+        await client.conferences(conferenceSid).update({ status: "completed" })
+    } catch (err) {
+        console.log(err);
+    }
     await callStudio("reveal_request", [match], new Firestore());
 }
 
