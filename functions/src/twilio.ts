@@ -52,7 +52,7 @@ export async function getConferenceTwimlForPhone(phone: string) {
 }
 
 export async function callStudio(mode: string, match: IMatch, firestore: Firestore) {
-    console.log(`executing '${mode}' for the following match: ` + match.id);
+    console.log(`executing '${mode}' for match ${match.id}`);
     const allUsersById = await firestore.getUsersForMatches([match]);
 
     const latestMatchesByUserId: Record<string, any> = {}
