@@ -417,8 +417,6 @@ export const conferenceStatusWebhook = functions.https.onRequest(
         if (request.body.StatusCallbackEvent === "participant-join") {
             const conferenceSid = request.body.ConferenceSid;
             const participants = await client.conferences(conferenceSid).participants.list();
-            const joined = Object.assign({}, ...participants.map(p => ({ [p.label]: true })));
-            await admin.firestore().collection("matches").doc(request.body.FriendlyName).update("joined", joined)
             if (participants.length === 1) {
                 return;
             }

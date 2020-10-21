@@ -35,6 +35,7 @@ export async function getConferenceTwimlForPhone(phone: string) {
     if (match.empty) {
         return errorResponse;
     }
+    await match.docs[0].ref.update("joined." + userId, true)
 
     const twiml = new twilio.twiml.VoiceResponse();
     const dial = twiml.dial();
