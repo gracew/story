@@ -99,3 +99,14 @@ it("matchNotification for two matches - fun facts", async () => {
     expect(res[0].startsWith(expectedTwoMatches)).toBeTruthy();
     expect(res[1]).toEqual(`Here are a few fun facts about Rachael: "funFactsRachael"`)
 });
+
+it("matchNotification for two matches, different times", async () => {
+    const user1 = user("Anna");
+    const user2 = user("Grace");
+    const user3 = user("Rachael");
+    const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
+    const matchUser3 = match(userId1, userId3, "2020-09-24T20:30:00-07:00");
+    const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
+    expect(res).toHaveLength(1);
+    expect(res[0]).toContain("At 8:00pm PDT Wednesday you'll be chatting with Grace and at 8:30pm PDT Thursday you'll be chatting with Rachael. Both nights you’ll receive a phone call connecting you with your match.")
+});
