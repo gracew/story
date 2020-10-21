@@ -55,7 +55,7 @@ it("callStudio", async () => {
         }
         return undefined;
     });
-    await callStudio("reveal_request", [m1], firestore);
+    await callStudio("reveal_request", m1, firestore);
     expect(mockCreate).toHaveBeenCalledTimes(2);
     expect(mockCreate).toHaveBeenCalledWith({
         to: user1.phone,
