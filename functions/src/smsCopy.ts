@@ -78,7 +78,7 @@ export function reminder(userA: IUser, userB: IUser) {
 }
 
 export function flakeWarning(userA: IUser) {
-    return `Hi ${userA.firstName}. It looks like you missed your date today. Respecting our users' time is important, so next time please let us know in advance if you need to reschedule a call. We know mistakes happen, so we’ll let it slide just this once. But if it happens again, we may remove you from Voicebar.`;
+    return `Hi ${userA.firstName}. It looks like you missed your date today. Respecting our users' time is important, so next time please let us know in advance if you need to reschedule a call. We know mistakes happen, so we’ll let it slide this time. But if it happens again, we may remove you from Voicebar.`;
 }
 
 export function flakeApology(userA: IUser) {
