@@ -51,56 +51,48 @@ export async function getConferenceTwimlForPhone(phone: string) {
     return twiml;
 }
 
-export async function callStudio(mode: string, matches: IMatch[], firestore: Firestore) {
-    console.log(`executing '${mode}' for the following matches: ` + matches.map(doc => doc.id));
-    const allUsersById = await firestore.getUsersForMatches(matches);
+export async function callStudio(mode: string, match: IMatch, firestore: Firestore) {
+    console.log(`executing '${mode}' for match ${match.id}`);
+    const allUsersById = await firestore.getUsersForMatches([match]);
 
     const latestMatchesByUserId: Record<string, any> = {}
     for (const id of Object.keys(allUsersById)) {
         latestMatchesByUserId[id] = await firestore.latestMatchForUser(id);
     };
 
-    const userAPromises = matches.map(async match => {
-        const userAId = match.user_a_id;
-        const userA = allUsersById[match.user_a_id];
-        const userB = allUsersById[match.user_b_id];
-        const nextMatchParams = await nextMatchNameAndDate(latestMatchesByUserId, match, userAId, firestore);
-        return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
-            to: userA.phone,
-            from: TWILIO_NUMBER,
-            parameters: {
-                mode,
-                userId: userAId,
-                matchId: match.id,
-                firstName: userA.firstName,
-                matchName: userB.firstName,
-                matchPhone: userB.phone.substring(2),
-                ...nextMatchParams,
-            }
-        });
+    const userAId = match.user_a_id;
+    const userA = allUsersById[match.user_a_id];
+    const userB = allUsersById[match.user_b_id];
+    const userAPromise = client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+        to: userA.phone,
+        from: TWILIO_NUMBER,
+        parameters: {
+            mode,
+            userId: userAId,
+            matchId: match.id,
+            firstName: userA.firstName,
+            matchName: userB.firstName,
+            matchPhone: userB.phone.substring(2),
+            ...(await nextMatchNameAndDate(latestMatchesByUserId, match, userAId, firestore)),
+        }
     });
 
-    const userBPromises = matches.map(async match => {
-        const userBId = match.user_b_id;
-        const userA = allUsersById[match.user_a_id];
-        const userB = allUsersById[match.user_b_id];
-        const nextMatchParams = await nextMatchNameAndDate(latestMatchesByUserId, match, userBId, firestore);
-        return client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
-            to: userB.phone,
-            from: TWILIO_NUMBER,
-            parameters: {
-                mode,
-                userId: userBId,
-                matchId: match.id,
-                firstName: userB.firstName,
-                matchName: userA.firstName,
-                matchPhone: userA.phone.substring(2),
-                ...nextMatchParams,
-            }
-        });
+    const userBId = match.user_b_id;
+    const userBPromise = client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+        to: userB.phone,
+        from: TWILIO_NUMBER,
+        parameters: {
+            mode,
+            userId: userBId,
+            matchId: match.id,
+            firstName: userB.firstName,
+            matchName: userA.firstName,
+            matchPhone: userA.phone.substring(2),
+            ...(await nextMatchNameAndDate(latestMatchesByUserId, match, userBId, firestore)),
+        }
     });
 
-    await Promise.all(userAPromises.concat(userBPromises));
+    await Promise.all([userAPromise, userBPromise]);
 }
 
 export async function saveRevealHelper(body: { phone: string, reveal: string, matchId: string }, firestore: Firestore) {

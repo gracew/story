@@ -268,7 +268,7 @@ export const callStudioManual = functions.https.onRequest(
             .collection("matches")
             .doc(matchId)
             .get();
-        await callStudio(request.body.mode, [match.data() as IMatch], new Firestore());
+        await callStudio(request.body.mode, match.data() as IMatch, new Firestore());
         response.end();
     });
 
@@ -303,7 +303,7 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
     } catch (err) {
         console.log(err);
     }
-    await callStudio("reveal_request", [match], new Firestore());
+    await callStudio("reveal_request", match, new Firestore());
 }
 
 export const saveReveal = functions.https.onRequest(
