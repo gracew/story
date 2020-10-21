@@ -33,6 +33,7 @@ export function match(userIdA: string, userIdB: string, createdAt: string): IMat
         canceled: false,
         reminded: false,
         called: false,
+        flakesHandled: false,
         warned5Min: false,
         warned1Min: false,
         revealRequested: false,
