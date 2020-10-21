@@ -17,6 +17,7 @@ admin
         doc.ref.update({
           reminded: false,
           called: false,
+          flakesHandled: false,
           warned5Min: false,
           warned1Min: false,
           revealRequested: false,
