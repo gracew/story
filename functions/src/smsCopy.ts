@@ -77,3 +77,11 @@ export function reminder(userA: IUser, userB: IUser) {
     return `Hi ${userA.firstName}! This is Voicebar. Just a reminder that you’ll be speaking with ${userB.firstName} in an hour. Here's one idea to get the conversation started: "${prompt}" Hope you two have a good date!`;
 }
 
+export function flakeWarning(userA: IUser) {
+    return `Hi ${userA.firstName}. It looks like you missed your date today. Respecting our users' time is important, so next time please let us know in advance if you need to reschedule a call. We know mistakes happen, so we’ll let it slide this time. But if it happens again, we may remove you from Voicebar.`;
+}
+
+export function flakeApology(userA: IUser) {
+    return `Hi ${userA.firstName}, we're really sorry your match wasn't able to chat tonight. We're reaching out to them to understand how we can prevent this in the future. Feel free to text us with any feedback, otherwise we'll be in touch next week with more matches for you!`;
+}
+

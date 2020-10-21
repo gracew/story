@@ -13,10 +13,12 @@ export interface IMatch {
     user_b_id: string;
     user_b_revealed?: boolean;
     user_ids: string[];
+    joined?: Record<string, boolean>,
     created_at: admin.firestore.Timestamp;
     canceled?: boolean;
     reminded?: boolean;
     called?: boolean;
+    flakesHandled?: boolean;
     warned5Min?: boolean;
     warned1Min?: boolean;
     revealRequested?: boolean;
@@ -61,6 +63,10 @@ export class Firestore {
     }
 
     public async getUsersForMatches(matches: IMatch[]): Promise<Record<string, IUser>> {
+        if (matches.length === 0) {
+            return {};
+        }
+
         const userARefs = matches.map(m => admin.firestore().collection("users").doc(m.user_a_id));
         const userBRefs = matches.map(m => admin.firestore().collection("users").doc(m.user_b_id));
 
