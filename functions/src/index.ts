@@ -284,7 +284,8 @@ export const handleFlakes = functions.pubsub.schedule('10,40 * * * *').onRun(asy
         flakeMatches.forEach(m => {
             m.user_ids.forEach(userId => {
                 const user = users[userId];
-                const body = userId in (m.joined || {}) ? flakeApology(user) : flakeWarning(user);
+                const other = userId === m.user_a_id ? users[m.user_b_id] : users[m.user_a_id];
+                const body = userId in (m.joined || {}) ? flakeApology(user, other) : flakeWarning(user, other);
                 smsPromises.push(sendSms({
                     body,
                     from: TWILIO_NUMBER,

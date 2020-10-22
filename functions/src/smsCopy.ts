@@ -84,11 +84,11 @@ export function reminder(userA: IUser, userB: IUser) {
     return `Hi ${userA.firstName}! This is Voicebar. Just a reminder that you’ll be speaking with ${userB.firstName} in an hour. Here's one idea to get the conversation started: "${prompt}" Hope you two have a good date!`;
 }
 
-export function flakeWarning(user: IUser) {
-    return `Hi ${user.firstName}. It looks like you missed your date today. Respecting our users' time is important, so next time please let us know in advance if you need to reschedule a call. We know mistakes happen, so we’ll let it slide this time. But if it happens again, we may remove you from Voicebar.`;
+export function flakeWarning(userA: IUser, userB: IUser) {
+    return `Hi ${userA.firstName}. It looks like you missed your call with ${userB.firstName} today. Respecting our users' time is important, so next time please let us know in advance if you need to reschedule a call. We know mistakes happen, so we’ll let it slide this time. But if it happens again, we may remove you from Voicebar.`;
 }
 
-export function flakeApology(user: IUser) {
-    return `Hi ${user.firstName}, it looks like your match had some trouble connecting. We're so sorry for the inconvenience and are reaching out to them to understand how we can prevent this in the future.`;
+export function flakeApology(userA: IUser, userB: IUser) {
+    return `Hi ${userA.firstName}, we're really sorry your match wasn't able to connect tonight. We're reaching out to understand why ${userB.firstName} wasn't able to join the call and are working to ensure this doesn't happen again. In the meantime, feel free to text us if you have any feedback on the experience.`;
 }
 
