@@ -36,10 +36,17 @@ Happy chatting!`
         const match2 = matches[1];
         const matchUser2Id = match2.user_a_id === userId ? match2.user_b_id : match2.user_a_id;
         const match2User = usersById[matchUser2Id];
-        // NOTE: this assumes both dates are at the same time
-        const texts = [
-            `Hi ${user.firstName}, we have two Voicebar matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. At ${formattedTime} both nights you’ll receive a phone call connecting you with your match. ${phoneSwapText}`
-        ];
+        const formattedTime2 = moment(matches[1].created_at.toDate()).tz(tz).format("h:mma z");
+        const texts = [];
+        if (formattedTime === formattedTime2) {
+            texts.push(
+                `Hi ${user.firstName}, we have two Voicebar matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. At ${formattedTime} both nights you’ll receive a phone call connecting you with your match. ${phoneSwapText}`
+            );
+        } else {
+            texts.push(
+                `Hi ${user.firstName}, we have two Voicebar matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}. Both nights you’ll receive a phone call connecting you with your match. ${phoneSwapText}`
+            );
+        }
         if (user.funFacts && match1User.funFacts) {
             texts.push(
                 `Here are a few fun facts about ${match1User.firstName}: "${match1User.funFacts}"`
