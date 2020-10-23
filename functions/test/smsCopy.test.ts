@@ -5,9 +5,9 @@ import { match, user } from "./mock";
 const userId1 = uuid.v4();
 const userId2 = uuid.v4();
 const userId3 = uuid.v4();
-const expectedSimpleET = "Hi Anna, your match Grace has confirmed. At 8:00pm EDT Wednesday, you’ll receive a phone call connecting you with your match. If you miss the call, you can call back. Afterwards, we’ll ask if you want to swap phone numbers. In the case of mutual interest we’ll facilitate a phone number swap. If not no sweat!";
-const expectedSimple = "Hi Anna, your match Grace has confirmed. At 8:00pm PDT Wednesday, you’ll receive a phone call connecting you with your match. If you miss the call, you can call back. Afterwards, we’ll ask if you want to swap phone numbers. In the case of mutual interest we’ll facilitate a phone number swap. If not no sweat!";
-const expectedTwoMatches = "Hi Anna, we have two Voicebar matches for you! On Wednesday you'll be chatting with Grace and on Thursday you'll be chatting with Rachael. At 8:00pm PDT both nights you’ll receive a phone call connecting you with your match.";
+const expectedSimpleET = "Hi Anna, your match Grace has confirmed. At 8:00pm EDT Wednesday, you'll receive a phone call connecting you with your match. If you miss the call, you can call back. Afterwards, we'll ask if you want to swap phone numbers. In the case of mutual interest we'll facilitate a phone number swap. If not no sweat!";
+const expectedSimple = "Hi Anna, your match Grace has confirmed. At 8:00pm PDT Wednesday, you'll receive a phone call connecting you with your match. If you miss the call, you can call back. Afterwards, we'll ask if you want to swap phone numbers. In the case of mutual interest we'll facilitate a phone number swap. If not no sweat!";
+const expectedTwoMatches = "Hi Anna, we have two Voicebar matches for you! On Wednesday you'll be chatting with Grace and on Thursday you'll be chatting with Rachael. At 8:00pm PDT both nights you'll receive a phone call connecting you with your match.";
 
 it("matchNotification for a single match - ET", async () => {
     const user1 = user("Anna");
@@ -108,5 +108,5 @@ it("matchNotification for two matches, different times", async () => {
     const matchUser3 = match(userId1, userId3, "2020-09-24T20:30:00-07:00");
     const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
     expect(res).toHaveLength(1);
-    expect(res[0]).toContain("At 8:00pm PDT Wednesday you'll be chatting with Grace and at 8:30pm PDT Thursday you'll be chatting with Rachael. Both nights you’ll receive a phone call connecting you with your match.")
+    expect(res[0]).toContain("At 8:00pm PDT Wednesday you'll be chatting with Grace and at 8:30pm PDT Thursday you'll be chatting with Rachael. Both nights you'll receive a phone call connecting you with your match.")
 });
