@@ -6,7 +6,7 @@ export function availability(user: IUser, tz: string) {
 }
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
-    const phoneSwapText = `If you miss the call, you can call back. Afterwards, we’ll ask if you want to swap phone numbers. In the case of mutual interest we’ll facilitate a phone number swap. If not no sweat!`;
+    const phoneSwapText = `If you miss the call, you can call back. Afterwards, we'll ask if you want to swap phone numbers. In the case of mutual interest we'll facilitate a phone number swap. If not no sweat!`;
     const user = usersById[userId];
     if (matches.length === 0) {
         return [];
@@ -19,7 +19,7 @@ export function matchNotification(userId: string, matches: IMatch[], usersById: 
         const matchUserId = match.user_a_id === userId ? match.user_b_id : match.user_a_id;
         const matchUser = usersById[matchUserId];
         const texts = [
-            `Hi ${user.firstName}, your match ${matchUser.firstName} has confirmed. At ${formattedTime} ${day(match)}, you’ll receive a phone call connecting you with your match. ${phoneSwapText}`
+            `Hi ${user.firstName}, your match ${matchUser.firstName} has confirmed. At ${formattedTime} ${day(match)}, you'll receive a phone call connecting you with your match. ${phoneSwapText}`
         ];
         if (user.funFacts && matchUser.funFacts) {
             texts.push(
@@ -40,11 +40,11 @@ Happy chatting!`
         const texts = [];
         if (formattedTime === formattedTime2) {
             texts.push(
-                `Hi ${user.firstName}, we have two Voicebar matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. At ${formattedTime} both nights you’ll receive a phone call connecting you with your match. ${phoneSwapText}`
+                `Hi ${user.firstName}, we have two Voicebar matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. At ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
             );
         } else {
             texts.push(
-                `Hi ${user.firstName}, we have two Voicebar matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}. Both nights you’ll receive a phone call connecting you with your match. ${phoneSwapText}`
+                `Hi ${user.firstName}, we have two Voicebar matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}. Both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
             );
         }
         if (user.funFacts && match1User.funFacts) {
@@ -85,7 +85,7 @@ export function reminder(userA: IUser, userB: IUser) {
 }
 
 export function flakeWarning(userA: IUser, userB: IUser) {
-    return `Hi ${userA.firstName}. It looks like you missed your call with ${userB.firstName} today. Respecting our users' time is important, so next time please let us know in advance if you need to reschedule a call. We know mistakes happen, so we’ll let it slide this time. But if it happens again, we may remove you from Voicebar.`;
+    return `Hi ${userA.firstName}. It looks like you missed your call with ${userB.firstName} today. Respecting our users' time is important, so next time please let us know in advance if you need to reschedule a call. We know mistakes happen, so we'll let it slide this time. But if it happens again, we may remove you from Voicebar.`;
 }
 
 export function flakeApology(userA: IUser, userB: IUser) {
