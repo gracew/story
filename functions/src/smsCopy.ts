@@ -81,7 +81,7 @@ function day(match: IMatch) {
 
 export function reminder(userA: IUser, userB: IUser) {
     const prompt = "What’s the most obscure subject that you know a lot about?";
-    return `Hi ${userA.firstName}! This is Voicebar. Just a reminder that you’ll be speaking with ${userB.firstName} in an hour. Here's one idea to get the conversation started: "${prompt}" Hope you two have a good date!`;
+    return `Hi ${userA.firstName}! This is Voicebar. Just a reminder that you'll be speaking with ${userB.firstName} in an hour. Here's one idea to get the conversation started: "${prompt}" Hope you two have a good date!`;
 }
 
 export function flakeWarning(userA: IUser, userB: IUser) {
