@@ -7,6 +7,7 @@ export function availability(user: IUser, tz: string) {
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
     const phoneSwapText = `If you miss the call, you can call back. Afterwards, we'll ask if you want to swap phone numbers. In the case of mutual interest we'll facilitate a phone number swap. If not no sweat!`;
+    const reminderText = `If something comes up and you need to reschedule, text 'RESCHEDULE' to see your options.`
     const user = usersById[userId];
     if (matches.length === 0) {
         return [];
@@ -19,7 +20,9 @@ export function matchNotification(userId: string, matches: IMatch[], usersById: 
         const matchUserId = match.user_a_id === userId ? match.user_b_id : match.user_a_id;
         const matchUser = usersById[matchUserId];
         const texts = [
-            `Hi ${user.firstName}, your match ${matchUser.firstName} has confirmed. At ${formattedTime} ${day(match)}, you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+            `Hi ${user.firstName}, your match ${matchUser.firstName} has confirmed. At ${formattedTime} ${day(match)}, you'll receive a phone call connecting you with your match. ${phoneSwapText}
+
+${reminderText}`
         ];
         if (user.funFacts && matchUser.funFacts) {
             texts.push(
