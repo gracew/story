@@ -4,7 +4,7 @@ import * as twilio from "twilio";
 import * as moment from "moment-timezone";
 import { Firestore, IMatch } from "./firestore";
 
-export const TWILIO_NUMBER = '+12036338466';
+export const TWILIO_NUMBER = 'MG35ade708f17b5ae9c9af44c95128182b';  // messaging service sid
 export const BASE_URL = 'https://us-central1-speakeasy-prod.cloudfunctions.net/';
 const accountSid = 'AC07d4a9a61ac7c91f7e5cecf1e27c45a6';
 const authToken = functions.config().twilio.auth_token;
