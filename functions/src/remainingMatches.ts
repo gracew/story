@@ -53,24 +53,19 @@ export async function generateRemainingMatchCount(excludeNames: string[]) {
     return results;
 }
 
-export async function generateAvailableMatches(view: string, tz: string) {
+export async function generateAvailableMatches(week: string, tz: string) {
     const base = new Airtable({ apiKey: apiKey }).base(baseId);
 
     const users = await base("Users").select({ view: "Available Users" }).all();
-    const availability = await base("Scheduling").select({ view }).all();
 
-    const availabilityByUserId: Record<string, string[]> = {}
-    const usersInRound = availability.map((record: any) => {
-        const id = record.get('UserID')[0];
-        availabilityByUserId[id] = record.get('Response') || [];
-        return id;
-    })
+    const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
+    const availabilityByUserId = Object.assign({}, ...availability.docs.map(doc => ({[doc.id]: doc.data()})))
 
     const usersInTZ = await Promise.all(users
         .filter((record: any) => {
             const userId = record.get('UserID');
             const timezone = record.get("Timezone")?.[0];
-            return userId && usersInRound.includes(userId) && timezone === tz;
+            return userId && userId in availabilityByUserId && timezone === tz;
         }).map((record: any) => formatAirtableUserRecord(record)));
 
     const pairs = [];
@@ -78,7 +73,7 @@ export async function generateAvailableMatches(view: string, tz: string) {
         if (!areUsersCompatible(userA, userB)) {
             continue;
         }
-        const sharedAvailability = findCommonElements(availabilityByUserId[userA.id], availabilityByUserId[userB.id]);
+        const sharedAvailability = findCommonAvailability(availabilityByUserId[userA.id], availabilityByUserId[userB.id]);
         if (sharedAvailability.length > 0) {
             pairs.push({
                 userA: userA.name,
@@ -97,8 +92,18 @@ export async function generateAvailableMatches(view: string, tz: string) {
     return pairs;
 }
 
-function findCommonElements(arr1: any[], arr2: any[]) {
-    return arr1.filter(item => arr2.includes(item))
+function findCommonAvailability(a1: Record<string, boolean>, a2: Record<string, boolean>) {
+    const ret = [];
+    if (a1["tue"] && a2["tue"]) {
+        ret.push("tue");
+    }
+    if (a1["wed"] && a2["wed"]) {
+        ret.push("wed");
+    }
+    if (a1["thu"] && a2["thu"]) {
+        ret.push("thu");
+    }
+    return ret;
 }
 
 // returns all possible pairings of an array
