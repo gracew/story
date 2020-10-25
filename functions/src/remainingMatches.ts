@@ -37,6 +37,7 @@ export async function generateRemainingMatchCount(excludeNames: string[]) {
         const matches = users.filter((match: IAirtableUser) => areUsersCompatible(user, match));
 
         results.push({
+            id: user.id,
             name: user.name,
             first: user.first,
             gender: user.gender,
