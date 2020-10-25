@@ -12,6 +12,7 @@ import { createMatchFirestore, processAvailabilityCsv, processBulkSmsCsv, proces
 import { Firestore, IMatch, IUser } from "./firestore";
 import { flakeApology, flakeWarning, reminder } from "./smsCopy";
 import { generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
+import { addUsersToSendgrid} from "./sendgrid"
 
 admin.initializeApp();
 
@@ -116,6 +117,15 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     await reff.set(user);
 
     addUserToAirtable(user)
+
+    let sendgrid = [{
+        age: user.age.toString(),
+        email: user.email,
+        first_name: user.firstName,
+        last_name: user.lastName ? user.lastName : ""
+    }]
+
+    addUsersToSendgrid(sendgrid)
 
     response.send({ 'success': 'true' })
 });
