@@ -7,7 +7,7 @@ export function availability(user: IUser, tz: string) {
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
     const phoneSwapText = `If you miss the call, you can call back. Afterwards, we'll ask if you want to swap phone numbers. In the case of mutual interest we'll facilitate a phone number swap. If not no sweat!`;
-    const reminderText = `If something comes up and you need to reschedule, text 'RESCHEDULE' to see your options.`
+    const reminderText = `If something comes up and you need to reschedule, text RESCHEDULE to see your options.`
     const user = usersById[userId];
     if (matches.length === 0) {
         return [];
