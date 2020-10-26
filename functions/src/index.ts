@@ -11,7 +11,7 @@ import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHel
 import { createMatchFirestore, processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
 import { Firestore, IMatch, IUser } from "./firestore";
 import { flakeApology, flakeWarning, reminder } from "./smsCopy";
-import { generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
+import { bipartite, generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
 import { addUsersToSendgrid} from "./sendgrid"
 
 admin.initializeApp();
@@ -141,6 +141,12 @@ export const generateRemainingMatchReport = functions.https.onRequest(
 export const generateMatchesUsingAvailability = functions.https.onRequest(
     async (request, response) => {
         const result = await generateAvailableMatches(request.body.schedulingView, request.body.tz);
+        response.send(result);
+    });
+
+export const bipartiteAvailability = functions.https.onRequest(
+    async (request, response) => {
+        const result = await bipartite(request.body.schedulingView, request.body.tz);
         response.send(result);
     });
 
