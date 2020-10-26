@@ -21,7 +21,7 @@ export const addUserToAirtable = (userData : {[key: string]: any}) =>{
             "UserID" : userData.id,
             "Fun Facts": userData["funFacts"],
             "Email": userData["email"],
-            "Ethnicity": userData["race"] ? [userData["race"]] : ["Prefer not to say"],
+            "Ethnicity": userData["race"] ? userData["race"] : ["Prefer not to say"],
             "Flexible on Location": userData["locationFlexibility"] ? "Yes" : "No",
             "Match Age": userData["agePreference"],
             "Social Media": userData["social"],
