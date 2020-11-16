@@ -10,7 +10,7 @@ beforeEach(() => jest.resetAllMocks());
 it("processBulkSmsCsv", async () => {
     await processBulkSmsCsv("./testdata/bulkSms.csv", mockSendSms)
     expect(mockSendSms).toHaveBeenCalledTimes(2);
-    const body1 = `Your Voicebar match will expire soon! If you'd like to connect this week, please reply in the next hour and let us know which days work for you for an 8pm call.
+    const body1 = `Your match will expire soon! If you'd like to connect this week, please reply in the next hour and let us know which days work for you for an 8pm call.
 
 another line
 `
