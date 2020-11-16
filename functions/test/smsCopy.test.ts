@@ -7,7 +7,7 @@ const userId2 = uuid.v4();
 const userId3 = uuid.v4();
 const expectedSimpleET = "Hi Anna, your match Grace has confirmed. At 8:00pm EDT Wednesday";
 const expectedSimple = "Hi Anna, your match Grace has confirmed. At 8:00pm PDT Wednesday";
-const expectedTwoMatches = "Hi Anna, we have two Voicebar matches for you! On Wednesday you'll be chatting with Grace and on Thursday you'll be chatting with Rachael. At 8:00pm PDT both nights";
+const expectedTwoMatches = "Hi Anna, we have two matches for you! On Wednesday you'll be chatting with Grace and on Thursday you'll be chatting with Rachael. At 8:00pm PDT both nights";
 
 it("matchNotification for a single match - ET", async () => {
     const user1 = user("Anna");

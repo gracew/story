@@ -7,7 +7,6 @@ export function availability(user: IUser, tz: string) {
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
     const phoneSwapText = `If you miss the call, you can call back. Afterwards, we'll ask if you want to swap phone numbers. In the case of mutual interest we'll facilitate a phone number swap. If not no sweat!`;
-    const reminderText = `If something comes up and you need to reschedule, text RESCHEDULE to see your options.`
     const user = usersById[userId];
     if (matches.length === 0) {
         return [];
@@ -20,9 +19,7 @@ export function matchNotification(userId: string, matches: IMatch[], usersById: 
         const matchUserId = match.user_a_id === userId ? match.user_b_id : match.user_a_id;
         const matchUser = usersById[matchUserId];
         const texts = [
-            `Hi ${user.firstName}, your match ${matchUser.firstName} has confirmed. At ${formattedTime} ${day(match)}, you'll receive a phone call connecting you with your match. ${phoneSwapText}
-
-${reminderText}`
+            `Hi ${user.firstName}, your match ${matchUser.firstName} has confirmed. At ${formattedTime} ${day(match)}, you'll receive a phone call connecting you with your match. ${phoneSwapText}`
         ];
         if (user.funFacts && matchUser.funFacts) {
             texts.push(
@@ -43,11 +40,11 @@ Happy chatting!`
         const texts = [];
         if (formattedTime === formattedTime2) {
             texts.push(
-                `Hi ${user.firstName}, we have two Voicebar matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. At ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+                `Hi ${user.firstName}, we have two matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. At ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
             );
         } else {
             texts.push(
-                `Hi ${user.firstName}, we have two Voicebar matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}. Both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+                `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}. Both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
             );
         }
         if (user.funFacts && match1User.funFacts) {
@@ -84,7 +81,7 @@ function day(match: IMatch) {
 
 export function reminder(userA: IUser, userB: IUser) {
     const prompt = "What’s the most obscure subject that you know a lot about?";
-    return `Hi ${userA.firstName}! This is Voicebar. Just a reminder that you'll be speaking with ${userB.firstName} in an hour. Here's one idea to get the conversation started: "${prompt}" Hope you two have a good date!`;
+    return `Hi ${userA.firstName}! Just a reminder that you'll be speaking with ${userB.firstName} in an hour. Here's one idea to get the conversation started: "${prompt}" Hope you two have a good date!`;
 }
 
 export function flakeWarning(userA: IUser, userB: IUser) {
