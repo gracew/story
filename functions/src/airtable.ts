@@ -1,9 +1,8 @@
-import * as functions from "firebase-functions";
 import * as moment from "moment";
 const Airtable = require('airtable');
 
-const baseId = functions.config().airtable.id;
-const apiKey = functions.config().airtable.key;
+const baseId = "baseId";
+const apiKey = "apiKey";
 
 const base = new Airtable({apiKey: apiKey}).base(baseId);
 

@@ -1,91 +1,84 @@
 /* tslint:disable */
 // @ts-nocheck
 import * as admin from "firebase-admin";
-import * as functions from "firebase-functions";
 
-
-const Airtable = require('airtable');
-const baseId = functions.config().airtable.id;
-const apiKey = functions.config().airtable.key;
-
-interface IAirtableUser {
-    name: string;
-    first: string;
-    id: string;
-    airtableId: string;
-    age: number;
-    gender: string;
-    phone: string;
-    status: string;
-    matchMax: number;
-    matchMin: number;
-    location: string;
-    timezone: string;
-    flexible: string;
-    wants: string[];
-    prevMatches: string[];
-    blocklist: string[];
+function formatUser(d: any) {
+    // convert wants to Gender Field options
+    const o = d.data();
+    const genderPreference = o.genderPreference.map((want: any) => want === "Men" ? "Male" : "Female");
+    return {
+        ...o,
+        genderPreference,
+        matchMax: o.matchMax || defaultMatchMax(o.gender, o.age),
+        matchMin: o.matchMin || defaultMatchMin(o.gender, o.age),
+    };
 }
 
 export async function generateRemainingMatchCount(excludeNames: string[]) {
-    const base = new Airtable({ apiKey: apiKey }).base(baseId);
-    const records = await base("Users").select({ view: "Available Users" }).all();
-    const users: IAirtableUser[] = await Promise.all(records
-        .filter((record: any) => !excludeNames.includes(record.get("Label")))
-        .map((record: any) => formatAirtableUserRecord(record)));
+    // TODO(gracew): incorporate excludeNames again
+    const usersRaw = await admin.firestore().collection("users").where("eligible", "==", true).get();
+    const users = usersRaw.docs.map(d => formatUser(d));
+    const prevMatches = await getPrevMatches();
 
     const results = [];
     for (const user of users) {
-        const matches = users.filter((match: IAirtableUser) => areUsersCompatible(user, match));
+        const remainingMatches = users.filter(match => areUsersCompatible(user, match, prevMatches));
 
         results.push({
-            id: user.id,
-            name: user.name,
-            first: user.first,
-            gender: user.gender,
-            age: user.age,
-            timezone: user.timezone,
-            location: user.location,
-            phone: user.phone,
-            remainingMatches: matches.map(m => m.name),
-            status: user.status,
-            previousMatches: user.prevMatches.length,
+            ...user,
+            remainingMatches,
+            // @ts-ignore
+            prevMatches: prevMatches[user.id],
         });
     }
 
     return results;
 }
 
-export async function generateAvailableMatches(week: string, tz: string) {
-    const base = new Airtable({ apiKey: apiKey }).base(baseId);
+async function getPrevMatches() {
+    const matches = await admin.firestore().collection("matches").get();
+    const ret: Record<string, string[]> = {};
+    matches.forEach(m => {
+        const data = m.data();
+        if (!(data.user_a_id in ret)) {
+            ret[data.user_a_id] = [];
+        }
+        ret[data.user_a_id].push(data.user_b_id);
 
-    const users = await base("Users").select({ view: "Available Users" }).all();
+        if (!(data.user_b_id in ret)) {
+            ret[data.user_b_id] = [];
+        }
+        ret[data.user_b_id].push(data.user_a_id);
+    })
+    return ret;
+}
+
+export async function generateAvailableMatches(week: string, tz: string) {
+    const usersRaw = await admin.firestore().collection("users").where("eligible", "==", true).get();
+    const users = usersRaw.docs.map(d => formatUser(d));
 
     const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
     const availabilityByUserId = Object.assign({}, ...availability.docs.map(doc => ({ [doc.id]: doc.data() })))
 
-    const usersInTZ = await Promise.all(users
-        .filter((record: any) => {
-            const userId = record.get('UserID');
-            const timezone = record.get("Timezone")?.[0];
-            return userId && userId in availabilityByUserId && timezone === tz;
-        }).map((record: any) => formatAirtableUserRecord(record)));
+    // @ts-ignore
+    const usersInTZ = users.filter(u => u.id in availabilityByUserId && u.timezone === tz);
 
     const pairs = [];
+    const prevMatches = await getPrevMatches();
     for (const [userA, userB] of generatePairs(usersInTZ)) {
-        if (!areUsersCompatible(userA, userB)) {
+        if (!areUsersCompatible(userA, userB, prevMatches)) {
             continue;
         }
         const sharedAvailability = findCommonAvailability(availabilityByUserId[userA.id], availabilityByUserId[userB.id]);
         if (sharedAvailability.length > 0) {
             pairs.push({
-                userA: userA.name,
-                userB: userB.name,
+                userA: userA.firstName + " " + userA.lastName,
+                userB: userB.firstName + " " + userB.lastName,
                 sameLocation: userA.location === userB.location,
-                userAFlexible: userA.flexible,
-                userBFlexible: userB.flexible,
-                userAPrevMatches: userA.prevMatches.length,
-                userBPrevMatches: userB.prevMatches.length,
+                userAFlexible: userA.locationFlexibility,
+                userBFlexible: userB.locationFlexibility,
+                userAPrevMatches: (prevMatches[userA.id] || []).length,
+                userBPrevMatches: (prevMatches[userB.id] || []).length,
                 userAId: userA.id,
                 userBId: userB.id,
                 days: sharedAvailability
@@ -130,45 +123,7 @@ function defaultMatchMin(match_gender: string, match_age: number) {
     return match_gender === "Female" ? match_age - 1 : match_age - 5
 }
 
-async function getPreviousMatches(id: string) {
-    if (!id) {
-        return [];
-    }
-    const matches = await admin.firestore().collection("matches")
-        .where("user_ids", "array-contains", id).get();
-    return matches.docs.map(doc => doc.get("user_a_id") === id ? doc.get("user_b_id") : doc.get("user_a_id"));
-}
-
-async function formatAirtableUserRecord(record: any): Promise<IAirtableUser> {
-    const firebaseId = record.get("UserID");
-    const age = record.get("Age");
-    const gender = record.get("Gender");
-
-    // these contain airtable IDs
-    const prevMatches = await getPreviousMatches(firebaseId);
-    const blocklist = record.get("Blocklist") || [];
-    return {
-        name: record.get("Label"),
-        first: record.get("First"),
-        id: firebaseId,
-        airtableId: record.id,
-        age,
-        gender,
-        phone: record.get("Phone"),
-        status: record.get("Status")[0],
-        matchMax: record.get("Max Match Age") || defaultMatchMax(gender, age),
-        matchMin: record.get("Min Match Age") || defaultMatchMin(gender, age),
-        location: record.get("Location")[0],
-        timezone: record.get("Timezone")[0],
-        flexible: record.get("Flexible on Location"),
-        // convert wants to Gender Field options
-        wants: record.get("Wants").map((want: any) => want === "Men" ? "Male" : "Female"),
-        prevMatches,
-        blocklist,
-    };
-}
-
-function areUsersCompatible(user: IAirtableUser, match: IAirtableUser) {
+function areUsersCompatible(user: any, match: any, prevMatches: Record<string, string[]>) {
     // ensure user isn't matching with self
     if (user.id === match.id) {
         return false;
@@ -185,53 +140,52 @@ function areUsersCompatible(user: IAirtableUser, match: IAirtableUser) {
     }
 
     // check gender
-    if (!user.wants.includes(match.gender) || !match.wants.includes(user.gender)) {
-        if (!(user.gender === "Other" && match.wants.length > 1 || match.gender === "Other" && user.wants.length > 1)) {
+    if (!user.genderPreference.includes(match.gender) || !match.genderPreference.includes(user.gender)) {
+        if (!(user.gender === "Other" && match.genderPreference.length > 1 || match.gender === "Other" && user.genderPreference.length > 1)) {
             return false;
         }
     }
 
     // check timezone
     if (match.timezone !== user.timezone) {
-        return false
+        return false;
     }
 
     // if users are in different locations, check if both are flexible. defaults to true if flexibility is unknown
     if (match.location !== user.location) {
-        if (match.flexible === "No" || user.flexible === "No") {
-            return false
+        if (match.locationFlexibility === false || user.locationFlexibility === false) {
+            return false;
         }
     }
 
     // If user has previous matches or blocklist, filter them out of results
-    if (user.prevMatches.includes(match.id)) {
+    if ((prevMatches[user.id] || []).includes(match.id)) {
         return false;
     }
-    if (user.blocklist.includes(match.airtableId)) {
+    /*if (user.blocklist.includes(match.airtableId)) {
         return false;
-    }
+    }*/
 
     return true;
 }
 
 export async function bipartite(week: string, tz: string) {
-    const base = new Airtable({ apiKey: apiKey }).base(baseId);
-    const users = await base("Users").select({ view: "Available Users" }).all();
+    const usersRaw = await admin.firestore().collection("users").where("eligible", "==", true).get();
+    const users = usersRaw.docs.map(d => formatUser(d));
+
     const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
     const availabilityByUserId = Object.assign({}, ...availability.docs.map(doc => ({ [doc.id]: doc.data() })))
 
-    const usersInTZ: IAirtableUser[] = await Promise.all(users
-        .filter((record: any) => {
-            const userId = record.get('UserID');
-            const timezone = record.get("Timezone")?.[0];
-            return userId && userId in availabilityByUserId && timezone === tz;
-        }).map((record: any) => formatAirtableUserRecord(record)));
+    // @ts-ignore
+    const usersInTZ = users.filter(u => u.id in availabilityByUserId && u.timezone === tz);
+
     const usersById = Object.assign({}, ...usersInTZ.map(user => ({ [user.id]: user })))
+    const prevMatches = await getPrevMatches();
 
     const possibleMatches: Record<string, boolean> = {}
     generatePairs(usersInTZ)
-        .forEach(([userA, userB]: [IAirtableUser, IAirtableUser]) => {
-            if (!areUsersCompatible(userA, userB)) {
+        .forEach(([userA, userB]: [any, any]) => {
+            if (!areUsersCompatible(userA, userB, prevMatches)) {
                 return;
             }
             const commonAvailability = findCommonAvailability(availabilityByUserId[userA.id], availabilityByUserId[userB.id]);
@@ -263,13 +217,13 @@ export async function bipartite(week: string, tz: string) {
         matchedUsers.add(userAId);
         matchedUsers.add(userBId);
         return {
-            userA: userA.name,
-            userB: userB.name,
+            userA: userA.firstName + " " + userA.lastName,
+            userB: userB.firstName + " " + userB.lastName,
             sameLocation: userA.location === userB.location,
-            userAFlexible: userA.flexible,
-            userBFlexible: userB.flexible,
-            userAPrevMatches: userA.prevMatches.length,
-            userBPrevMatches: userB.prevMatches.length,
+            userAFlexible: userA.locationFlexibility,
+            userBFlexible: userB.locationFlexibility,
+            userAPrevMatches: (prevMatches[userA.id] || []).length,
+            userBPrevMatches: (prevMatches[userB.id] || []).length,
             userAId: userA.id,
             userBId: userB.id,
             days: findCommonAvailability(availabilityByUserId[userA.id], availabilityByUserId[userB.id]),
