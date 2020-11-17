@@ -46,7 +46,6 @@ export async function getConferenceTwimlForPhone(phone: string) {
         waitUrl: "http://twimlets.com/holdmusic?Bucket=com.twilio.music.guitars",
         statusCallbackEvent: ["join", "end"],
         statusCallback: BASE_URL + "conferenceStatusWebhook",
-        muted: true,
     }, match.docs[0].id);
 
     return twiml;
