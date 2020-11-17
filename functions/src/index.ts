@@ -4,7 +4,6 @@ import * as moment from "moment-timezone";
 import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
-import * as util from "util";
 import * as firestore from "@google-cloud/firestore";
 import { addUserToAirtable } from './airtable';
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
