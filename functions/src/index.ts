@@ -29,7 +29,7 @@ export const phoneRegistered = functions.https.onCall(async (request) => {
 });
 
 /**
- * Used by the frontend to look up metadata for a user based on username (e.g. when navigating to voicebar.co/grace).
+ * Used by the frontend to look up metadata for a user based on username (e.g. when navigating to storydating.com/grace).
  */
 export const getUserByUsername = functions.https.onCall(
     async (request) => {

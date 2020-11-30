@@ -12,12 +12,12 @@
     "redirects": [
       {
         "source": "/signup",
-        "destination": "https://voicebar.typeform.com/to/NUynD2GT",
+        "destination": "https://Story.typeform.com/to/NUynD2GT",
         "type": 301
       },
       {
         "source": "/feedback",
-        "destination": "https://voicebar.typeform.com/to/aryQh6Da",
+        "destination": "https://Story.typeform.com/to/aryQh6Da",
         "type": 301
       }
     ],
