@@ -27,12 +27,12 @@ it("processAvailabilityCsv", async () => {
     await processAvailabilityCsv("./testdata/availability.csv", firestore, mockSendSms)
     expect(mockSendSms).toHaveBeenCalledTimes(2);
     expect(mockSendSms).toHaveBeenCalledWith({
-        body: "Hi Anna. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ET any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.",
+        body: "Hi Anna. It's Story. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ET any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.",
         from: TWILIO_NUMBER,
         to: user1.phone,
     })
     expect(mockSendSms).toHaveBeenCalledWith({
-        body: "Hi Grace. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm PT any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.",
+        body: "Hi Grace. It's Story. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm PT any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.",
         from: TWILIO_NUMBER,
         to: user2.phone,
     })

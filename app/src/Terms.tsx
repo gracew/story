@@ -8,18 +8,18 @@ function Terms() {
       <h3>Last Updated: September 15, 2020</h3>
       <p>
         Hello! Thank you for visiting our Terms of Use (“Terms”). These Terms
-        constitute a legal agreement between you and Voicebar (the “Agreement”),
+        constitute a legal agreement between you and Story (the “Agreement”),
         so please read through this document carefully before using our website
-        and signing up for any Voicebar services.
+        and signing up for any Story services.
       </p>
       <p>
         If you believe a user is in violation of any of these terms, please
         contact us at{" "}
-        <a href="mailto:support@voicebar.co">support@voicebar.co</a>.
+        <a href="mailto:support@storydating.com">support@storydating.com</a>.
       </p>
       <h2>1. Acceptance of Terms</h2>
       <p>
-        By registering for Voicebar on our website or using any Voicebar service
+        By registering for Story on our website or using any Story service
         (collectively, the “Service”), you agree to be bound by these Terms of
         Use and any other Terms referenced within these terms, including, but
         not limited to, our <a href="/privacy">Privacy Policy</a>. If you do not
@@ -28,35 +28,35 @@ function Terms() {
       </p>
       <h2>2. Service Description</h2>
       <p>
-        Voicebar provides a service that helps users connect with and
+        Story provides a service that helps users connect with and
         communicate with one another for dating purposes, friendship, making
         connections and other similar purposes. As a User of the Service, you
         agree to provide us with complete and accurate information (if
         requested) and to update such information to keep it accurate, current
-        and complete. You hereby grant Voicebar the right to use and distribute
-        the information that you have provided to Voicebar for the purpose for
+        and complete. You hereby grant Story the right to use and distribute
+        the information that you have provided to Story for the purpose for
         which it was provided.{" "}
         <strong>
-          You understand and agree that Voicebar has no control over the conduct
+          You understand and agree that Story has no control over the conduct
           of users. To the fullest extent permitted by law, you agree to release
-          Voicebar from all liability arising out of or related to any
+          Story from all liability arising out of or related to any
           interactions you may have with other users for your use of the Service
           or any act or omission of other users.
         </strong>
       </p>
-      <h2>3. Voicebar Rules</h2>
+      <h2>3. Story Rules</h2>
       <h3>3.1 Eligibility</h3>
       <p>
         Before you may use our Service, you must register for an account. To
-        create a Voicebar account you must be at least 18 years of age or older
+        create a Story account you must be at least 18 years of age or older
         and you must be legally permitted to use our Service by the home laws of
         your country.
       </p>
       <p>
-        By creating an account with Voicebar, you represent and warrant that:
+        By creating an account with Story, you represent and warrant that:
       </p>
       <ul>
-        <li>You can form a binding contract with Voicebar;</li>
+        <li>You can form a binding contract with Story;</li>
         <li>
           You will comply with these Terms and all applicable laws, rules,
           regulations, including without limitation, privacy laws, intellectual
@@ -72,16 +72,16 @@ function Terms() {
       </ul>
       <h3>3.2 Community Rules</h3>
       <p>
-        Voicebar users must be respectful and honest. While you are using
-        Voicebar, you are required to provide accurate information and keep your
+        Story users must be respectful and honest. While you are using
+        Story, you are required to provide accurate information and keep your
         account up-to-date. You agree to:
       </p>
       <ul>
-        <li>Use your real name on your Voicebar account</li>
+        <li>Use your real name on your Story account</li>
         <li>Represent yourself honestly and accurately</li>
         <li>
           Be respectful when using our services and interacting with other
-          Voicebar users
+          Story users
         </li>
       </ul>
       <p>You agree not to:</p>
@@ -114,8 +114,8 @@ function Terms() {
       </ul>
       <h3>3.3 Contact</h3>
       <p>
-        By registering for a Voicebar account, you agree to be contacted by
-        Voicebar via email and/or SMS message. You understand that your mobile
+        By registering for a Story account, you agree to be contacted by
+        Story via email and/or SMS message. You understand that your mobile
         carrier may charge a fee for SMS messages you receive through the
         Service and that you are solely responsible for paying these fees. You
         can opt out of receiving these messages at any time by replying “STOP”.{" "}
@@ -123,16 +123,16 @@ function Terms() {
       <h2>4. Content and Copyright</h2>
       <p>
         There are three types of Content that you will be able to access on the
-        Voicebar site and service:
+        Story site and service:
       </p>
       <ol>
         <li>content that you provide;</li>
         <li>content that other users provide; and</li>
-        <li>content that Voicebar provides;</li>
+        <li>content that Story provides;</li>
       </ol>
       <h3>4.1 Your Content</h3>
       <p>
-        By creating an account, you grant to Voicebar a worldwide, transferable,
+        By creating an account, you grant to Story a worldwide, transferable,
         sub-licensable, royalty-free, right and license to host, store, use,
         copy, display, reproduce, adapt, edit, publish, modify and distribute
         information you authorize us to access from third-party sources, as well
@@ -141,9 +141,9 @@ function Terms() {
         Content”).
       </p>
       <p>
-        You may create and share Content with Voicebar and other users while
+        You may create and share Content with Story and other users while
         using the Service. For instance, when you create an account you provide
-        Voicebar with profile Content, such as “Fun Facts”. Though Voicebar
+        Story with profile Content, such as “Fun Facts”. Though Story
         reserves the right to review and remove Content that violates this
         agreement, you are responsible and liable for Your Content and will
         indemnify, defend, release, and hold us harmless from any claims made in
@@ -164,7 +164,7 @@ function Terms() {
       </p>
       <p>
         You may not include any personal contact or banking information in
-        Content you share for your Voicebar profile. If you do choose to reveal
+        Content you share for your Story profile. If you do choose to reveal
         any personal information about yourself to other users, whether via
         email, text message or otherwise, it is at your own risk. We encourage
         you to use the same caution in disclosing details about yourself to
@@ -177,30 +177,30 @@ function Terms() {
       <h3>4.2 Your Feedback</h3>
       <p>
         If you submit any ideas, suggestions or testimonials (“Feedback”) to
-        Voicebar, you hereby transfer to us all rights in such Feedback without
-        charge. You also agree that Voicebar shall have the right to use and
+        Story, you hereby transfer to us all rights in such Feedback without
+        charge. You also agree that Story shall have the right to use and
         fully exploit such Feedback in any manner that we consider appropriate,
         including posting on the Internet. The Feedback you provide to us will
         not be treated as confidential information – accordingly, you agree not
         to submit to us any information or ideas that you consider to be
         confidential or proprietary. You agree only to submit ideas and material
         if you have obtained appropriate copyright and other permission to
-        submit such materials and to permit Voicebar to use such material
+        submit such materials and to permit Story to use such material
         without restriction.{" "}
       </p>
       <h3>4.3 Other Users’ Content</h3>
       <p>
         Other users may share Content with you through the Service. Such Content
-        is the sole responsibility of the user who shares it, and Voicebar
+        is the sole responsibility of the user who shares it, and Story
         cannot guarantee that all Content will comply with this Agreement. If
         you see Content on the Service that violates this Agreement, please
         report it by contacting{" "}
-        <a href="mailto:support@voicebar.co">support@voicebar.co</a>.
+        <a href="mailto:support@storydating.com">support@storydating.com</a>.
       </p>
       <p>
         You do not have any rights in relation to other users' Content, and you
-        may only use other Voicebar users' personal information to the extent
-        that your use of it matches Voicebar’s purpose of allowing people to
+        may only use other Story users' personal information to the extent
+        that your use of it matches Story’s purpose of allowing people to
         meet one another. You may not use other users' information for
         commercial purposes, to spam, to harass, or to make unlawful threats. We
         reserve the right to terminate your Account if you misuse other users'
@@ -209,17 +209,17 @@ function Terms() {
       <h3>4.4 Our Content</h3>
       <p>
         Any other text, content, graphics, user interfaces, trademarks, logos,
-        sounds, artwork, and other intellectual property appearing on Voicebar
+        sounds, artwork, and other intellectual property appearing on Story
         (collectively, “Our Content”) are owned, controlled or licensed by us
         and are protected by copyright, trademark and other intellectual
         property law rights. All right, title and interest in and to Our Content
         remains with us at all times.
       </p>
       <p>
-        Voicebar grants you a personal, worldwide, royalty-free, non-assignable,
+        Story grants you a personal, worldwide, royalty-free, non-assignable,
         nonexclusive, revocable, and non-sublicensable license to access and use
         the Service and Our Content. This license is for the sole purpose of
-        letting you use and enjoy the Service’s benefits as intended by Voicebar
+        letting you use and enjoy the Service’s benefits as intended by Story
         and permitted by this Agreement. Therefore, you agree not to:
       </p>
       <ul>
@@ -253,7 +253,7 @@ function Terms() {
       </ul>
       <h2>5. Privacy</h2>
       <p>
-        Our <a href="/privacy">Privacy Policy</a> explains how Voicebar
+        Our <a href="/privacy">Privacy Policy</a> explains how Story
         collects, uses and shares your personal information and we suggest that
         you review this policy closely. When using our Service, you agree that
         we can use your personal information in accordance with our Privacy
@@ -264,37 +264,37 @@ function Terms() {
         To encourage a safe and respectful user experience, we have created
         features such as double-opt in, which allows users to exchange contact
         information only after both parties have provided their consent. While
-        all Voicebar users are expected to behave safely and respectfully,
-        Voicebar is not responsible for the conduct of its users on or off the
-        Voicebar service.If you choose to communicate with Voicebar users
-        outside of our service or to meet other Voicebar users in person, you
+        all Story users are expected to behave safely and respectfully,
+        Story is not responsible for the conduct of its users on or off the
+        Story service.If you choose to communicate with Story users
+        outside of our service or to meet other Story users in person, you
         agree to use caution.
       </p>
       <p>
         You are solely responsible for your interactions with other users.{" "}
         <strong>
-          Voicebar does not conduct background checks on users or otherwise
-          verify that all information users have provided is accurate. Voicebar
+          Story does not conduct background checks on users or otherwise
+          verify that all information users have provided is accurate. Story
           makes no representations or warranties regarding the conduct of
-          Voicebar members.
+          Story members.
         </strong>
       </p>
       <p>
         If you believe a user is behaving in an unsafe or disrespectful manner,
         please report the behavior to us by contacting{" "}
-        <a href="mailto:support@voicebar.co">support@voicebar.co</a>.
+        <a href="mailto:support@storydating.com">support@storydating.com</a>.
       </p>
       <h2>7. Account Termination</h2>
       <h3>7.1 Account Deletion By You</h3>
       <p>
         You may delete your account at any time by contacting us at{" "}
-        <a href="mailto:support@voicebar.co">support@voicebar.co</a>. For more
+        <a href="mailto:support@storydating.com">support@storydating.com</a>. For more
         information about account deletion please consult our{" "}
         <a href="/privacy">Privacy Policy</a>.
       </p>
       <h3>7.2 Account Termination By Us</h3>
       <p>
-        We may suspend or terminate your account and your use of Voicebar
+        We may suspend or terminate your account and your use of Story
         services at any time, with or without cause, with or without notice, and
         without any liability to you.{" "}
       </p>
@@ -302,7 +302,7 @@ function Terms() {
         We will likely terminate your account if you fail to comply with these
         Terms, there is evidence of illegal, disrespectful, or harmful activity
         in your use of this Service, or we believe use of your Account poses a
-        risk to Voicebar, you, or other Users. Upon such termination, you will
+        risk to Story, you, or other Users. Upon such termination, you will
         not be entitled to any refund for purchases.{" "}
       </p>
       <p>
@@ -313,7 +313,7 @@ function Terms() {
       </p>
       <h2>8. Modifications to the Service and Terms</h2>
       <p>
-        Voicebar is always trying to improve the Service and bring you
+        Story is always trying to improve the Service and bring you
         additional features that you will find engaging and useful. This means
         that we may add new products or features, remove products or features,
         or make other changes to the Service and we may do so without notifying
@@ -322,7 +322,7 @@ function Terms() {
         from doing so.{" "}
       </p>
       <p>
-        As Voicebar evolves, we need to make changes to these Terms from time to
+        As Story evolves, we need to make changes to these Terms from time to
         time, so we reserve the right to modify, amend, or change these Terms at
         any time. If we make a change to these Terms, we will update the
         Effective Date at the top of these terms, and the changes will go into
@@ -332,11 +332,11 @@ function Terms() {
         regularly for notice of any changes.
       </p>
       <p>
-        Your continued use of Voicebar following any change to the Terms
+        Your continued use of Story following any change to the Terms
         constitutes your acceptance of the change and your agreement to be
         legally bound by the updated Terms. If the modified terms are not
-        acceptable to you, you should stop using Voicebar immediately and delete
-        your Voicebar account.
+        acceptable to you, you should stop using Story immediately and delete
+        your Story account.
       </p>
       <p>
         We may transfer our rights and obligations under these Terms to another
@@ -345,7 +345,7 @@ function Terms() {
       </p>
       <h2>9. Disclaimer</h2>
       <p>
-        VOICEBAR PROVIDES THE SERVICE ON AN “AS IS” AND “AS AVAILABLE” BASIS AND
+        STORY PROVIDES THE SERVICE ON AN “AS IS” AND “AS AVAILABLE” BASIS AND
         TO THE EXTENT PERMITTED BY APPLICABLE LAW, GRANTS NO WARRANTIES OF ANY
         KIND, WHETHER EXPRESS, IMPLIED, STATUTORY OR OTHERWISE WITH RESPECT TO
         THE SERVICE (INCLUDING ALL CONTENT CONTAINED THEREIN), INCLUDING,
@@ -360,7 +360,7 @@ function Terms() {
         NOT EXPRESSLY STATED IN THIS SECTION.
       </p>
       <p>
-        VOICEBAR DOES NOT REPRESENT OR WARRANT THAT (A) THE SERVICE WILL BE
+        STORY DOES NOT REPRESENT OR WARRANT THAT (A) THE SERVICE WILL BE
         UNINTERRUPTED, SECURE OR ERROR FREE, (B) ANY DEFECTS OR ERRORS IN THE
         SERVICE WILL BE CORRECTED, (C), THAT YOUR USE OF THE SERVICE WILL MEET
         YOUR EXPECTATIONS, OR (D) THAT ANY CONTENT OR INFORMATION YOU OBTAIN ON
@@ -368,20 +368,20 @@ function Terms() {
         SERVICE OR SITE IS AT YOUR OWN RISK.
       </p>
       <p>
-        VOICEBAR TAKES NO RESPONSIBILITY FOR ANY CONTENT THAT YOU OR ANOTHER
+        STORY TAKES NO RESPONSIBILITY FOR ANY CONTENT THAT YOU OR ANOTHER
         USER OR THIRD PARTY POSTS, SENDS OR RECEIVES THROUGH THE SERVICE. ANY
         MATERIAL DOWNLOADED OR OTHERWISE OBTAINED THROUGH THE USE OF THE SERVICE
         IS ACCESSED AT YOUR OWN DISCRETION AND RISK.
       </p>
       <p>
-        VOICEBAR DISCLAIMS AND TAKES NO RESPONSIBILITY FOR ANY CONDUCT OF YOU OR
-        ANY OTHER MEMBER, ON OR OFF THE SERVICE. VOICEBAR DOES NOT CONDUCT
+        STORY DISCLAIMS AND TAKES NO RESPONSIBILITY FOR ANY CONDUCT OF YOU OR
+        ANY OTHER MEMBER, ON OR OFF THE SERVICE. STORY DOES NOT CONDUCT
         CRIMINAL BACKGROUND CHECKS ON ITS USERS.
       </p>
 
       <h2>10. Limitation of Liability</h2>
       <p>
-        NEITHER VOICEBAR NOR ANY OWNER WILL BE LIABLE FOR ANY DAMAGES, DIRECT,
+        NEITHER STORY NOR ANY OWNER WILL BE LIABLE FOR ANY DAMAGES, DIRECT,
         INDIRECT, INCIDENTAL, CONSEQUENTIAL, SPECIAL, OR PUNITIVE, INCLUDING,
         WITHOUT LIMITATION, LOSS OF DATA, INCOME, PROFIT OR GOODWILL, LOSS OF OR
         DAMAGE TO PROPERTY AND CLAIMS OF THIRD PARTIES ARISING OUT OF YOUR
@@ -418,8 +418,8 @@ function Terms() {
       <p>
         All the actions you take and information you provide in your use of the
         Service remain your responsibility. Therefore, to the maximum extent
-        permitted by applicable law, you agree to release, defend (at Voicebar’s
-        option), indemnify, and hold Voicebar and its affiliates and
+        permitted by applicable law, you agree to release, defend (at Story’s
+        option), indemnify, and hold Story and its affiliates and
         subsidiaries and their officers, directors, employees, and agents,
         harmless from and against any claims, liabilities, damages, losses, and
         expenses, including, without limitation, reasonable legal and accounting
@@ -452,7 +452,7 @@ function Terms() {
       <h2>13. About Us</h2>
       <p>
         The Terms constitute a binding legal agreement between you as user
-        (“you”) and the owners and operators of voicebar.co (“Voicebar”, “we” or
+        (“you”) and the owners and operators of storydating.com (“Story”, “we” or
         “us”).
       </p>
     </div>

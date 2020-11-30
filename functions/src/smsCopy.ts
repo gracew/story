@@ -2,7 +2,7 @@ import * as moment from "moment-timezone";
 import { IMatch, IUser } from "./firestore";
 
 export function availability(user: IUser, tz: string) {
-    return `Hi ${user.firstName}. It's Voicebar. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ${tz} any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.`;
+    return `Hi ${user.firstName}. It's Story. We've got a potential match for you! Are you available for a 30 minute phone call with your match at 8pm ${tz} any day this week? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.`;
 }
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
@@ -85,7 +85,7 @@ export function reminder(userA: IUser, userB: IUser) {
 }
 
 export function flakeWarning(userA: IUser, userB: IUser) {
-    return `Hi ${userA.firstName}. It looks like you missed your call with ${userB.firstName} today. Respecting our users' time is important, so next time please let us know in advance if you need to reschedule a call. We know mistakes happen, so we'll let it slide this time. But if it happens again, we may remove you from Voicebar.`;
+    return `Hi ${userA.firstName}. It looks like you missed your call with ${userB.firstName} today. Respecting our users' time is important, so next time please let us know in advance if you need to reschedule a call. We know mistakes happen, so we'll let it slide this time. But if it happens again, we may remove you from Story.`;
 }
 
 export function flakeApology(userA: IUser, userB: IUser) {

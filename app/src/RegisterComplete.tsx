@@ -44,7 +44,7 @@ function RegisterComplete() {
     text += " we have a match for you.";
   }
 
-  const personalLink = "voicebar.co/" + username;
+  const personalLink = "storydating.com/" + username;
   return (
     <div>
       <h2>You're in!</h2>

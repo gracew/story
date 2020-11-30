@@ -7,19 +7,19 @@ function Privacy() {
       <h1>Privacy Policy</h1>
       <h3>Last Updated: September 15, 2020</h3>
       <p>
-        At Voicebar, your privacy is a top priority. Your trust is important to
+        At Story, your privacy is a top priority. Your trust is important to
         us, and we’re committed to protecting the privacy of our users. This
         privacy policy is part of our Terms of Service. It explains how we
         collect, store, and use personal information in plain language without
         excessive technical or legal jargon.
       </p>
       <p>
-        Voicebar.co provides a dating service (“Service”) that matches
+        storydating.com provides a dating service (“Service”) that matches
         compatible users and coordinates phone call dates between matches. This
-        Service is currently provided by Voicebar at no cost and is intended for
-        use as is. If you choose to use the Voicebar Service, we will collect
+        Service is currently provided by Story at no cost and is intended for
+        use as is. If you choose to use the Story Service, we will collect
         some information about you. In addition, you may choose to share
-        information with other users while using Voicebar. From time to time we
+        information with other users while using Story. From time to time we
         may also need to share your information with third parties to provide
         the Service or if required by law.
       </p>
@@ -28,14 +28,14 @@ function Privacy() {
         your information in the ways described in this policy. Please read this
         policy very carefully, and if you have any questions or comments about
         this policy, you can contact us at{" "}
-        <a href="mailto:support@voicebar.co">support@voicebar.co</a>.
+        <a href="mailto:support@storydating.com">support@storydating.com</a>.
       </p>
 
       <h2>1. Information We Collect</h2>
 
       <h3>Information You Provide To Us</h3>
       <p>
-        When you sign up for Voicebar, you provide us with basic information
+        When you sign up for Story, you provide us with basic information
         about yourself that is necessary for our Service to work, such as:
       </p>
       <ul>
@@ -87,7 +87,7 @@ function Privacy() {
       </ul>
       <p>
         We may use and allow others to use cookies, pixel tags, or other similar
-        tools in order to improve your experience using the Voicebar website.
+        tools in order to improve your experience using the Story website.
         Cookies are small data files that are stored on your local device to
         improve site performance and help us learn how users interact with our
         site. They also enable our site to remember you and your preferences
@@ -144,7 +144,7 @@ function Privacy() {
       <p>
         We may use your information to serve you with relevant ads and offers.
         You can opt-out of promotional communications at any time by emailing{" "}
-        <a href="mailto:support@voicebar.co">support@voicebar.co</a>.
+        <a href="mailto:support@storydating.com">support@storydating.com</a>.
       </p>
 
       <h3>Legal and Security Uses</h3>
@@ -190,13 +190,13 @@ function Privacy() {
       <h3>Viewing or Modifying Your Personal Information</h3>
       <p>
         You can review or update your account information anytime by emailing us
-        at <a href="mailto:support@voicebar.co">support@voicebar.co</a>.
+        at <a href="mailto:support@storydating.com">support@storydating.com</a>.
       </p>
 
-      <h3>Deleting Your Voicebar Account</h3>
+      <h3>Deleting Your Story Account</h3>
       <p>
-        If you would like to delete your account with Voicebar, you may do so by
-        contacting <a href="mailto:support@voicebar.co">support@voicebar.co</a>.
+        If you would like to delete your account with Story, you may do so by
+        contacting <a href="mailto:support@storydating.com">support@storydating.com</a>.
         For the security and safety of our users, we will retain data associated
         with your account for a safety period of six months following account
         deletion. Following the safety period, we will delete or anonymize your
@@ -222,15 +222,15 @@ function Privacy() {
         knowingly collect personal information from anyone under the age of 18.
         If you suspect that a user is under the age of 18, please report this to
         us by emailing{" "}
-        <a href="mailto:support@voicebar.co">support@voicebar.co</a>.
+        <a href="mailto:support@storydating.com">support@storydating.com</a>.
       </p>
 
       <h2>5. Changes to This Policy</h2>
       <p>
-        As Voicebar evolves, we may make changes to this policy from time to
+        As Story evolves, we may make changes to this policy from time to
         time. The most current policy will govern our use of personal data, and
         will always be available on our website at{" "}
-        <a href="/privacy">voicebar.co/privacy</a>.
+        <a href="/privacy">storydating.com/privacy</a>.
       </p>
     </div>
   );

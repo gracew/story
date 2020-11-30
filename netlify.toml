@@ -10,7 +10,7 @@
   status = 301
 
 [[redirects]]
-  from = "/feedback"
+  from = "/rate"
   to = "https://datwct.typeform.com/to/WtT4fdmX"
   status = 301
 

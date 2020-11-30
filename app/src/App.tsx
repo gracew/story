@@ -13,7 +13,7 @@ import RegisterComplete from "./RegisterComplete";
 import Terms from "./Terms";
 import VoiceBio from "./VoiceBio";
 
-const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://voicebar.co")
+const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://storydating.com")
   ? {
       apiKey: "AIzaSyATNRFSSQDVmI90c5y7FI817U9lWiH19_w",
       authDomain: "speakeasy-prod.firebaseapp.com",
@@ -42,7 +42,7 @@ function App() {
   return (
     <Router>
       <header>
-        <a href="/">Voicebar</a>
+        <a href="/">Story</a>
       </header>
       <Switch>
         <Route path="/privacy">
@@ -76,7 +76,7 @@ function App() {
       </Switch>
       <footer>
         Questions? Email{" "}
-        <a href="mailto:hello@voicebar.co">hello@voicebar.co</a>
+        <a href="mailto:hello@storydating.com">hello@storydating.com</a>
       </footer>
     </Router>
   );
