@@ -5,13 +5,12 @@ import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
 import * as firestore from "@google-cloud/firestore";
-import { addUserToAirtable } from './airtable';
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
 import { createMatchFirestore, processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
 import { Firestore, IMatch, IUser } from "./firestore";
 import { flakeApology, flakeWarning, reminder } from "./smsCopy";
 import { bipartite, generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
-import { addUsersToSendgrid} from "./sendgrid"
+import { sendConfirmationEmail} from "./sendgrid"
 
 admin.initializeApp();
 
@@ -53,28 +52,27 @@ export const getUserByUsername = functions.https.onCall(
 export const registerUser = functions.https.onRequest(async (req, response) => {
 
     const answersIdMap: { [key: string]: string } = {
-        "2a57e142-a19d-47a6-b9e7-e44e305020ae": "firstName",
-        "26da12e0-58dd-4c2d-94c3-43ce603e7845": "lastName",
-        "5c4ac50c-5f56-479e-8f26-79c0a8fbcf2f": "age",
-        "51a54426-5dd2-4195-ac3a-bc8bf63857aa": "gender",
-        "1a448624-668f-4904-b1dc-238ab0918ab3": "race",
-        "cb8abb92-a2ee-4d68-8e66-4f20a41ca617": "email",
-        "9cd16471-ba75-4b5a-8575-e9c59a76707b": "location",
-        "e20e886c-b4c9-47c9-a8fc-6801602225d2": "locationFlexibility",
-        "66620ef7-31d3-4269-b5be-4b5786793ec0": "agePreference",
-        "6f60bcbb-622f-4b94-9671-e9f361bdffd7": "phone",
-        "46b2e2ef-78b4-4113-af23-9f6b43fdab5c": "genderPreference",
-        "01093a01-0f3a-44b7-a595-2759523f3e48": "funFacts",
-        "bad634b9-0941-45e8-9dce-9f70f94b63cc": "interests",
-        "81a72b3b-f161-4fe3-86c8-2313634be26f": "social",
-        "c2edd041-e6a2-406a-81a0-fa66868059a4": "whereDidYouHearAboutVB"
+        "bc7dad0e-d1ee-42d5-b9b0-4b15b5d1b102": "firstName",
+        "e9ad7465-f6cf-457f-8679-ff188616e43e": "lastName",
+        "6fa1f2c6-a197-4509-bd40-561be56369ae": "age",
+        "2a7363b5-ef3d-409d-9a4b-7e673ac70cb5": "gender",
+        "c0e58906-8dc5-4471-a528-8e2290186ef0": "race",
+        "b67c3eee-a90d-4302-a710-6556829b6817": "email",
+        "6775fb10-e9a5-4ea6-909a-c939fed72695": "location",
+        "ff785a0b-f3a0-4406-aa13-ea266e9bb2d7": "locationFlexibility",
+        "3eb330d4-26cc-42fa-b9ae-3d236bf13b87": "agePreference",
+        "a5199299-4665-4e9b-87c7-eac644077f28": "phone",
+        "1cb2d597-5a52-406b-bc12-45bdea0d877f": "genderPreference",
+        "34932f3b-5120-47c2-8053-1c61c3f5ff6f": "funFacts",
+        "ead263db-6980-4ebe-9bc4-2956ce894fd3": "interests",
+        "4cef01ee-ed52-48b4-8f2b-902d38dafcf0": "social",
+        "1b6b3940-ba10-46f3-bd8b-17b7f32e93f8": "whereDidYouHearAboutStory"
     }
 
     const user: { [key: string]: any } = {
-        "referrer": req.body.form_response.hidden.referrer,
+        "referrer": req.body.form_response.hidden.r,
         "signUpDate": req.body.form_response.submitted_at
     }
-
 
     const answers = req.body.form_response.answers;
     console.log(answers);
@@ -82,10 +80,9 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     for (const a of answers) {
         const refff: string = a.field.ref;
         const key = answersIdMap[refff];
-        if (key === undefined) {
+        if (!key) {
             continue;
         }
-        console.log(key);
         if (a.type === 'text' || a.type === "boolean" || a.type === "email" || a.type === 'number' || a.type === 'phone_number' || a.type === 'long_text' || a.type === 'short_text') {
             user[key] = a[a.type];
         } else if (a.type === 'choice') {
@@ -114,19 +111,9 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     user.id = reff.id;
     user.registeredAt = admin.firestore.FieldValue.serverTimestamp();
     await reff.set(user);
+    await sendConfirmationEmail(user);
 
-    addUserToAirtable(user)
-
-    let sendgrid = [{
-        age: user.age.toString(),
-        email: user.email,
-        first_name: user.firstName,
-        last_name: user.lastName ? user.lastName : ""
-    }]
-
-    addUsersToSendgrid(sendgrid)
-
-    response.send({ 'success': 'true' })
+    response.end();
 });
 
 /** Used in each round to determine which users should be included (based on number of potential matches). */
