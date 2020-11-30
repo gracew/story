@@ -1,32 +1,17 @@
 [[redirects]]
   from = "/"
-  to = "https://webflow.voicebar.co"
+  to = "https://webflow.storydating.com"
   status = 200
   force = true
 
 [[redirects]]
-  from = "/signup"
-  to = "https://voicebar.typeform.com/to/NUynD2GT"
+  from = "/join"
+  to = "https://datwct.typeform.com/to/ocxmmOHo"
   status = 301
 
 [[redirects]]
   from = "/feedback"
-  to = "https://voicebar.typeform.com/to/TpRvqH1J"
-  status = 301
-
-[[redirects]]
-  from = "/prefs"
-  to = "https://voicebar.typeform.com/to/dDndU0sf"
-  status = 301
-  
-[[redirects]]
-  from = "/prefs2"
-  to = "https://voicebar.typeform.com/to/Wp4gvDt5"
-  status = 301
-  
-[[redirects]]
-  from = "/prefs3"
-  to = "https://voicebar.typeform.com/to/xtWXS8q5"
+  to = "https://datwct.typeform.com/to/WtT4fdmX"
   status = 301
 
 [[redirects]]
