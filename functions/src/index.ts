@@ -4,6 +4,7 @@ import * as moment from "moment-timezone";
 import * as os from 'os';
 import * as path from 'path';
 import * as twilio from 'twilio';
+import * as util from "util";
 import * as firestore from "@google-cloud/firestore";
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
 import { createMatchFirestore, processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
@@ -334,6 +335,11 @@ export const revealRequest = functions.pubsub.schedule('0,30 * * * *').onRun(asy
 async function playCallOutro(match: IMatch, conferenceSid: string) {
     try {
         // wrap in try/catch as twilio will throw if the conference has already ended
+        const participants = await client.conferences(conferenceSid).participants.list();
+        await Promise.all(participants.map(participant =>
+            client.conferences(conferenceSid).participants(participant.callSid).update({ muted: true })))
+        await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "callOutro" })
+        await util.promisify(setTimeout)(27_000);
         await client.conferences(conferenceSid).update({ status: "completed" })
     } catch (err) {
         console.log(err);
@@ -391,7 +397,7 @@ export const screenCall = functions.https.onRequest(
     async (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
         const gather = twiml.gather({ numDigits: 1, action: BASE_URL + "addUserToCall" });
-        gather.say({ voice: "alice" }, 'Welcome! Press any key to enter your voice date.');
+        gather.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_screen.mp3?alt=media");
 
         // If the user doesn't enter input, loop
         twiml.redirect('/screenCall');
@@ -420,6 +426,10 @@ export const conferenceStatusWebhook = functions.https.onRequest(
             }
             await admin.firestore().collection("matches").doc(request.body.FriendlyName)
                 .update({ "ongoing": true, "twilioSid": conferenceSid })
+            await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "announceUser" })
+            await util.promisify(setTimeout)(28_000);
+            await Promise.all(participants.map(participant =>
+                client.conferences(conferenceSid).participants(participant.callSid).update({ muted: false })))
         } else if (request.body.StatusCallbackEvent === "conference-end") {
             await admin.firestore().collection("matches").doc(request.body.FriendlyName)
                 .update({ "ongoing": false })
@@ -428,10 +438,19 @@ export const conferenceStatusWebhook = functions.https.onRequest(
     }
 );
 
+export const announceUser = functions.https.onRequest(
+    (request, response) => {
+        const twiml = new twilio.twiml.VoiceResponse();
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro.mp3?alt=media");
+        response.set('Content-Type', 'text/xml');
+        response.send(twiml.toString());
+    }
+);
+
 export const announce5Min = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
-        twiml.say({ 'voice': 'alice' }, "Your call will end in 5 minutes.");
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media");
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
@@ -440,7 +459,16 @@ export const announce5Min = functions.https.onRequest(
 export const announce1Min = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
-        twiml.say({ 'voice': 'alice' }, "Your call will end in 1 minute.");
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media");
+        response.set('Content-Type', 'text/xml');
+        response.send(twiml.toString());
+    }
+);
+
+export const callOutro = functions.https.onRequest(
+    (request, response) => {
+        const twiml = new twilio.twiml.VoiceResponse();
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro.mp3?alt=media");
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
@@ -463,6 +491,8 @@ export const call5MinWarning = functions.pubsub.schedule('25,55 * * * *').onRun(
 
 // runs every hour at 29 minutes past
 export const call1MinWarning = functions.pubsub.schedule('29,59 * * * *').onRun(async (context) => {
+    // wait 30s
+    await util.promisify(setTimeout)(30_000);
     await admin.firestore().runTransaction(async txn => {
         const ongoingCalls = await txn.get(admin
             .firestore()
