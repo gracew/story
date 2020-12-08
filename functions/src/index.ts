@@ -491,6 +491,8 @@ export const call5MinWarning = functions.pubsub.schedule('25,55 * * * *').onRun(
 
 // runs every hour at 29 minutes past
 export const call1MinWarning = functions.pubsub.schedule('29,59 * * * *').onRun(async (context) => {
+    // wait 30s
+    await util.promisify(setTimeout)(30_000);
     await admin.firestore().runTransaction(async txn => {
         const ongoingCalls = await txn.get(admin
             .firestore()
