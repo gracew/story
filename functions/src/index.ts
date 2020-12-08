@@ -421,6 +421,10 @@ export const conferenceStatusWebhook = functions.https.onRequest(
             }
             await admin.firestore().collection("matches").doc(request.body.FriendlyName)
                 .update({ "ongoing": true, "twilioSid": conferenceSid })
+            await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "announceUser" })
+            await util.promisify(setTimeout)(29_000);
+            await Promise.all(participants.map(participant =>
+                client.conferences(conferenceSid).participants(participant.callSid).update({ muted: false })))
         } else if (request.body.StatusCallbackEvent === "conference-end") {
             await admin.firestore().collection("matches").doc(request.body.FriendlyName)
                 .update({ "ongoing": false })
