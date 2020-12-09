@@ -21,7 +21,9 @@ export async function processBulkSmsCsv(tempFilePath: string, sendSms: (opts: an
 export async function processAvailabilityCsv(tempFilePath: string, firestore: Firestore, sendSms: (opts: any) => Promise<any>) {
     const contents = fs.readFileSync(tempFilePath).toString();
     const rows = await neatCsv(contents, { headers: ["userId", "timezone"] });
-    return Promise.all(rows.map(async data => {
+    const userIds: string[] = [];
+    await Promise.all(rows.map(async data => {
+        userIds.push(data.userId);
         const user = await firestore.getUser(data.userId)
         if (!user) {
             console.error("cannot find user with id " + data.userId);
@@ -33,6 +35,8 @@ export async function processAvailabilityCsv(tempFilePath: string, firestore: Fi
             to: user.phone,
         });
     }));
+    const week = moment().startOf("week").format("YYYY-MM-DD");
+    await firestore.createSchedulingRecords(week, userIds);
 }
 
 export async function processMatchCsv(tempFilePath: string, firestore: Firestore, sendSms: (opts: any) => Promise<any>) {

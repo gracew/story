@@ -73,4 +73,12 @@ export class Firestore {
         const allUsers = await admin.firestore().getAll(...userARefs.concat(userBRefs));
         return Object.assign({}, ...allUsers.map(user => ({ [user.id]: user.data() })));
     }
+
+    public async createSchedulingRecords(week: string, userIds: string[]) {
+        const batch = admin.firestore().batch();
+        userIds.forEach(userId => {
+            batch.create(admin.firestore().collection("scheduling").doc(week).collection("users").doc(userId), {});
+        })
+        return batch.commit();
+    }
 }
