@@ -115,12 +115,12 @@ function generatePairs(array: any[]) {
         []);
 }
 
-function defaultMatchMax(match_gender: string, match_age: number) {
-    return match_gender === "Female" ? match_age + 7 : match_age + 4
+function defaultMatchMax(gender: string, age: number) {
+    return gender === "Female" ? age + 7 : age + 4
 }
 
-function defaultMatchMin(match_gender: string, match_age: number) {
-    return match_gender === "Female" ? match_age - 1 : match_age - 5
+function defaultMatchMin(gender: string, age: number) {
+    return gender === "Female" ? age - 1 : age - 5
 }
 
 function areUsersCompatible(user: any, match: any, prevMatches: Record<string, string[]>) {
