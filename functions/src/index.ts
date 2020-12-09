@@ -61,7 +61,8 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
         "b67c3eee-a90d-4302-a710-6556829b6817": "email",
         "6775fb10-e9a5-4ea6-909a-c939fed72695": "location",
         "ff785a0b-f3a0-4406-aa13-ea266e9bb2d7": "locationFlexibility",
-        "3eb330d4-26cc-42fa-b9ae-3d236bf13b87": "agePreference",
+        "3a3112de-77a8-40e8-bce8-3f7fec4bb6dd": "matchMin",
+        "f88f7eef-745f-415d-8675-307965e200d6": "matchMax",
         "a5199299-4665-4e9b-87c7-eac644077f28": "phone",
         "1cb2d597-5a52-406b-bc12-45bdea0d877f": "genderPreference",
         "34932f3b-5120-47c2-8053-1c61c3f5ff6f": "funFacts",
@@ -94,6 +95,11 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     }
 
     user.phone = user.phone.split(" ").join("");
+    if (user.location === "San Francisco Bay Area") {
+        user.timezone = "PT";
+    } else if (user.location === "New York City") {
+        user.timezone = "ET";
+    }
 
     // make sure the phone number hasn't already been registered
     const ue = await admin
