@@ -72,8 +72,9 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     }
 
     const user: { [key: string]: any } = {
-        "referrer": req.body.form_response.hidden.r,
-        "signUpDate": req.body.form_response.submitted_at
+        referrer: req.body.form_response.hidden.r,
+        signUpDate: req.body.form_response.submitted_at,
+        eligible: true,
     }
 
     const answers = req.body.form_response.answers;
