@@ -18,11 +18,11 @@ export async function generateRemainingMatchCount(excludeNames: string[]) {
     // TODO(gracew): incorporate excludeNames again
     const usersRaw = await admin.firestore().collection("users").where("eligible", "==", true).get();
     const users = usersRaw.docs.map(d => formatUser(d));
-    const prevMatches = await getPrevMatches();
+    const [prevMatches, blocklist] = await Promise.all([getPrevMatches(), getBlocklist()]);
 
     const results = [];
     for (const user of users) {
-        const remainingMatches = users.filter(match => areUsersCompatible(user, match, prevMatches));
+        const remainingMatches = users.filter(match => areUsersCompatible(user, match, prevMatches, blocklist));
 
         results.push({
             ...user,
@@ -49,6 +49,25 @@ async function getPrevMatches() {
             ret[data.user_b_id] = [];
         }
         ret[data.user_b_id].push(data.user_a_id);
+    })
+    return ret;
+}
+
+async function getBlocklist() {
+    const blocklists = await admin.firestore().collection("blocklist").get();
+    const ret: Record<string, string[]> = {};
+    blocklists.forEach(b => {
+        const [id1, id2] = b.get("userIds");
+
+        if (!(id1 in ret)) {
+            ret[id1] = [];
+        }
+        ret[id1].push(id2);
+
+        if (!(id2 in ret)) {
+            ret[id2] = [];
+        }
+        ret[id2].push(id1);
     })
     return ret;
 }
@@ -123,7 +142,7 @@ function defaultMatchMin(gender: string, age: number) {
     return gender === "Female" ? age - 1 : age - 5
 }
 
-function areUsersCompatible(user: any, match: any, prevMatches: Record<string, string[]>) {
+function areUsersCompatible(user: any, match: any, prevMatches: Record<string, string[]>, blocklist: Record<string, string[]>) {
     // ensure user isn't matching with self
     if (user.id === match.id) {
         return false;
@@ -162,9 +181,9 @@ function areUsersCompatible(user: any, match: any, prevMatches: Record<string, s
     if ((prevMatches[user.id] || []).includes(match.id)) {
         return false;
     }
-    /*if (user.blocklist.includes(match.airtableId)) {
+    if ((blocklist[user.id] || []).includes(match.id)) {
         return false;
-    }*/
+    }
 
     return true;
 }
