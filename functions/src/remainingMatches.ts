@@ -14,10 +14,9 @@ function formatUser(d: any) {
     };
 }
 
-export async function generateRemainingMatchCount(excludeNames: string[]) {
-    // TODO(gracew): incorporate excludeNames again
+export async function generateRemainingMatchCount(excludeIds: string[]) {
     const usersRaw = await admin.firestore().collection("users").where("eligible", "==", true).get();
-    const users = usersRaw.docs.map(d => formatUser(d));
+    const users = usersRaw.docs.filter(d => !excludeIds.includes(d.id)).map(d => formatUser(d));
     const [prevMatches, blocklist] = await Promise.all([getPrevMatches(), getBlocklist()]);
 
     const results = [];

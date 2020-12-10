@@ -127,7 +127,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
 /** Used in each round to determine which users should be included (based on number of potential matches). */
 export const generateRemainingMatchReport = functions.https.onRequest(
     async (request, response) => {
-        const result = await generateRemainingMatchCount(request.body.excludeNames || []);
+        const result = await generateRemainingMatchCount(request.body.excludeIds || []);
         response.send(result);
     });
 
