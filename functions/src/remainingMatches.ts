@@ -35,7 +35,7 @@ export async function generateRemainingMatchCount(excludeIds: string[]) {
 }
 
 async function getPrevMatches() {
-    const matches = await admin.firestore().collection("matches").get();
+    const matches = await admin.firestore().collection("matches").where("canceled", "==", false).get();
     const ret: Record<string, string[]> = {};
     matches.forEach(m => {
         const data = m.data();
