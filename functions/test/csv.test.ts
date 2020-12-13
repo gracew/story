@@ -1,7 +1,7 @@
 import * as test from "firebase-functions-test";
 test().mockConfig({ twilio: { auth_token: "token" } });
-import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "../src/csv";
-import { firestore, match, user } from "./mock";
+import { processBulkSmsCsv, processMatchCsv } from "../src/csv";
+import { firestore, match } from "./mock";
 import { TWILIO_NUMBER } from "../src/twilio";
 
 const mockSendSms = jest.fn();
@@ -17,27 +17,6 @@ another line
     expect(mockSendSms).toHaveBeenCalledWith({ body: body1, from: TWILIO_NUMBER, to: "+1234567890" })
     expect(mockSendSms).toHaveBeenCalledWith({ body: "another message", from: TWILIO_NUMBER, to: "+10123456789" })
 });
-
-it("processAvailabilityCsv", async () => {
-    const user1 = user("Anna");
-    const user2 = user("Grace");
-    firestore.getUser = jest.fn()
-        .mockResolvedValueOnce(user1)
-        .mockResolvedValueOnce(user2);
-    await processAvailabilityCsv("./testdata/availability.csv", firestore, mockSendSms)
-    expect(mockSendSms).toHaveBeenCalledTimes(2);
-    expect(mockSendSms).toHaveBeenCalledWith({
-        body: "Hi Anna. It's Story. We've got a potential match for you! Are you available for a 20 minute phone call with your match at 8pm ET Tuesday, Wednesday or Thursday? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.",
-        from: TWILIO_NUMBER,
-        to: user1.phone,
-    })
-    expect(mockSendSms).toHaveBeenCalledWith({
-        body: "Hi Grace. It's Story. We've got a potential match for you! Are you available for a 20 minute phone call with your match at 8pm PT Tuesday, Wednesday or Thursday? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.",
-        from: TWILIO_NUMBER,
-        to: user2.phone,
-    })
-});
-
 
 it("processMatchCsv", async () => {
     const { id: id1, ...match1 } = match("UqS4ivx8v9xcUcrAKt3B", "wz931t4yTP2F5xvOW0QI", "2020-09-23T20:00:00-04:00");

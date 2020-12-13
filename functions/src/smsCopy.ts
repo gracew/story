@@ -2,7 +2,7 @@ import * as moment from "moment-timezone";
 import { IMatch, IUser } from "./firestore";
 
 export function availability(user: IUser, tz: string) {
-    return `Hi ${user.firstName}. It's Story. We've got a potential match for you! Are you available for a 20 minute phone call with your match at 8pm ${tz} Tuesday, Wednesday or Thursday? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.`;
+    return `Hi ${user.firstName}. It's Story Dating. We've got a potential match for you! Two changes this week: phone calls are now 20 min and we'll set up a second video date if the first phone call goes well! For the first phone call, are you available to chat with your match at 8pm ${tz} Tuesday, Wednesday or Thursday? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.`;
 }
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
