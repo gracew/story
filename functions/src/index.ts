@@ -11,7 +11,7 @@ import { createMatchFirestore, processAvailabilityCsv, processBulkSmsCsv, proces
 import { Firestore, IMatch, IUser } from "./firestore";
 import { flakeApology, flakeWarning, reminder } from "./smsCopy";
 import { bipartite, generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
-import { sendConfirmationEmail} from "./sendgrid"
+import { sendConfirmationEmail } from "./sendgrid"
 
 admin.initializeApp();
 
@@ -526,3 +526,27 @@ export const backupFirestore = functions.pubsub.schedule('every 24 hours').onRun
         collectionIds: [] // leave collectionIds empty to export all collections
     });
 });
+
+export const notifyIncomingText = functions.https.onRequest(
+    async (request, response) => {
+        const phone = request.body.phone;
+        if (phone === functions.config().twilio.notify_phone) {
+            // special case grace's phone number...
+            response.end();
+        }
+        const userQuery = await admin.firestore().collection("users").where("phone", "==", phone).get();
+        if (userQuery.empty) {
+            console.error("No user with phone " + phone);
+            response.end();
+            return;
+        }
+        const user = userQuery.docs[0];
+        const fullName = user.get("firstName") + " " + user.get("lastName");
+        await client.conversations.conversations.get("CH3b12dac2b9484e5fb719bd2a32f16272").messages.create({
+            author: "+12036338466",
+            body: `From: ${fullName}
+Body: ${request.body.message}`
+        })
+        response.end();
+    }
+);
