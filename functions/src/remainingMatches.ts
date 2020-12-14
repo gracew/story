@@ -82,9 +82,9 @@ export async function generateAvailableMatches(week: string, tz: string) {
     const usersInTZ = users.filter(u => u.id in availabilityByUserId && u.timezone === tz);
 
     const pairs = [];
-    const prevMatches = await getPrevMatches();
+    const [prevMatches, blocklist] = await Promise.all([getPrevMatches(), getBlocklist()]);
     for (const [userA, userB] of generatePairs(usersInTZ)) {
-        if (!areUsersCompatible(userA, userB, prevMatches)) {
+        if (!areUsersCompatible(userA, userB, prevMatches, blocklist)) {
             continue;
         }
         const sharedAvailability = findCommonAvailability(availabilityByUserId[userA.id], availabilityByUserId[userB.id]);
@@ -198,12 +198,12 @@ export async function bipartite(week: string, tz: string) {
     const usersInTZ = users.filter(u => u.id in availabilityByUserId && u.timezone === tz);
 
     const usersById = Object.assign({}, ...usersInTZ.map(user => ({ [user.id]: user })))
-    const prevMatches = await getPrevMatches();
+    const [prevMatches, blocklist] = await Promise.all([getPrevMatches(), getBlocklist()]);
 
     const possibleMatches: Record<string, boolean> = {}
     generatePairs(usersInTZ)
         .forEach(([userA, userB]: [any, any]) => {
-            if (!areUsersCompatible(userA, userB, prevMatches)) {
+            if (!areUsersCompatible(userA, userB, prevMatches, blocklist)) {
                 return;
             }
             const commonAvailability = findCommonAvailability(availabilityByUserId[userA.id], availabilityByUserId[userB.id]);
