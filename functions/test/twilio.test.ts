@@ -22,10 +22,11 @@ const user2 = user(uuid.v4());
 const user3 = user(uuid.v4());
 let m1: IMatch;
 let m2: IMatch;
+const nextWeek = "Monday, Tuesday or Wednesday of next week";
 
 beforeEach(() => {
-    m1 = match(user1.id, user2.id, "2020-09-23T20:00:00-04:00");
-    m2 = match(user3.id, user2.id, "2020-09-24T20:00:00-04:00");
+    m1 = match(user1.id, user2.id, "2020-09-23T20:00:00-04:00"); // Wed
+    m2 = match(user3.id, user2.id, "2020-09-24T20:00:00-04:00"); // Thu
 
     jest.resetAllMocks();
     firestore.getUserByPhone.mockResolvedValue(user1);
@@ -40,12 +41,6 @@ beforeEach(() => {
         }
         return undefined;
     });
-    firestore.latestMatchForUser.mockResolvedValue(m1);
-
-});
-
-it("callStudio", async () => {
-    firestore.getUsersForMatches.mockReturnValue({ [user1.id]: user1, [user2.id]: user2 });
     firestore.latestMatchForUser.mockImplementation(id => {
         if (id === user1.id) {
             return m1;
@@ -55,6 +50,10 @@ it("callStudio", async () => {
         }
         return undefined;
     });
+});
+
+it("callStudio", async () => {
+    firestore.getUsersForMatches.mockReturnValue({ [user1.id]: user1, [user2.id]: user2 });
     await callStudio("reveal_request", m1, firestore);
     expect(mockCreate).toHaveBeenCalledTimes(2);
     expect(mockCreate).toHaveBeenCalledWith({
@@ -100,31 +99,10 @@ it("saveReveal Y, other N", async () => {
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: true });
 });
 
-it("saveReveal Y, other Y", async () => {
-    m1.user_b_revealed = true;
-    const res = await saveRevealHelper({ phone: user1.phone, reveal: "y", matchId: m1.id }, firestore);
-    expect(res).toEqual({ next: "reveal" });
-    expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
-    expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: true });
-    expect(mockCreate).toHaveBeenCalledTimes(1);
-    expect(mockCreate).toHaveBeenCalledWith({
-        to: user2.phone,
-        from: TWILIO_NUMBER,
-        parameters: {
-            mode: "reveal",
-            userId: user2.id,
-            firstName: user2.firstName,
-            matchName: user1.firstName,
-            matchPhone: user1.phone.substring(2),
-        }
-    })
-});
-
 it("saveReveal Y, other Y next match", async () => {
     m1.user_b_revealed = true;
-    firestore.latestMatchForUser.mockResolvedValue(m2)
     const res = await saveRevealHelper({ phone: user1.phone, reveal: "y", matchId: m1.id }, firestore);
-    expect(res).toEqual({ next: "reveal" });
+    expect(res).toEqual({ next: "reveal", nextDays: nextWeek });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: true });
     expect(mockCreate).toHaveBeenCalledTimes(1);
@@ -139,6 +117,7 @@ it("saveReveal Y, other Y next match", async () => {
             matchPhone: user1.phone.substring(2),
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
+            nextDays: nextWeek,
         }
     })
 });
@@ -150,29 +129,8 @@ it("saveReveal N", async () => {
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: false });
 });
 
-it("saveReveal N, other Y", async () => {
-    m1.user_b_revealed = true;
-    const res = await saveRevealHelper({ phone: user1.phone, reveal: "n", matchId: m1.id }, firestore);
-    expect(res).toEqual({ next: "no_reveal" })
-    expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
-    expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: false });
-    expect(mockCreate).toHaveBeenCalledTimes(1);
-    expect(mockCreate).toHaveBeenCalledWith({
-        to: user2.phone,
-        from: TWILIO_NUMBER,
-        parameters: {
-            mode: "reveal_other_no",
-            userId: user2.id,
-            firstName: user2.firstName,
-            matchName: user1.firstName,
-            matchPhone: user1.phone.substring(2),
-        }
-    })
-});
-
 it("saveReveal N, other Y next match", async () => {
     m1.user_b_revealed = true;
-    firestore.latestMatchForUser.mockResolvedValue(m2)
     const res = await saveRevealHelper({ phone: user1.phone, reveal: "n", matchId: m1.id }, firestore);
     expect(res).toEqual({ next: "no_reveal" })
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
