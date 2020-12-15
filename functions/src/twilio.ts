@@ -133,6 +133,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
         console.error("Requested match doesnt have the requested users");
         return;
     }
+    const latestMatchRevealing = await firestore.latestMatchForUser(revealingUser.id);
     const latestMatchOther = await firestore.latestMatchForUser(otherUser.id)
     const otherNextMatch = await nextMatchNameAndDate(
         { [otherUser.id]: latestMatchOther! }, match, otherUser.id, firestore);
@@ -145,6 +146,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
     };
 
     if (reveal && otherReveal) {
+        const nextDays = getNextDays(latestMatchRevealing!, latestMatchOther!);
         await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
             to: otherUser.phone,
             from: TWILIO_NUMBER,
@@ -152,9 +154,10 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
                 mode: "reveal",
                 ...otherData,
                 ...otherNextMatch,
+                nextDays,
             }
         });
-        return { next: "reveal" };
+        return { next: "reveal", nextDays };
     } else if (reveal && otherReveal === false) {
         return { next: "reveal_other_no" };
     } else if (reveal && otherReveal === undefined) {
@@ -174,6 +177,35 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
         return { next: "no_reveal" };
     }
     return;
+}
+
+function getNextDays(latestMatchRevealing: IMatch, latestMatchOther: IMatch) {
+    const day = moment().tz("America/Los_Angeles").format("ddd");
+    const nextMatchDays = new Set([
+        moment(latestMatchRevealing.created_at.toDate()).tz("America/Los_Angeles").format("ddd"),
+        moment(latestMatchOther.created_at.toDate()).tz("America/Los_Angeles").format("ddd"),
+    ]);
+
+    const nextWeek = "Monday, Tuesday or Wednesday of next week";
+    if (day === "Tue") {
+        if (nextMatchDays.has("Wed") && nextMatchDays.has("Thu")) {
+            return nextWeek;
+        } else if (nextMatchDays.has("Wed")) {
+            return "Thursday, next Monday, next Tuesday";
+        } else if (nextMatchDays.has("Thu")) {
+            return "Wednesday, next Monday, next Tuesday"
+        } else {
+            return "Wednesday, Thursday, next Monday";
+        }
+    } else if (day === "Wed") {
+        if (nextMatchDays.has("Thu")) {
+            return nextWeek;
+        } else {
+            return "Thursday, next Monday, next Tuesday";
+        }
+    } else {
+        return nextWeek;
+    }
 }
 
 function parseUserReveal(reveal: string) {
