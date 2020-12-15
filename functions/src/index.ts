@@ -320,10 +320,10 @@ export const callStudioManual = functions.https.onRequest(
         response.end();
     });
 
-export const revealRequest = functions.pubsub.schedule('0,30 * * * *').onRun(async (context) => {
+export const revealRequest = functions.pubsub.schedule('20,50 * * * *').onRun(async (context) => {
     const createdAt = moment().utc().startOf("hour");
-    if (moment().minutes() < 30) {
-        createdAt.subtract(30, "minutes");
+    if (moment().minutes() > 30) {
+        createdAt.add(30, "minutes");
     }
     await admin.firestore().runTransaction(async txn => {
         const matches = await txn.get(admin
@@ -346,7 +346,7 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
         await Promise.all(participants.map(participant =>
             client.conferences(conferenceSid).participants(participant.callSid).update({ muted: true })))
         await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "callOutro" })
-        await util.promisify(setTimeout)(27_000);
+        await util.promisify(setTimeout)(31_000);
         await client.conferences(conferenceSid).update({ status: "completed" })
     } catch (err) {
         console.log(err);
@@ -448,7 +448,7 @@ export const conferenceStatusWebhook = functions.https.onRequest(
 export const announceUser = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
-        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro.mp3?alt=media");
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_video.mp3?alt=media");
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
@@ -475,14 +475,13 @@ export const announce1Min = functions.https.onRequest(
 export const callOutro = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
-        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro.mp3?alt=media");
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_video.mp3?alt=media");
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
 );
 
-// runs every hour at 25 minutes past
-export const call5MinWarning = functions.pubsub.schedule('25,55 * * * *').onRun(async (context) => {
+export const call5MinWarning = functions.pubsub.schedule('15,45 * * * *').onRun(async (context) => {
     await admin.firestore().runTransaction(async txn => {
         const ongoingCalls = await txn.get(admin
             .firestore()
@@ -497,7 +496,7 @@ export const call5MinWarning = functions.pubsub.schedule('25,55 * * * *').onRun(
 });
 
 // runs every hour at 29 minutes past
-export const call1MinWarning = functions.pubsub.schedule('29,59 * * * *').onRun(async (context) => {
+export const call1MinWarning = functions.pubsub.schedule('19,49 * * * *').onRun(async (context) => {
     // wait 30s
     await util.promisify(setTimeout)(30_000);
     await admin.firestore().runTransaction(async txn => {
