@@ -66,6 +66,7 @@ it("callStudio", async () => {
             firstName: user1.firstName,
             matchName: user2.firstName,
             matchPhone: user2.phone.substring(2),
+            nextDays: nextWeek,
         }
     });
     expect(mockCreate).toHaveBeenCalledWith({
@@ -80,6 +81,7 @@ it("callStudio", async () => {
             matchPhone: user1.phone.substring(2),
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
+            nextDays: nextWeek,
         }
     });
 });
@@ -102,7 +104,7 @@ it("saveReveal Y, other N", async () => {
 it("saveReveal Y, other Y next match", async () => {
     m1.user_b_revealed = true;
     const res = await saveRevealHelper({ phone: user1.phone, reveal: "y", matchId: m1.id }, firestore);
-    expect(res).toEqual({ next: "reveal", nextDays: nextWeek });
+    expect(res).toEqual({ next: "reveal" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: true });
     expect(mockCreate).toHaveBeenCalledTimes(1);

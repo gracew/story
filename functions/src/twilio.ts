@@ -61,6 +61,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
         latestMatchesByUserId[id] = await firestore.latestMatchForUser(id);
     };
 
+    const nextDays = getNextDays(latestMatchesByUserId[match.user_a_id], latestMatchesByUserId[match.user_b_id]);
     const userAId = match.user_a_id;
     const userA = allUsersById[match.user_a_id];
     const userB = allUsersById[match.user_b_id];
@@ -75,6 +76,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
             matchName: userB.firstName,
             matchPhone: userB.phone.substring(2),
             ...(await nextMatchNameAndDate(latestMatchesByUserId, match, userAId, firestore)),
+            nextDays,
         }
     });
 
@@ -90,6 +92,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
             matchName: userA.firstName,
             matchPhone: userA.phone.substring(2),
             ...(await nextMatchNameAndDate(latestMatchesByUserId, match, userBId, firestore)),
+            nextDays,
         }
     });
 
@@ -157,7 +160,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
                 nextDays,
             }
         });
-        return { next: "reveal", nextDays };
+        return { next: "reveal" };
     } else if (reveal && otherReveal === false) {
         return { next: "reveal_other_no" };
     } else if (reveal && otherReveal === undefined) {
