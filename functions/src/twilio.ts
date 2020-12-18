@@ -161,7 +161,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
                 ...otherData,
                 ...otherNextMatch,
                 nextDays,
-                video: match.video,
+                video: match.mode === "video",
             }
         });
         return { next: "reveal" };
@@ -178,7 +178,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
                     mode: "reveal_other_no",
                     ...otherData,
                     ...otherNextMatch,
-                    video: match.video,
+                    video: match.mode === "video",
                 },
             });
         }

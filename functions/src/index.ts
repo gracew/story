@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as twilio from 'twilio';
 import * as util from "util";
 import * as firestore from "@google-cloud/firestore";
-import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, POST_CALL_FLOW_ID, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
+import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
 import { createMatchFirestore, processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
 import { Firestore, IMatch, IUser } from "./firestore";
 import { flakeApology, flakeWarning, reminder } from "./smsCopy";
@@ -316,7 +316,7 @@ export const callStudioManual = functions.https.onRequest(
             .collection("matches")
             .doc(matchId)
             .get();
-        await callStudio(request.body.mode, match.data() as IMatch, new Firestore(), POST_CALL_FLOW_ID);
+        await callStudio(request.body.mode, match.data() as IMatch, new Firestore(), false);
         response.end();
     });
 
