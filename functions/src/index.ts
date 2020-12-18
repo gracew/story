@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as twilio from 'twilio';
 import * as util from "util";
 import * as firestore from "@google-cloud/firestore";
-import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
+import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, POST_CALL_FLOW_ID, POST_VIDEO_FLOW_ID, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
 import { createMatchFirestore, processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
 import { Firestore, IMatch, IUser } from "./firestore";
 import { flakeApology, flakeWarning, reminder } from "./smsCopy";
@@ -316,7 +316,7 @@ export const callStudioManual = functions.https.onRequest(
             .collection("matches")
             .doc(matchId)
             .get();
-        await callStudio(request.body.mode, match.data() as IMatch, new Firestore());
+        await callStudio(request.body.mode, match.data() as IMatch, new Firestore(), POST_CALL_FLOW_ID);
         response.end();
     });
 
@@ -339,6 +339,23 @@ export const revealRequest = functions.pubsub.schedule('20,50 * * * *').onRun(as
     });
 });
 
+export const revealRequestVideo = functions.pubsub.schedule('0 * * * *').onRun(async (context) => {
+    const createdAt = moment().utc().startOf("hour");
+    createdAt.subtract(1, "hour");
+    await admin.firestore().runTransaction(async txn => {
+        const matches = await txn.get(admin
+            .firestore()
+            .collection("matches")
+            .where("created_at", "==", createdAt)
+            .where("revealRequested", "==", false));
+        const videoMatches = matches.docs.filter(doc => doc.get("mode") === "video");
+        await Promise.all(videoMatches.map(async doc => {
+            await callStudio("reveal_request", doc.data() as IMatch, new Firestore(), POST_VIDEO_FLOW_ID);
+            txn.update(doc.ref, "revealRequested", true);
+        }));
+    });
+});
+
 async function playCallOutro(match: IMatch, conferenceSid: string) {
     try {
         // wrap in try/catch as twilio will throw if the conference has already ended
@@ -351,7 +368,7 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
     } catch (err) {
         console.log(err);
     }
-    await callStudio("reveal_request", match, new Firestore());
+    await callStudio("reveal_request", match, new Firestore(), POST_CALL_FLOW_ID);
 }
 
 export const saveReveal = functions.https.onRequest(
