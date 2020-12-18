@@ -6,6 +6,8 @@ import { Firestore, IMatch } from "./firestore";
 
 export const TWILIO_NUMBER = 'MG35ade708f17b5ae9c9af44c95128182b';  // messaging service sid
 export const BASE_URL = 'https://us-central1-speakeasy-prod.cloudfunctions.net/';
+export const POST_CALL_FLOW_ID = "FW3a60e55131a4064d12f95c730349a131";
+export const POST_VIDEO_FLOW_ID = "FWc523c6cbbfbdd0061b29ba79600b93e0";
 const accountSid = 'AC07d4a9a61ac7c91f7e5cecf1e27c45a6';
 const authToken = functions.config().twilio.auth_token;
 export const client = twilio(accountSid, authToken);
@@ -52,7 +54,7 @@ export async function getConferenceTwimlForPhone(phone: string) {
     return twiml;
 }
 
-export async function callStudio(mode: string, match: IMatch, firestore: Firestore) {
+export async function callStudio(mode: string, match: IMatch, firestore: Firestore, flowId: string) {
     console.log(`executing '${mode}' for match ${match.id}`);
     const allUsersById = await firestore.getUsersForMatches([match]);
 
@@ -65,7 +67,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
     const userAId = match.user_a_id;
     const userA = allUsersById[match.user_a_id];
     const userB = allUsersById[match.user_b_id];
-    const userAPromise = client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+    const userAPromise = client.studio.flows(flowId).executions.create({
         to: userA.phone,
         from: TWILIO_NUMBER,
         parameters: {
@@ -81,7 +83,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
     });
 
     const userBId = match.user_b_id;
-    const userBPromise = client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+    const userBPromise = client.studio.flows(flowId).executions.create({
         to: userB.phone,
         from: TWILIO_NUMBER,
         parameters: {
@@ -99,7 +101,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
     await Promise.all([userAPromise, userBPromise]);
 }
 
-export async function saveRevealHelper(body: { phone: string, reveal: string, matchId: string }, firestore: Firestore) {
+export async function saveRevealHelper(body: { phone: string, reveal: string, matchId: string, flowSid?: string }, firestore: Firestore) {
     const phone = body.phone;
     const reveal = parseUserReveal(body.reveal);
     if (reveal === undefined) {
@@ -150,7 +152,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
 
     if (reveal && otherReveal) {
         const nextDays = getNextDays(latestMatchRevealing!, latestMatchOther!);
-        await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+        await client.studio.flows(body.flowSid || POST_CALL_FLOW_ID).executions.create({
             to: otherUser.phone,
             from: TWILIO_NUMBER,
             parameters: {
@@ -167,7 +169,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
         return { next: "reveal_other_pending" };
     } else if (!reveal) {
         if (otherReveal) {
-            await client.studio.flows("FW3a60e55131a4064d12f95c730349a131").executions.create({
+            await client.studio.flows(body.flowSid || POST_CALL_FLOW_ID).executions.create({
                 to: otherUser.phone,
                 from: TWILIO_NUMBER,
                 parameters: {
