@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as twilio from 'twilio';
 import * as util from "util";
 import * as firestore from "@google-cloud/firestore";
-import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, POST_CALL_FLOW_ID, POST_VIDEO_FLOW_ID, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
+import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, POST_CALL_FLOW_ID, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
 import { createMatchFirestore, processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
 import { Firestore, IMatch, IUser } from "./firestore";
 import { flakeApology, flakeWarning, reminder } from "./smsCopy";
@@ -350,7 +350,7 @@ export const revealRequestVideo = functions.pubsub.schedule('0 * * * *').onRun(a
             .where("revealRequested", "==", false));
         const videoMatches = matches.docs.filter(doc => doc.get("canceled") === false && doc.get("mode") === "video");
         await Promise.all(videoMatches.map(async doc => {
-            await callStudio("reveal_request", doc.data() as IMatch, new Firestore(), POST_VIDEO_FLOW_ID);
+            await callStudio("reveal_request", doc.data() as IMatch, new Firestore(), true);
             txn.update(doc.ref, "revealRequested", true);
         }));
     });
@@ -368,7 +368,7 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
     } catch (err) {
         console.log(err);
     }
-    await callStudio("reveal_request", match, new Firestore(), POST_CALL_FLOW_ID);
+    await callStudio("reveal_request", match, new Firestore(), false);
 }
 
 export const saveReveal = functions.https.onRequest(
