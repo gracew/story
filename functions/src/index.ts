@@ -348,7 +348,7 @@ export const revealRequestVideo = functions.pubsub.schedule('0 * * * *').onRun(a
             .collection("matches")
             .where("created_at", "==", createdAt)
             .where("revealRequested", "==", false));
-        const videoMatches = matches.docs.filter(doc => doc.get("mode") === "video");
+        const videoMatches = matches.docs.filter(doc => doc.get("canceled") === false && doc.get("mode") === "video");
         await Promise.all(videoMatches.map(async doc => {
             await callStudio("reveal_request", doc.data() as IMatch, new Firestore(), POST_VIDEO_FLOW_ID);
             txn.update(doc.ref, "revealRequested", true);
