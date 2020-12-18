@@ -1,5 +1,5 @@
 import * as uuid from "uuid";
-import { callStudio, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
+import { callStudio, POST_CALL_FLOW_ID, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
 import { firestore, match, user } from "./mock";
 import * as test from "firebase-functions-test";
 import { IMatch } from "../src/firestore";
@@ -54,7 +54,7 @@ beforeEach(() => {
 
 it("callStudio", async () => {
     firestore.getUsersForMatches.mockReturnValue({ [user1.id]: user1, [user2.id]: user2 });
-    await callStudio("reveal_request", m1, firestore);
+    await callStudio("reveal_request", m1, firestore, POST_CALL_FLOW_ID);
     expect(mockCreate).toHaveBeenCalledTimes(2);
     expect(mockCreate).toHaveBeenCalledWith({
         to: user1.phone,
