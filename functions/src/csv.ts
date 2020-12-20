@@ -81,6 +81,7 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
         warned5Min: false,
         warned1Min: false,
         revealRequested: false,
+        mode: data.mode || "phone",
     };
     await firestore.createMatch(match);
     return match;
