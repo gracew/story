@@ -247,7 +247,45 @@ async function textUserHelper(userA: IUser, userB: IUser, video: boolean) {
         })
 }
 
-// runs every hour
+export const sendVideoLink = functions.pubsub.schedule('55 * * * *').onRun(async (context) => {
+    const createdAt = moment().utc().endOf("hour");
+    await admin.firestore().runTransaction(async txn => {
+        const matches = await txn.get(admin
+            .firestore()
+            .collection("matches")
+            .where("created_at", "==", createdAt)
+            .where("called", "==", false)
+            .where("canceled", "==", false));
+        console.log("found the following matches: " + matches.docs.map(doc => doc.id));
+
+        const userAIds = matches.docs.map(doc => doc.get("user_a_id"));
+        const userBIds = matches.docs.map(doc => doc.get("user_b_id"));
+        const userIds = userAIds.concat(userBIds);
+        console.log("sending texts to the following users: " + userIds);
+
+        if (userIds.length === 0) {
+            return;
+        }
+        const users = await txn.getAll(...userIds.map(id => admin.firestore().collection("users").doc(id)));
+
+        const usersById = Object.assign({}, ...users.map(user => ({ [user.id]: user.data() })));
+
+        const allPromises: Array<Promise<any>> = []
+        matches.docs.forEach(doc => {
+            const userA = usersById[doc.get("user_a_id")];
+            const userB = usersById[doc.get("user_b_id")];
+            const bodyA = `Hi ${userA.firstName}! You can join the video call in a few minutes at https://storydating.com/v/${doc.get("videoId")}/a. Happy chatting!`;
+            const bodyB = `Hi ${userB.firstName}! You can join the video call in a few minutes at https://storydating.com/v/${doc.get("videoId")}/b. Happy chatting!`;
+            allPromises.push(sendSms({ body: bodyA, from: TWILIO_NUMBER, to: userA.phone }))
+            allPromises.push(sendSms({ body: bodyB, from: TWILIO_NUMBER, to: userB.phone }))
+        })
+
+        await Promise.all(allPromises);
+        await Promise.all(matches.docs.map(doc => txn.update(doc.ref, "called", true)))
+    })
+});
+
+
 export const issueCalls = functions.pubsub.schedule('0,30 * * * *').onRun(async (context) => {
     const createdAt = moment().utc().startOf("hour");
     if (moment().minutes() >= 30) {
