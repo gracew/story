@@ -84,7 +84,7 @@ function day(match: IMatch) {
 }
 
 export function videoReminder(userA: IUser, userB: IUser) {
-    return `Hi ${userA.firstName}! Just a reminder that you'll be speaking with ${userB.firstName} in an hour. We'll send you the video link at 8pm!`
+    return `Hi ${userA.firstName}! Just a reminder that you'll be speaking with ${userB.firstName} in an hour. We'll send you the video link then!`
 }
 
 export async function reminder(userA: IUser, userB: IUser) {
