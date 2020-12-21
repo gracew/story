@@ -1,8 +1,9 @@
+import { Spin } from "antd";
 import "firebase/analytics";
 import * as firebase from "firebase/app";
 import "firebase/remote-config";
 import "firebase/storage";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
 
 function VideoRedirect() {
@@ -18,7 +19,7 @@ function VideoRedirect() {
       });
   });
 
-  return null;
+  return <Spin size="large" />;
 }
 
 export default VideoRedirect;
