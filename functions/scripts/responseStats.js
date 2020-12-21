@@ -12,7 +12,7 @@ admin
   .collection("scheduling").doc(week).collection("users")
   .get()
   .then(async (res) => {
-    const ids = res.docs.filter(doc => doc.get("skip") !== true).map(doc => admin.firestore().collection("users").doc(doc.id));
+    const ids = res.docs.filter(doc => Object.keys(doc.data()).length > 0 && doc.get("skip") !== true).map(doc => admin.firestore().collection("users").doc(doc.id));
     const users = await admin.firestore().getAll(...ids);
     var menPt = [];
     var menEt = [];
