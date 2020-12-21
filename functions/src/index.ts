@@ -9,7 +9,7 @@ import * as firestore from "@google-cloud/firestore";
 import { BASE_URL, callStudio, client, getConferenceTwimlForPhone, saveRevealHelper, sendSms, TWILIO_NUMBER } from "./twilio";
 import { createMatchFirestore, processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./csv";
 import { Firestore, IMatch, IUser } from "./firestore";
-import { flakeApology, flakeWarning, reminder } from "./smsCopy";
+import { flakeApology, flakeWarning, reminder, videoReminder } from "./smsCopy";
 import { bipartite, generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
 import { sendConfirmationEmail } from "./sendgrid"
 
@@ -227,8 +227,9 @@ export const sendReminderTexts = functions.pubsub.schedule('0,30 * * * *').onRun
         matches.docs.forEach(doc => {
             const userA = usersById[doc.get("user_a_id")];
             const userB = usersById[doc.get("user_b_id")];
-            allPromises.push(textUserHelper(userA, userB))
-            allPromises.push(textUserHelper(userB, userA))
+            const video = doc.get("mode") === "video";
+            allPromises.push(textUserHelper(userA, userB, video))
+            allPromises.push(textUserHelper(userB, userA, video))
         })
 
         await Promise.all(allPromises);
@@ -236,10 +237,11 @@ export const sendReminderTexts = functions.pubsub.schedule('0,30 * * * *').onRun
     })
 });
 
-async function textUserHelper(userA: IUser, userB: IUser) {
+async function textUserHelper(userA: IUser, userB: IUser, video: boolean) {
+    const body = video ? videoReminder(userA, userB) : await reminder(userA, userB);
     await client.messages
         .create({
-            body: reminder(userA, userB),
+            body,
             from: TWILIO_NUMBER,
             to: userA.phone,
         })
