@@ -67,6 +67,7 @@ it("callStudio", async () => {
             matchName: user2.firstName,
             matchPhone: user2.phone.substring(2),
             nextDays: nextWeek,
+            video: false,
         }
     });
     expect(mockCreate).toHaveBeenCalledWith({
@@ -82,6 +83,7 @@ it("callStudio", async () => {
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
             nextDays: nextWeek,
+            video: false,
         }
     });
 });
@@ -120,6 +122,7 @@ it("saveReveal Y, other Y next match", async () => {
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
             nextDays: nextWeek,
+            video: false,
         }
     })
 });
@@ -149,6 +152,7 @@ it("saveReveal N, other Y next match", async () => {
             matchPhone: user1.phone.substring(2),
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
+            video: false,
         }
     })
 });
