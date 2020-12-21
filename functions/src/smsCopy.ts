@@ -1,8 +1,12 @@
 import * as moment from "moment-timezone";
+import * as admin from "firebase-admin";
 import { IMatch, IUser } from "./firestore";
 
-export function availability(user: IUser, tz: string) {
-    return `Hi ${user.firstName}. It's Story Dating. We've got a potential match for you! Are you available for a 20 minute phone call with your match at 8pm ${tz} Tuesday or Wednesday? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.`;
+export async function availability(user: IUser, tz: string) {
+    const week = moment().startOf("week").format("YYYY-MM-DD");
+    const smsCopy = await admin.firestore().collection("smsCopy").doc(week).get();
+    const text = smsCopy.get("availability") || "It's Story Dating. We've got a potential match for you! Are you available for a 20 minute phone call with your match at 8pm TIMEZONE Tuesday, Wednesday or Thursday? Please respond with all the days you're free. You can also reply SKIP to skip this week. Respond in the next 3 hours to confirm your date.";
+    return `Hi ${user.firstName}. ${text.replace("TIMEZONE", tz)}`;
 }
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
@@ -79,8 +83,14 @@ function day(match: IMatch) {
     return matchTime.format("dddd");
 }
 
-export function reminder(userA: IUser, userB: IUser) {
-    const prompt = "What's the longest you've ever gone without using your phone?";
+export function videoReminder(userA: IUser, userB: IUser) {
+    return `Hi ${userA.firstName}! Just a reminder that you'll be speaking with ${userB.firstName} in an hour. We'll send you the video link then!`
+}
+
+export async function reminder(userA: IUser, userB: IUser) {
+    const week = moment().startOf("week").format("YYYY-MM-DD");
+    const smsCopy = await admin.firestore().collection("smsCopy").doc(week).get();
+    const prompt = smsCopy.get("prompt") || "What's the longest you've ever gone without using your phone?";
     return `Hi ${userA.firstName}! Just a reminder that you'll be speaking with ${userB.firstName} in an hour. Here's one idea to get the conversation started: "${prompt}" Hope you two have a good date!`;
 }
 
