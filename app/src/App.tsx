@@ -11,6 +11,7 @@ import Privacy from "./Privacy";
 import Recorder from "./Recorder";
 import RegisterComplete from "./RegisterComplete";
 import Terms from "./Terms";
+import VideoRedirect from "./VideoRedirect";
 import VoiceBio from "./VoiceBio";
 
 const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://storydating.com")
@@ -53,6 +54,9 @@ function App() {
         </Route>
         <div className="App">
           <Switch>
+            <Route path="/v/:videoId/:user">
+              <VideoRedirect />
+            </Route>
             <Route path="/record">
               <Recorder />
             </Route>

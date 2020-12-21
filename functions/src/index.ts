@@ -310,16 +310,27 @@ export const handleFlakes = functions.pubsub.schedule('10,40 * * * *').onRun(asy
     })
 });
 
-export const callStudioManual = functions.https.onRequest(
-    async (request, response) => {
-        const matchId = request.body.matchId;
-        const match = await admin
+export const markJoined = functions.https.onCall(
+    async (request) => {
+        const videoId = request.videoId;
+        const user = request.user;
+
+        const matches = await admin
             .firestore()
             .collection("matches")
-            .doc(matchId)
+            .where("videoId", "==", videoId)
             .get();
-        await callStudio(request.body.mode, match.data() as IMatch, new Firestore(), false);
-        response.end();
+        if (matches.docs.length === 0) {
+            console.warn(`unknown videoId: ${videoId}`)
+            return;
+        }
+        if (user !== "a" && user !== "b") {
+            console.warn(`unknown user: ${user} for videoId ${videoId}`)
+            return;
+        }
+        const match = matches.docs[0];
+        const userId = user === "a" ? match.get("user_a_id") : match.get("user_b_id");
+        await match.ref.update("joined." + userId, true)
     });
 
 export const revealRequest = functions.pubsub.schedule('20,50 * * * *').onRun(async (context) => {
