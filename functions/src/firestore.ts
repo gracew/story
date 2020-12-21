@@ -22,6 +22,7 @@ export interface IMatch {
     warned5Min?: boolean;
     warned1Min?: boolean;
     revealRequested?: boolean;
+    mode?: string;
 }
 
 export class Firestore {

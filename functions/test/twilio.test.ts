@@ -1,5 +1,5 @@
 import * as uuid from "uuid";
-import { callStudio, POST_CALL_FLOW_ID, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
+import { callStudio, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
 import { firestore, match, user } from "./mock";
 import * as test from "firebase-functions-test";
 import { IMatch } from "../src/firestore";
@@ -54,7 +54,7 @@ beforeEach(() => {
 
 it("callStudio", async () => {
     firestore.getUsersForMatches.mockReturnValue({ [user1.id]: user1, [user2.id]: user2 });
-    await callStudio("reveal_request", m1, firestore, POST_CALL_FLOW_ID);
+    await callStudio("reveal_request", m1, firestore, false);
     expect(mockCreate).toHaveBeenCalledTimes(2);
     expect(mockCreate).toHaveBeenCalledWith({
         to: user1.phone,
@@ -67,6 +67,7 @@ it("callStudio", async () => {
             matchName: user2.firstName,
             matchPhone: user2.phone.substring(2),
             nextDays: nextWeek,
+            video: false,
         }
     });
     expect(mockCreate).toHaveBeenCalledWith({
@@ -82,6 +83,7 @@ it("callStudio", async () => {
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
             nextDays: nextWeek,
+            video: false,
         }
     });
 });
@@ -120,6 +122,7 @@ it("saveReveal Y, other Y next match", async () => {
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
             nextDays: nextWeek,
+            video: false,
         }
     })
 });
@@ -149,6 +152,7 @@ it("saveReveal N, other Y next match", async () => {
             matchPhone: user1.phone.substring(2),
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
+            video: false,
         }
     })
 });
