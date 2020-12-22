@@ -248,7 +248,7 @@ async function textUserHelper(userA: IUser, userB: IUser, video: boolean) {
 }
 
 export const sendVideoLink = functions.pubsub.schedule('55 * * * *').onRun(async (context) => {
-    const createdAt = moment().utc().endOf("hour");
+    const createdAt = moment().utc().startOf("hour").add(1, "hour");
     await admin.firestore().runTransaction(async txn => {
         const matches = await txn.get(admin
             .firestore()
@@ -256,10 +256,11 @@ export const sendVideoLink = functions.pubsub.schedule('55 * * * *').onRun(async
             .where("created_at", "==", createdAt)
             .where("called", "==", false)
             .where("canceled", "==", false));
-        console.log("found the following matches: " + matches.docs.map(doc => doc.id));
+        const videoMatches = matches.docs.filter(doc => doc.get("mode") === "video");
+        console.log("found the following matches: " + videoMatches.map(doc => doc.id));
 
-        const userAIds = matches.docs.map(doc => doc.get("user_a_id"));
-        const userBIds = matches.docs.map(doc => doc.get("user_b_id"));
+        const userAIds = videoMatches.map(doc => doc.get("user_a_id"));
+        const userBIds = videoMatches.map(doc => doc.get("user_b_id"));
         const userIds = userAIds.concat(userBIds);
         console.log("sending texts to the following users: " + userIds);
 
@@ -271,7 +272,7 @@ export const sendVideoLink = functions.pubsub.schedule('55 * * * *').onRun(async
         const usersById = Object.assign({}, ...users.map(user => ({ [user.id]: user.data() })));
 
         const allPromises: Array<Promise<any>> = []
-        matches.docs.forEach(doc => {
+        videoMatches.forEach(doc => {
             const userA = usersById[doc.get("user_a_id")];
             const userB = usersById[doc.get("user_b_id")];
             const bodyA = `Hi ${userA.firstName}! You can join the video call in a few minutes at https://storydating.com/v/${doc.get("videoId")}/a. Happy chatting!`;
@@ -281,7 +282,7 @@ export const sendVideoLink = functions.pubsub.schedule('55 * * * *').onRun(async
         })
 
         await Promise.all(allPromises);
-        await Promise.all(matches.docs.map(doc => txn.update(doc.ref, "called", true)))
+        await Promise.all(videoMatches.map(doc => txn.update(doc.ref, "called", true)))
     })
 });
 
