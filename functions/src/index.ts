@@ -370,6 +370,7 @@ export const markJoined = functions.https.onCall(
         const match = matches.docs[0];
         const userId = user === "a" ? match.get("user_a_id") : match.get("user_b_id");
         await match.ref.update("joined." + userId, true)
+        return { redirect: match.get("videoLink") }
     });
 
 export const revealRequest = functions.pubsub.schedule('20,50 * * * *').onRun(async (context) => {

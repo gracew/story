@@ -14,9 +14,9 @@ function VideoRedirect() {
     firebase
       .functions()
       .httpsCallable("markJoined")({ videoId, user })
-      .finally(() => {
-        window.location.href = `https://meet.google.com/${videoId}`
-      });
+      .then((res) => {
+        window.location.href = res.data.redirect;
+      })
   });
 
   return <Spin size="large" />;
