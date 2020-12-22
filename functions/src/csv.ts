@@ -60,15 +60,13 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
     if (!userB) {
         console.error("cannot find user with id " + data.userBId);
         return;
-    }
-
+    } 
     const timezone = processTimeZone(data.timezone.trim())
     if (!timezone) {
         console.error("invalid timezone, skpping row: " + data)
         return;
     }
     const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
-    const video = data.mode === "video";
     const match = {
         user_a_id: data.userAId,
         user_b_id: data.userBId,
@@ -77,10 +75,10 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
         created_at: new admin.firestore.Timestamp(createdAt.unix(), 0),
         canceled: data.canceled || false,
         reminded: false,
-        called: video,  // if it's video we don't want to issue a call
-        flakesHandled: video,
-        warned5Min: video,
-        warned1Min: video,
+        called: false, 
+        flakesHandled: false,
+        warned5Min: false,
+        warned1Min: false,
         revealRequested: false,
         mode: data.mode,
     };
