@@ -416,7 +416,7 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
         await Promise.all(participants.map(participant =>
             client.conferences(conferenceSid).participants(participant.callSid).update({ muted: true })))
         await client.conferences(conferenceSid).update({ announceUrl: BASE_URL + "callOutro" })
-        await util.promisify(setTimeout)(31_000);
+        await util.promisify(setTimeout)(35_000);
         await client.conferences(conferenceSid).update({ status: "completed" })
     } catch (err) {
         console.log(err);
