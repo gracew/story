@@ -199,18 +199,12 @@ function getNextDays(latestMatchRevealing: IMatch, latestMatchOther: IMatch) {
         if (nextMatchDays.has("Wed") && nextMatchDays.has("Thu")) {
             return nextWeek;
         } else if (nextMatchDays.has("Wed")) {
-            return "Thursday, next Monday, next Tuesday";
-        } else if (nextMatchDays.has("Thu")) {
-            return "Wednesday, next Monday, next Tuesday"
-        } else {
-            return "Wednesday, Thursday, next Monday";
-        }
-    } else if (day === "Wed") {
-        if (nextMatchDays.has("Thu")) {
             return nextWeek;
         } else {
-            return "Thursday, next Monday, next Tuesday";
+            return "Wednesday, next Monday, next Tuesday"
         }
+    } else if (day === "Wed") {
+        return nextWeek;
     } else {
         return nextWeek;
     }
