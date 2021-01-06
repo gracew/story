@@ -30,7 +30,7 @@ export async function processAvailabilityCsv(tempFilePath: string, firestore: Fi
             return;
         }
         return sendSms({
-            body: availability(user, data.timezone),
+            body: await availability(user, data.timezone),
             from: TWILIO_NUMBER,
             to: user.phone,
         });
@@ -80,7 +80,7 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
         warned5Min: false,
         warned1Min: false,
         revealRequested: false,
-        mode: data.mode,
+        mode: data.mode || "phone",
     };
     await firestore.createMatch(match);
     return match;
