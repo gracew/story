@@ -38,5 +38,6 @@ export function match(userIdA: string, userIdB: string, createdAt: string): IMat
         warned5Min: false,
         warned1Min: false,
         revealRequested: false,
+        mode: "phone",
     }
 }
