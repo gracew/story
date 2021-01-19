@@ -78,7 +78,6 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     }
 
     const answers = req.body.form_response.answers;
-    console.log(answers);
 
     for (const a of answers) {
         const refff: string = a.field.ref;
@@ -100,6 +99,21 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
         user.timezone = "PT";
     } else if (user.location === "New York City") {
         user.timezone = "ET";
+    }
+
+    // overwrite genderPreference to match previous multiple selection format
+    switch (user.genderPreference) {
+        case "Men":
+            user.genderPreference = ["Men"];
+            break;
+        case "Women": 
+            user.genderPreference = ["Women"];
+            break;
+        case "Everyone":
+            user.genderPreference = ["Men", "Women"];
+            break;
+        default:
+            console.warn("unknown genderPreference: " + user.genderPreference);
     }
 
     // make sure the phone number hasn't already been registered
