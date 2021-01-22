@@ -23,7 +23,7 @@ export function matchNotification(userId: string, matches: IMatch[], usersById: 
         const matchUserId = match.user_a_id === userId ? match.user_b_id : match.user_a_id;
         const matchUser = usersById[matchUserId];
         const texts = [
-            `Hi ${user.firstName}, your match ${matchUser.firstName} has confirmed. At ${formattedTime} ${day(match)}, you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+            `Hi ${user.firstName}, on ${day(match)} you'll be chatting with ${matchUser.firstName}${location(matchUser)}. At ${formattedTime}, you'll receive a phone call connecting you with your match. ${phoneSwapText}`
         ];
         if (user.funFacts && matchUser.funFacts) {
             texts.push(
@@ -37,19 +37,47 @@ Happy chatting!`
         const match1 = matches[0];
         const matchUser1Id = match1.user_a_id === userId ? match1.user_b_id : match1.user_a_id;
         const match1User = usersById[matchUser1Id];
+        const match1Location = location(match1User);
+
         const match2 = matches[1];
         const matchUser2Id = match2.user_a_id === userId ? match2.user_b_id : match2.user_a_id;
         const match2User = usersById[matchUser2Id];
+        const match2Location = location(match2User);
         const formattedTime2 = moment(matches[1].created_at.toDate()).tz(tz).format("h:mma z");
+
         const texts = [];
         if (formattedTime === formattedTime2) {
-            texts.push(
-                `Hi ${user.firstName}, we have two matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. At ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
-            );
+            if (user.locationFlexibility) {
+                if (match1Location !== match2Location) {
+                    texts.push(
+                        `Hi ${user.firstName}, we have two matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName}${match1Location} and on ${day(match2)} you'll be chatting with ${match2User.firstName}${match2Location}. At ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+                    );
+                } else {
+                    texts.push(
+                        `Hi ${user.firstName}, we have two matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. They are both${match1Location}. At ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+                    );
+                }
+            } else {
+                texts.push(
+                    `Hi ${user.firstName}, we have two matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. At ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+                );
+            }
         } else {
-            texts.push(
-                `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}. Both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
-            );
+            if (user.locationFlexibility) {
+                if (match1Location !== match2Location) {
+                    texts.push(
+                        `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName}${match1Location} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}${match2Location}. Both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+                    );
+                } else {
+                    texts.push(
+                        `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}. They are both${match1Location}. Both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+                    );
+                }
+            } else {
+                texts.push(
+                    `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}. Both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+                );
+            }
         }
         if (user.funFacts && match1User.funFacts) {
             texts.push(
@@ -63,6 +91,14 @@ Happy chatting!`
         }
         return texts;
     }
+}
+
+function location(user: IUser) {
+    if (!user.locationFlexibility) {
+        return "";
+    }
+    const the = user.location === "San Francisco Bay Area" ? "the " : "";
+    return ` from ${the}${user.location}`
 }
 
 function timezone(match: IMatch) {

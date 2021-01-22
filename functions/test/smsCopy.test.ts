@@ -5,9 +5,13 @@ import { match, user } from "./mock";
 const userId1 = uuid.v4();
 const userId2 = uuid.v4();
 const userId3 = uuid.v4();
-const expectedSimpleET = "Hi Anna, your match Grace has confirmed. At 8:00pm EDT Wednesday";
-const expectedSimple = "Hi Anna, your match Grace has confirmed. At 8:00pm PDT Wednesday";
+const expectedSimpleET = "Hi Anna, on Wednesday you'll be chatting with Grace. At 8:00pm EDT";
+const expectedSimple = "Hi Anna, on Wednesday you'll be chatting with Grace. At 8:00pm PDT";
+const expectedSimpleNYC = "Hi Anna, on Wednesday you'll be chatting with Grace from New York City. At 8:00pm PDT";
+const expectedSimpleSF = "Hi Anna, on Wednesday you'll be chatting with Grace from the San Francisco Bay Area. At 8:00pm PDT";
 const expectedTwoMatches = "Hi Anna, we have two matches for you! On Wednesday you'll be chatting with Grace and on Thursday you'll be chatting with Rachael. At 8:00pm PDT both nights";
+const expectedTwoMatchesSameLocation = "Hi Anna, we have two matches for you! On Wednesday you'll be chatting with Grace and on Thursday you'll be chatting with Rachael. They are both from New York City. At 8:00pm PDT both nights";
+const expectedTwoMatchesDiffLocation = "Hi Anna, we have two matches for you! On Wednesday you'll be chatting with Grace from New York City and on Thursday you'll be chatting with Rachael from the San Francisco Bay Area. At 8:00pm PDT both nights";
 
 it("matchNotification for a single match - ET", async () => {
     const user1 = user("Anna");
@@ -66,6 +70,24 @@ it("matchNotification for a single match - fun facts for both", async () => {
 Happy chatting!`)
 });
 
+it("matchNotification for a single match - location", async () => {
+    const user1 = user("Anna");
+    const user2 = user("Grace", undefined, "New York City", true);
+    const m = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
+    const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
+    expect(res).toHaveLength(1);
+    expect(res[0]).toContain(expectedSimpleNYC)
+});
+
+it("matchNotification for a single match - location SF", async () => {
+    const user1 = user("Anna");
+    const user2 = user("Grace", undefined, "San Francisco Bay Area", true);
+    const m = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
+    const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
+    expect(res).toHaveLength(1);
+    expect(res[0]).toContain(expectedSimpleSF)
+});
+
 it("matchNotification for two matches", async () => {
     const user1 = user("Anna");
     const user2 = user("Grace");
@@ -98,6 +120,28 @@ it("matchNotification for two matches - fun facts", async () => {
     expect(res).toHaveLength(2);
     expect(res[0]).toContain(expectedTwoMatches);
     expect(res[1]).toEqual(`Here are a few fun facts about Rachael: "funFactsRachael"`)
+});
+
+it("matchNotification for two matches - same location", async () => {
+    const user1 = user("Anna", undefined, "location", true);
+    const user2 = user("Grace", undefined, "New York City", true);
+    const user3 = user("Rachael", undefined, "New York City", true);
+    const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
+    const matchUser3 = match(userId1, userId3, "2020-09-24T20:00:00-07:00");
+    const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
+    expect(res).toHaveLength(1);
+    expect(res[0]).toContain(expectedTwoMatchesSameLocation);
+});
+
+it("matchNotification for two matches - diff location", async () => {
+    const user1 = user("Anna", undefined, "location", true);
+    const user2 = user("Grace", undefined, "New York City", true);
+    const user3 = user("Rachael", undefined, "San Francisco Bay Area", true);
+    const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
+    const matchUser3 = match(userId1, userId3, "2020-09-24T20:00:00-07:00");
+    const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
+    expect(res).toHaveLength(1);
+    expect(res[0]).toContain(expectedTwoMatchesDiffLocation);
 });
 
 it("matchNotification for two matches, different times", async () => {
