@@ -37,7 +37,7 @@ it("matchNotification correctly formats half past dates", async () => {
     const m = match(userId1, userId2, "2020-09-23T20:30:00-07:00");
     const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
     expect(res).toHaveLength(1);
-    expect(res[0]).toContain("8:30pm PDT Wednesday")
+    expect(res[0]).toContain("8:30pm PDT")
 });
 
 it("matchNotification for a single match - no fun facts for user", async () => {
