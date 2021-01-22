@@ -14,12 +14,14 @@ export const firestore = {
     createSchedulingRecords: jest.fn(),
 };
 
-export function user(firstName: string, funFacts?: string): IUser {
+export function user(firstName: string, funFacts?: string, location?: string, locationFlexibility?: boolean): IUser {
     return {
         id: uuid.v4(),
         firstName,
         phone: uuid.v4(),
         funFacts,
+        location: location || "San Francisco Bay Area",
+        locationFlexibility,
     }
 }
 

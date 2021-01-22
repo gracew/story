@@ -4,6 +4,8 @@ export interface IUser {
     id: string;
     firstName: string;
     phone: string;
+    location: string;
+    locationFlexibility?: boolean;
     funFacts?: string;
 }
 export interface IMatch {
