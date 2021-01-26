@@ -532,7 +532,7 @@ export const conferenceStatusWebhook = functions.https.onRequest(
 export const announceUser = functions.https.onRequest(
     (request, response) => {
         const twiml = new twilio.twiml.VoiceResponse();
-        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_video.mp3?alt=media");
+        twiml.play("https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_video_beep.mp3?alt=media");
         response.set('Content-Type', 'text/xml');
         response.send(twiml.toString());
     }
