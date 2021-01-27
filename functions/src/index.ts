@@ -11,7 +11,6 @@ import { createMatchFirestore, processAvailabilityCsv, processBulkSmsCsv, proces
 import { Firestore, IMatch, IUser } from "./firestore";
 import { flakeApology, flakeWarning, reminder, videoReminder } from "./smsCopy";
 import { bipartite, generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
-import { sendConfirmationEmail } from "./sendgrid"
 
 admin.initializeApp();
 
@@ -133,10 +132,20 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     user.id = reff.id;
     user.registeredAt = admin.firestore.FieldValue.serverTimestamp();
     await reff.set(user);
-    await sendConfirmationEmail(user);
+    await sendWelcomeText(user as IUser);
 
     response.end();
 });
+
+async function sendWelcomeText(user: IUser) {
+    const body = `Hi ${user.firstName}, thanks for joining Story Dating! Think of us as a personalized matchmaker that finds great matches for you and handles all of the scheduling. You're currently on the waitlist, but we'll notify you as soon as we have some matches we think you'll like. In the meantime, feel free to text us with any questions, and refer your friends with this link to get off the waitlist sooner: https://storydating.com/join?r=${user.id}`
+    await client.messages
+        .create({
+            body,
+            from: TWILIO_NUMBER,
+            to: user.phone,
+        })
+}
 
 /** Used in each round to determine which users should be included (based on number of potential matches). */
 export const generateRemainingMatchReport = functions.https.onRequest(
