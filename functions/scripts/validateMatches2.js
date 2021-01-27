@@ -25,6 +25,7 @@ admin
     const allKeys = new Set();
     const types = {};
     const firstAppearances = {};
+    const lastAppearances = {};
     const docs = Array.from(res.docs);
     docs.sort((a, b) => {
       if (a.createTime < b.createTime) {
@@ -44,6 +45,10 @@ admin
           };
         }
         allKeys.add(key);
+        lastAppearances[key] = {
+          datetime: doc.createTime.toDate(),
+          index,
+        };
       });
       Object.entries(docData).forEach(([key, value]) => {
         if (!(key in types)) {
@@ -94,7 +99,9 @@ admin
         nulls: docs.length - Object.values(types[key])[0],
         percentNull: (docs.length - Object.values(types[key])[0]) / docs.length,
         percentNullAfterIntro: (docs.length - Object.values(types[key])[0] - firstAppearances[key].index) / (docs.length - firstAppearances[key].index),
+        percentNullAfterIntroBeforeOutro: (lastAppearances[key].index - Object.values(types[key])[0] - firstAppearances[key].index + 1) / (lastAppearances[key].index - firstAppearances[key].index + 1),
         firstAppeared: firstAppearances[key].datetime,
+        lastAppeared: lastAppearances[key].datetime,
       };
     })
     console.log(`All keys: ${Array.from(allKeys)}`);
