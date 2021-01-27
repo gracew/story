@@ -9,13 +9,8 @@ Checks the following:
 */
 
 const admin = require("firebase-admin");
-const util = require("./util");
 
-util.checkRequiredEnvVars(["GOOGLE_APPLICATION_CREDENTIALS"]);
-
-export default async function analyzeCollection(collectionName) {
-  admin.initializeApp();
-
+export async function analyzeCollection(collectionName) {
   const stats = {};
 
   const res = await admin

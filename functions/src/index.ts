@@ -29,7 +29,7 @@ import {
   generateRemainingMatchCount,
 } from "./remainingMatches";
 
-import { analyzeCollection as analyzeCollectionHelper } from "../scripts/validateMatches2";
+import { analyzeCollection as analyzeCollectionHelper } from "./validateMatches2";
 
 admin.initializeApp();
 

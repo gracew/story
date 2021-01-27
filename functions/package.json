@@ -3,11 +3,11 @@
   "scripts": {
     "lint": "tslint --project tsconfig.json",
     "build": "tsc",
-    "serve": "npm run build && firebase emulators:start --only functions",
-    "shell": "npm run build && firebase functions:shell",
+    "serve": "npm run build && npx firebase emulators:start --only functions",
+    "shell": "npm run build && npx firebase functions:shell",
     "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "deploy": "npx firebase deploy --only functions",
+    "logs": "npx firebase functions:log"
   },
   "engines": {
     "node": "10"
@@ -29,6 +29,7 @@
   "devDependencies": {
     "@types/uuid": "^8.3.0",
     "firebase-functions-test": "^0.2.0",
+    "firebase-tools": "^9.2.2",
     "jest": "^26.4.2",
     "ts-jest": "^26.4.0",
     "tslint": "^5.12.0",
