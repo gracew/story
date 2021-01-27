@@ -20,8 +20,6 @@ admin
   .collection("matches")
   .get()
   .then(async (res) => {
-    var invalidCount = 0;
-    const allUserRefs = [];
     const allKeys = new Set();
     const types = {};
     const firstAppearances = {};
@@ -60,37 +58,7 @@ admin
         }
         frequencies[typeof value] += 1;
       });
-
-      if (!doc.get("id") ||
-        doc.get("reminded") === undefined ||
-        doc.get("called") === undefined ||
-        doc.get("warned5Min") === undefined ||
-        doc.get("warned1Min") === undefined ||
-        doc.get("revealRequested") === undefined) {
-        invalidCount++;
-        console.log(doc.id);
-        return;
-      }
-
-      const userIds = doc.get("user_ids");
-      const userAId = doc.get("user_a_id");
-      const userBId = doc.get("user_b_id");
-      userRefs = userIds.map((id) => admin.firestore().collection("users").doc(id));
-      allUserRefs.push(...userRefs);
-
-      if (
-        userIds.length != 2 ||
-        !userIds.includes(userAId) ||
-        !userIds.includes(userBId)
-      ) {
-        invalidCount++;
-        console.log(doc.id);
-      }
     });
-
-    if (invalidCount > 0) {
-      console.log("Number invalid matches: " + invalidCount);
-    }
 
     const stats = {};
     allKeys.forEach((key) => {
