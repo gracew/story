@@ -59,6 +59,7 @@ export class Firestore {
     public async latestMatchForUser(id: string): Promise<IMatch | undefined> {
         const latestMatchOther = await admin.firestore().collection("matches")
             .where("user_ids", "array-contains", id)
+            .where("canceled", "==", false)
             .orderBy("created_at", "desc")
             .limit(1)
             .get();
