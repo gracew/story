@@ -20,6 +20,11 @@
   status = 301
 
 [[redirects]]
+  from = "/prefs"
+  to = "https://storydating.typeform.com/to/lOJkjvuS"
+  status = 301
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
