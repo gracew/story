@@ -5,8 +5,14 @@ import { IMatch, IUser } from "./firestore";
 export async function availability(user: IUser, tz: string) {
     const week = moment().startOf("week").format("YYYY-MM-DD");
     const smsCopy = await admin.firestore().collection("smsCopy").doc(week).get();
-    const availabilityTexts = (smsCopy.get("availability") || []).map((text: string) => text.replace("TIMEZONE", tz).replace("USER_ID", user.id))
-    return `Hi ${user.firstName}. ${availabilityTexts.join("\n\n")}`;
+    let availabilityTexts;
+    if (user.status === "waitlist") {
+        availabilityTexts = smsCopy.get("availabilityNewUser");
+        await admin.firestore().collection("users").doc(user.id).update("status", "contacted");
+    } else {
+        availabilityTexts = smsCopy.get("availability");
+    }
+    return `Hi ${user.firstName}. ${availabilityTexts.map((text: string) => text.replace("TIMEZONE", tz).replace("USER_ID", user.id)).join("\n\n")}`;
 }
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {

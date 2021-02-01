@@ -94,6 +94,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     referrer: req.body.form_response.hidden.r,
     signUpDate: req.body.form_response.submitted_at,
     eligible: true,
+    status: "waitlist",
   };
 
   const answers = req.body.form_response.answers;
@@ -630,7 +631,11 @@ export const markActive = functions.https.onRequest(
       response.end();
       return;
     }
-    await userQuery.docs[0].ref.update({ active: request.body.active });
+    if (request.body.active) {
+      await userQuery.docs[0].ref.update({ status: "resurrected" });
+    } else {
+      await userQuery.docs[0].ref.update({ status: "opt-out" });
+    }
     response.end();
   }
 );
