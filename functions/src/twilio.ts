@@ -62,7 +62,8 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
         latestMatchesByUserId[id] = await firestore.latestMatchForUser(id);
     };
 
-    const nextDays = getNextDays(latestMatchesByUserId[match.user_a_id], latestMatchesByUserId[match.user_b_id]);
+    const today = moment().tz("America/Los_Angeles").format("dddd");
+    const nextDays = getNextDays(today, latestMatchesByUserId[match.user_a_id], latestMatchesByUserId[match.user_b_id]);
     const userAId = match.user_a_id;
     const userA = allUsersById[match.user_a_id];
     const userB = allUsersById[match.user_b_id];
@@ -152,7 +153,8 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
     };
 
     if (reveal && otherReveal) {
-        const nextDays = getNextDays(latestMatchRevealing!, latestMatchOther!);
+        const today = moment().tz("America/Los_Angeles").format("dddd");
+        const nextDays = getNextDays(today, latestMatchRevealing!, latestMatchOther!);
         await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
             to: otherUser.phone,
             from: TWILIO_NUMBER,
@@ -187,33 +189,21 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
     return;
 }
 
-function getNextDays(latestMatchRevealing: IMatch, latestMatchOther: IMatch) {
-    const day = moment().tz("America/Los_Angeles").format("ddd");
+export function getNextDays(today: string, latestMatchRevealing: IMatch, latestMatchOther: IMatch) {
     const nextMatchDays = new Set([
-        moment(latestMatchRevealing.created_at.toDate()).tz("America/Los_Angeles").format("ddd"),
-        moment(latestMatchOther.created_at.toDate()).tz("America/Los_Angeles").format("ddd"),
+        moment(latestMatchRevealing.created_at.toDate()).tz("America/Los_Angeles").format("dddd"),
+        moment(latestMatchOther.created_at.toDate()).tz("America/Los_Angeles").format("dddd"),
     ]);
-
-    const nextWeek = "Monday, Tuesday or Wednesday of next week";
-    if (day === "Tue") {
-        if (nextMatchDays.has("Wed") && nextMatchDays.has("Thu")) {
-            return nextWeek;
-        } else if (nextMatchDays.has("Wed")) {
-            return "Thursday, next Monday, next Tuesday";
-        } else if (nextMatchDays.has("Thu")) {
-            return "Wednesday, next Monday, next Tuesday"
-        } else {
-            return "Wednesday, Thursday, next Monday";
-        }
-    } else if (day === "Wed") {
-        if (nextMatchDays.has("Thu")) {
-            return nextWeek;
-        } else {
-            return "Thursday, next Monday, next Tuesday";
-        }
+    const potentialNextDays = ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    let availableNextDays: string[];
+    if (today === "Tuesday") {
+        availableNextDays = potentialNextDays.filter(day => !nextMatchDays.has(day))
+    } else if (today === "Wednesday") {
+        availableNextDays = potentialNextDays.slice(1).filter(day => !nextMatchDays.has(day))
     } else {
-        return nextWeek;
+        availableNextDays = potentialNextDays.slice(2).filter(day => !nextMatchDays.has(day));
     }
+    return availableNextDays.slice(0, 3).join(", ")
 }
 
 function parseUserReveal(reveal: string) {
