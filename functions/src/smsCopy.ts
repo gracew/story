@@ -5,11 +5,8 @@ import { IMatch, IUser } from "./firestore";
 export async function availability(user: IUser, tz: string) {
     const week = moment().startOf("week").format("YYYY-MM-DD");
     const smsCopy = await admin.firestore().collection("smsCopy").doc(week).get();
-    const availabilityText = smsCopy.get("availability");
-    const referralText = smsCopy.get("referral");
-    return `Hi ${user.firstName}. ${availabilityText.replace("TIMEZONE", tz)}
-
-${referralText.replace("USER_ID", user.id)}`;
+    const availabilityTexts = (smsCopy.get("availability") || []).map((text: string) => text.replace("TIMEZONE", tz).replace("USER_ID", user.id))
+    return `Hi ${user.firstName}. ${availabilityTexts.join("\n\n")}`;
 }
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
