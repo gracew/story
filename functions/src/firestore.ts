@@ -7,6 +7,7 @@ export interface IUser {
     location: string;
     locationFlexibility?: boolean;
     funFacts?: string;
+    status?: string;
 }
 export interface IMatch {
     id: string;

@@ -94,6 +94,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     referrer: req.body.form_response.hidden.r,
     signUpDate: req.body.form_response.submitted_at,
     eligible: true,
+    status: "waitlist",
   };
 
   const answers = req.body.form_response.answers;
