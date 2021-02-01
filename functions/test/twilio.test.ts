@@ -1,5 +1,5 @@
 import * as uuid from "uuid";
-import { callStudio, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
+import { callStudio, getNextDays, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
 import { firestore, match, user } from "./mock";
 import * as test from "firebase-functions-test";
 import { IMatch } from "../src/firestore";
@@ -22,7 +22,7 @@ const user2 = user(uuid.v4());
 const user3 = user(uuid.v4());
 let m1: IMatch;
 let m2: IMatch;
-const nextWeek = "Monday, Tuesday or Wednesday of next week";
+const nextWeek = "Friday, Saturday, Sunday";
 
 beforeEach(() => {
     m1 = match(user1.id, user2.id, "2020-09-23T20:00:00-04:00"); // Wed
@@ -181,4 +181,35 @@ it("saveReveal does not save for unknown input", async () => {
     const res = await saveRevealHelper({ phone: user1.phone, reveal: "foo", matchId: m1.id }, firestore);
     expect(res).toBeUndefined();
     expect(firestore.updateMatch).not.toHaveBeenCalled();
+});
+
+it("getNextDays", async () => {
+    const tue = match(user1.id, user2.id, "2020-09-22T20:00:00-04:00");
+    const wed = match(user1.id, user2.id, "2020-09-23T20:00:00-04:00");
+    const thu = match(user3.id, user2.id, "2020-09-24T20:00:00-04:00");
+    const fri = match(user3.id, user2.id, "2020-09-25T20:00:00-04:00");
+    const sat = match(user3.id, user2.id, "2020-09-26T20:00:00-04:00");
+    const sun = match(user3.id, user2.id, "2020-09-27T20:00:00-04:00");
+
+    // if today is Tuesday: available latest match days are Tuesday, Wednesday, Thursday (other phone dates)
+    expect(getNextDays("Tuesday", tue, tue)).toEqual("Wednesday, Thursday, Friday")
+    expect(getNextDays("Tuesday", tue, wed)).toEqual("Thursday, Friday, Saturday")
+    expect(getNextDays("Tuesday", tue, thu)).toEqual("Wednesday, Friday, Saturday")
+    expect(getNextDays("Tuesday", wed, thu)).toEqual("Friday, Saturday, Sunday")
+
+    expect(getNextDays("Wednesday", wed, wed)).toEqual("Thursday, Friday, Saturday")
+    expect(getNextDays("Wednesday", wed, fri)).toEqual("Thursday, Saturday, Sunday")
+    expect(getNextDays("Wednesday", wed, sat)).toEqual("Thursday, Friday, Sunday")
+    expect(getNextDays("Wednesday", wed, sun)).toEqual("Thursday, Friday, Saturday")
+    expect(getNextDays("Wednesday", thu, fri)).toEqual("Saturday, Sunday")
+    expect(getNextDays("Wednesday", thu, sat)).toEqual("Friday, Sunday")
+    expect(getNextDays("Wednesday", thu, sun)).toEqual("Friday, Saturday")
+
+    expect(getNextDays("Thursday", thu, thu)).toEqual("Friday, Saturday, Sunday")
+    expect(getNextDays("Thursday", thu, fri)).toEqual("Saturday, Sunday")
+    expect(getNextDays("Thursday", thu, sat)).toEqual("Friday, Sunday")
+    expect(getNextDays("Thursday", thu, sun)).toEqual("Friday, Saturday")
+    expect(getNextDays("Thursday", fri, sat)).toEqual("Sunday")
+    expect(getNextDays("Thursday", fri, sun)).toEqual("Saturday")
+    expect(getNextDays("Thursday", sat, sun)).toEqual("Friday")
 });
