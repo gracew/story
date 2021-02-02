@@ -13,8 +13,7 @@
 [[redirects]]
   from = "/efficient/join"
   to = "https://storydating.typeform.com/to/tgfN9WPN"
-  status = 200
-  force = true
+  status = 301
 
 [[redirects]]
   from = "/join"
