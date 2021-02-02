@@ -14,6 +14,7 @@ const expectedTwoMatchesDiffLocation = "Hi Anna, we have two matches for you! On
 
 it("matchNotification for a single match - ET", async () => {
     const user1 = user("Anna");
+    user1.timezone = "ET";
     const user2 = user("Grace");
     const m = match(userId1, userId2, "2020-09-23T20:00:00-04:00");
     const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
