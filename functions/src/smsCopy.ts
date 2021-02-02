@@ -22,7 +22,7 @@ export function matchNotification(userId: string, matches: IMatch[], usersById: 
         return [];
     }
 
-    const tz = timezone(matches[0]);
+    const tz = timezone(user);
     const formattedTime = moment(matches[0].created_at.toDate()).tz(tz).format("h:mma z");
     if (matches.length === 1) {
         const match = matches[0];
@@ -107,13 +107,12 @@ function location(user: IUser, match: IUser) {
     return ` from ${the}${match.location}`
 }
 
-function timezone(match: IMatch) {
-    const matchTime = moment(match.created_at.toDate()).tz("America/Los_Angeles")
-    if (matchTime.hour() === 17) {
+function timezone(user: IUser) {
+    if (user.timezone === "ET") {
         return "America/New_York";
-    } else if (matchTime.hour() === 18) {
+    } else if (user.timezone === "CT") {
         return "America/Chicago";
-    } else if (matchTime.hour() === 19) {
+    } else if (user.timezone === "MT") {
         return "America/Denver";
     }
     // TODO(gracew): should probably not return this by default

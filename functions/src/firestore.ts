@@ -5,6 +5,7 @@ export interface IUser {
     firstName: string;
     phone: string;
     location: string;
+    timezone?: string;
     locationFlexibility?: boolean;
     funFacts?: string;
     status?: string;
