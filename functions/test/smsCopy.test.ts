@@ -14,6 +14,7 @@ const expectedTwoMatchesDiffLocation = "Hi Anna, we have two matches for you! On
 
 it("matchNotification for a single match - ET", async () => {
     const user1 = user("Anna");
+    user1.timezone = "ET";
     const user2 = user("Grace");
     const m = match(userId1, userId2, "2020-09-23T20:00:00-04:00");
     const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
@@ -28,6 +29,22 @@ it("matchNotification for a single match - PT", async () => {
     const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
     expect(res).toHaveLength(1);
     expect(res[0]).toContain(expectedSimple)
+});
+
+it("matchNotification formats time according to each user's timezone", async () => {
+    const user1 = user("Anna");
+    user1.timezone = "PT";
+    const user2 = user("Grace");
+    user2.timezone = "CT";
+    const m = match(userId1, userId2, "2020-09-23T19:00:00-07:00");
+
+    const user1Res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
+    expect(user1Res).toHaveLength(1);
+    expect(user1Res[0]).toContain("At 7:00pm PDT")
+
+    const user2Res = matchNotification(userId2, [m], { [userId1]: user1, [userId2]: user2 })
+    expect(user2Res).toHaveLength(1);
+    expect(user2Res[0]).toContain("At 9:00pm CDT")
 });
 
 it("matchNotification correctly formats half past dates", async () => {
