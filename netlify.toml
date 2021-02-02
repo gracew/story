@@ -5,6 +5,18 @@
   force = true
 
 [[redirects]]
+  from = "/efficient"
+  to = "https://webflow.storydating.com/efficient"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/efficient/join"
+  to = "https://storydating.typeform.com/to/tgfN9WPN"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/join"
   to = "https://storydating.typeform.com/to/ocxmmOHo"
   status = 301
