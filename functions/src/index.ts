@@ -30,6 +30,7 @@ import {
 } from "./remainingMatches";
 
 import { analyzeCollection as analyzeCollectionHelper } from "./validateMatches2";
+import { sendWelcomeEmail } from "./sendgrid";
 
 admin.initializeApp();
 
@@ -161,7 +162,12 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
   user.id = reff.id;
   user.registeredAt = admin.firestore.FieldValue.serverTimestamp();
   await reff.set(user);
-  await sendWelcomeText(user as IUser);
+  if (user.phone.length === 12 && user.phone.startsWith("+1")) {
+    // US or Canada
+    await sendWelcomeText(user as IUser);
+  } else {
+    await sendWelcomeEmail(user as IUser);
+  }
 
   response.end();
 });
