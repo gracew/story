@@ -3,7 +3,7 @@ import * as sendgrid from "@sendgrid/mail";
 
 sendgrid.setApiKey(functions.config().sendgrid.key);
 
-export async function sendConfirmationEmail(user: any) {
+export async function sendWelcomeEmail(user: any) {
   const welcomeEmailText = `Hi ${user.firstName},
 
 Thanks for your interest in Story Dating! Think of us as a personalized matchmaker that finds great matches for you and handles all of the scheduling. Currently we are focused on growing our user base in the US to ensure high quality matches for our users. If that goes well we would love to expand to more regions.
