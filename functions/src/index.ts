@@ -23,6 +23,7 @@ import {
 } from "./csv";
 import { Firestore, IMatch, IUser } from "./firestore";
 import { flakeApology, flakeWarning, reminder, videoReminder } from "./smsCopy";
+<<<<<<< HEAD
 import {
   bipartite,
   generateAvailableMatches,
@@ -30,6 +31,10 @@ import {
 } from "./remainingMatches";
 
 import { analyzeCollection as analyzeCollectionHelper } from "./validateMatches2";
+=======
+import { bipartite, generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
+import { sendConfirmationEmail } from "./sendgrid"
+>>>>>>> parent of 6a631f4... send welcome text instead of email
 
 admin.initializeApp();
 
