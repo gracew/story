@@ -393,18 +393,20 @@ export const sendVideoLink = functions.pubsub
       videoMatches.forEach((doc) => {
         const userA = usersById[doc.get("user_a_id")];
         const userB = usersById[doc.get("user_b_id")];
-        const bodyA = `Hi ${userA.firstName
-          }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
-            "videoId"
-          )}/a. In case you need it, the passcode is ${doc.get(
-            "videoPasscode"
-          )}. Happy chatting!`;
-        const bodyB = `Hi ${userB.firstName
-          }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
-            "videoId"
-          )}/b. In case you need it, the passcode is ${doc.get(
-            "videoPasscode"
-          )}. Happy chatting!`;
+        const bodyA = `Hi ${
+          userA.firstName
+        }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
+          "videoId"
+        )}/a. In case you need it, the passcode is ${doc.get(
+          "videoPasscode"
+        )}. Happy chatting!`;
+        const bodyB = `Hi ${
+          userB.firstName
+        }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
+          "videoId"
+        )}/b. In case you need it, the passcode is ${doc.get(
+          "videoPasscode"
+        )}. Happy chatting!`;
         allPromises.push(
           sendSms({ body: bodyA, from: TWILIO_NUMBER, to: userA.phone })
         );
