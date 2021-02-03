@@ -23,7 +23,6 @@ import {
 } from "./csv";
 import { Firestore, IMatch, IUser } from "./firestore";
 import { flakeApology, flakeWarning, reminder, videoReminder } from "./smsCopy";
-<<<<<<< HEAD
 import {
   bipartite,
   generateAvailableMatches,
@@ -31,10 +30,7 @@ import {
 } from "./remainingMatches";
 
 import { analyzeCollection as analyzeCollectionHelper } from "./validateMatches2";
-=======
-import { bipartite, generateAvailableMatches, generateRemainingMatchCount } from "./remainingMatches";
-import { sendConfirmationEmail } from "./sendgrid"
->>>>>>> parent of 6a631f4... send welcome text instead of email
+import { sendWelcomeEmail } from "./sendgrid";
 
 admin.initializeApp();
 
@@ -166,7 +162,12 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
   user.id = reff.id;
   user.registeredAt = admin.firestore.FieldValue.serverTimestamp();
   await reff.set(user);
-  await sendWelcomeText(user as IUser);
+  if (user.phone.length === 12 && user.phone.startsWith("+1")) {
+    // US or Canada
+    await sendWelcomeText(user as IUser);
+  } else {
+    await sendWelcomeEmail(user as IUser);
+  }
 
   response.end();
 });
@@ -392,20 +393,18 @@ export const sendVideoLink = functions.pubsub
       videoMatches.forEach((doc) => {
         const userA = usersById[doc.get("user_a_id")];
         const userB = usersById[doc.get("user_b_id")];
-        const bodyA = `Hi ${
-          userA.firstName
-        }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
-          "videoId"
-        )}/a. In case you need it, the passcode is ${doc.get(
-          "videoPasscode"
-        )}. Happy chatting!`;
-        const bodyB = `Hi ${
-          userB.firstName
-        }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
-          "videoId"
-        )}/b. In case you need it, the passcode is ${doc.get(
-          "videoPasscode"
-        )}. Happy chatting!`;
+        const bodyA = `Hi ${userA.firstName
+          }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
+            "videoId"
+          )}/a. In case you need it, the passcode is ${doc.get(
+            "videoPasscode"
+          )}. Happy chatting!`;
+        const bodyB = `Hi ${userB.firstName
+          }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
+            "videoId"
+          )}/b. In case you need it, the passcode is ${doc.get(
+            "videoPasscode"
+          )}. Happy chatting!`;
         allPromises.push(
           sendSms({ body: bodyA, from: TWILIO_NUMBER, to: userA.phone })
         );
