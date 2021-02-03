@@ -12,7 +12,7 @@ export async function availability(user: IUser, tz: string) {
     } else {
         availabilityTexts = smsCopy.get("availability");
     }
-    return `Hi ${user.firstName}. ${availabilityTexts.map((text: string) => text.replace("TIMEZONE", tz).replace("USER_ID", user.id)).join("\n\n")}`;
+    return `${availabilityTexts.map((text: string) => text.replace("FIRST_NAME", user.firstName).replace("TIMEZONE", tz).replace("USER_ID", user.id)).join("\n\n")}`;
 }
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
