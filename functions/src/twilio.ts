@@ -186,6 +186,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
         }
         return { next: "no_reveal" };
     }
+    console.error(`unexpected combination for match ${match.id}, phone ${phone}, reveal ${reveal}, otherReveal ${otherReveal}`)
     return;
 }
 
