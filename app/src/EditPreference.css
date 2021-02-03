@@ -1,0 +1,29 @@
+.prefs-header {
+  margin-top: 30px;
+}
+
+.prefs-header h3, .prefs-header div {
+  display: inline-block;
+}
+
+.multiple-selection-desc {
+  font-style: italic;
+}
+
+.pref-options {
+  text-align: center;
+}
+
+.pref-option {
+  margin: 3px;
+}
+
+.save-cancel {
+  margin: 30px 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.save-cancel button {
+  width: 48%;
+}

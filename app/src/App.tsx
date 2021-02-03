@@ -1,18 +1,21 @@
 import "firebase/analytics";
 import * as firebase from "firebase/app";
 import "firebase/remote-config";
-import React from "react";
+import React, { useState } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.less";
+import EditPreference, { EditPreferenceProps } from "./EditPreference";
 import Home from "./Home";
 import Listener from "./Listener";
 import PhoneAlreadyExists from "./PhoneAlreadyExists";
+import Profile from "./Profile";
 import Privacy from "./Privacy";
 import Recorder from "./Recorder";
 import RegisterComplete from "./RegisterComplete";
 import Terms from "./Terms";
 import VideoRedirect from "./VideoRedirect";
 import VoiceBio from "./VoiceBio";
+import Login from "./Login";
 
 const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://storydating.com")
   ? {
@@ -40,10 +43,11 @@ function App() {
   firebase.initializeApp(firebaseConfig);
   firebase.remoteConfig().fetchAndActivate();
   firebase.analytics();
+
   return (
     <Router>
       <header>
-        <a href="/">Story</a>
+        <a href="/">Story Dating</a>
       </header>
       <Switch>
         <Route path="/privacy">
@@ -69,6 +73,12 @@ function App() {
             <Route path="/listen/:bioId">
               <Listener />
             </Route>
+            <Route path="/profile">
+              <Profile />
+            </Route>
+            <Route path="/login">
+              <Login />
+            </Route>
             <Route path="/:username">
               <VoiceBio />
             </Route>
@@ -78,10 +88,6 @@ function App() {
           </Switch>
         </div>
       </Switch>
-      <footer>
-        Questions? Email{" "}
-        <a href="mailto:hello@storydating.com">hello@storydating.com</a>
-      </footer>
     </Router>
   );
 }
