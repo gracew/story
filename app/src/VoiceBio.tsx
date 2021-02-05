@@ -68,8 +68,7 @@ function VoiceBio() {
   function onCtaClick() {
     firebase.analytics().logEvent("sign_up", { referrer_username: username });
     window.location.href =
-      firebase.remoteConfig().getString("typeform_url") +
-      `?referrerUsername=${username}&referrerFirstname=${user.firstName}`;
+      firebase.remoteConfig().getString("typeform_url") + `#r=${username}`;
   }
 
   return (
