@@ -15,7 +15,7 @@ function formatUser(d: any) {
 }
 
 export async function generateRemainingMatchCount(excludeIds: string[]) {
-    const usersRaw = await admin.firestore().collection("users").where("eligible", "==", true).get();
+    const usersRaw = await admin.firestore().collection("users").where("status", "in", ["waitlist", "contacted", "pause", "resurrected"]).get();
     const users = usersRaw.docs.filter(d => !excludeIds.includes(d.id)).map(d => formatUser(d));
     const [prevMatches, blocklist] = await Promise.all([getPrevMatches(), getBlocklist()]);
 
@@ -72,7 +72,7 @@ async function getBlocklist() {
 }
 
 export async function generateAvailableMatches(week: string, tz: string) {
-    const usersRaw = await admin.firestore().collection("users").where("eligible", "==", true).get();
+    const usersRaw = await admin.firestore().collection("users").where("status", "in", ["waitlist", "contacted", "pause", "resurrected"]).get();
     const users = usersRaw.docs.map(d => formatUser(d));
 
     const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
@@ -188,7 +188,7 @@ function areUsersCompatible(user: any, match: any, prevMatches: Record<string, s
 }
 
 export async function bipartite(week: string, tz: string) {
-    const usersRaw = await admin.firestore().collection("users").where("eligible", "==", true).get();
+    const usersRaw = await admin.firestore().collection("users").where("status", "in", ["waitlist", "contacted", "pause", "resurrected"]).get();
     const users = usersRaw.docs.map(d => formatUser(d));
 
     const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
