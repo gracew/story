@@ -70,7 +70,7 @@ export const getUserByUsername = functions.https.onCall(async (request) => {
   return { firstName, age, bio, prompt, gender };
 });
 
-/** Called upon typeform submission to save user data in firebase and airtable. */
+/** Called upon typeform submission to save user data in firebase. */
 export const registerUser = functions.https.onRequest(async (req, response) => {
   const answersIdMap: { [key: string]: string } = {
     "bc7dad0e-d1ee-42d5-b9b0-4b15b5d1b102": "firstName",
