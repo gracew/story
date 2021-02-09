@@ -1,7 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import * as twilio from "twilio";
 import * as moment from "moment-timezone";
+import * as twilio from "twilio";
 import { Firestore, IMatch } from "./firestore";
 
 export const TWILIO_NUMBER = 'MG35ade708f17b5ae9c9af44c95128182b';  // messaging service sid
@@ -77,7 +77,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
             firstName: userA.firstName,
             matchName: userB.firstName,
             matchPhone: userB.phone.substring(2),
-            ...(await nextMatchNameAndDate(latestMatchesByUserId, match, userAId, firestore)),
+            ...(await nextMatchNameAndDate(latestMatchesByUserId, userAId, firestore)),
             nextDays,
             video,
         }
@@ -94,7 +94,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
             firstName: userB.firstName,
             matchName: userA.firstName,
             matchPhone: userA.phone.substring(2),
-            ...(await nextMatchNameAndDate(latestMatchesByUserId, match, userBId, firestore)),
+            ...(await nextMatchNameAndDate(latestMatchesByUserId, userBId, firestore)),
             nextDays,
             video,
         }
@@ -143,7 +143,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
     const latestMatchRevealing = await firestore.latestMatchForUser(revealingUser.id);
     const latestMatchOther = await firestore.latestMatchForUser(otherUser.id)
     const otherNextMatch = await nextMatchNameAndDate(
-        { [otherUser.id]: latestMatchOther! }, match, otherUser.id, firestore);
+        { [otherUser.id]: latestMatchOther }, otherUser.id, firestore);
 
     const otherData = {
         userId: otherUser.id,
@@ -154,7 +154,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
 
     if (reveal && otherReveal) {
         const today = moment().tz("America/Los_Angeles").format("dddd");
-        const nextDays = getNextDays(today, latestMatchRevealing!, latestMatchOther!);
+        const nextDays = getNextDays(today, latestMatchRevealing, latestMatchOther);
         await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
             to: otherUser.phone,
             from: TWILIO_NUMBER,
@@ -190,11 +190,15 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
     return;
 }
 
-export function getNextDays(today: string, latestMatchRevealing: IMatch, latestMatchOther: IMatch) {
-    const nextMatchDays = new Set([
-        moment(latestMatchRevealing.created_at.toDate()).tz("America/Los_Angeles").format("dddd"),
-        moment(latestMatchOther.created_at.toDate()).tz("America/Los_Angeles").format("dddd"),
-    ]);
+export function getNextDays(today: string, latestMatchRevealing?: IMatch, latestMatchOther?: IMatch) {
+    const nextMatchDays = new Set();
+    if (latestMatchRevealing) {
+        nextMatchDays.add(moment(latestMatchRevealing.created_at.toDate()).tz("America/Los_Angeles").format("dddd"));
+    }
+    if (latestMatchOther) {
+        nextMatchDays.add(moment(latestMatchOther.created_at.toDate()).tz("America/Los_Angeles").format("dddd"));
+    }
+    
     const potentialNextDays = ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
     let availableNextDays: string[];
     if (today === "Tuesday") {
@@ -218,9 +222,9 @@ function parseUserReveal(reveal: string) {
     return undefined;
 }
 
-async function nextMatchNameAndDate(matchesByUserId: Record<string, IMatch>, currMatch: IMatch, userId: string, firestore: Firestore) {
+async function nextMatchNameAndDate(matchesByUserId: Record<string, IMatch | undefined>, userId: string, firestore: Firestore) {
     const nextMatch = matchesByUserId[userId];
-    if (nextMatch && nextMatch.id === currMatch.id) {
+    if (!nextMatch) {
         return {};
     }
     const nextMatchUserId = nextMatch.user_a_id === userId ? nextMatch.user_b_id : nextMatch.user_a_id;

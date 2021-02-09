@@ -1,3 +1,4 @@
+import * as firestore from "@google-cloud/firestore";
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
@@ -5,7 +6,20 @@ import * as os from "os";
 import * as path from "path";
 import * as twilio from "twilio";
 import * as util from "util";
-import * as firestore from "@google-cloud/firestore";
+import {
+  createMatchFirestore,
+  processAvailabilityCsv,
+  processBulkSmsCsv,
+  processMatchCsv
+} from "./csv";
+import { Firestore, IMatch, IUser } from "./firestore";
+import {
+  bipartite,
+  generateAvailableMatches,
+  generateRemainingMatchCount
+} from "./remainingMatches";
+import { sendWelcomeEmail } from "./sendgrid";
+import { flakeApology, flakeWarning, reminder, videoReminder } from "./smsCopy";
 import {
   BASE_URL,
   callStudio,
@@ -13,24 +27,10 @@ import {
   getConferenceTwimlForPhone,
   saveRevealHelper,
   sendSms,
-  TWILIO_NUMBER,
+  TWILIO_NUMBER
 } from "./twilio";
-import {
-  createMatchFirestore,
-  processAvailabilityCsv,
-  processBulkSmsCsv,
-  processMatchCsv,
-} from "./csv";
-import { Firestore, IMatch, IUser } from "./firestore";
-import { flakeApology, flakeWarning, reminder, videoReminder } from "./smsCopy";
-import {
-  bipartite,
-  generateAvailableMatches,
-  generateRemainingMatchCount,
-} from "./remainingMatches";
-
 import { analyzeCollection as analyzeCollectionHelper } from "./validateMatches2";
-import { sendWelcomeEmail } from "./sendgrid";
+
 
 admin.initializeApp();
 
@@ -531,6 +531,13 @@ export const markJoined = functions.https.onCall(async (request) => {
   return { redirect: match.get("videoLink") };
 });
 
+function connected(match: IMatch) {
+  if (match.mode === "video") {
+    return match.joined && Object.keys(match.joined).length === 2;
+  }
+  return match.twilioSid !== undefined;
+}
+
 export const revealRequest = functions.pubsub
   .schedule("20,50 * * * *")
   .onRun(async (context) => {
@@ -546,9 +553,7 @@ export const revealRequest = functions.pubsub
           .where("created_at", "==", createdAt)
           .where("revealRequested", "==", false)
       );
-      const connectedMatches = matches.docs.filter(
-        (doc) => doc.get("twilioSid") !== undefined
-      );
+      const connectedMatches = matches.docs.filter((doc) => connected(doc.data() as IMatch));
       await Promise.all(
         connectedMatches.map(async (doc) => {
           await playCallOutro(doc.data() as IMatch, doc.get("twilioSid"));

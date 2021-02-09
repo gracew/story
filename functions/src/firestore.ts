@@ -27,6 +27,7 @@ export interface IMatch {
     warned1Min?: boolean;
     revealRequested?: boolean;
     mode?: string;
+    twilioSid?: string;
 }
 
 export class Firestore {
@@ -62,6 +63,7 @@ export class Firestore {
         const latestMatchOther = await admin.firestore().collection("matches")
             .where("user_ids", "array-contains", id)
             .where("canceled", "==", false)
+            .where("created_at", ">=", new Date())
             .orderBy("created_at", "desc")
             .limit(1)
             .get();
