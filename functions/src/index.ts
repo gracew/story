@@ -393,20 +393,18 @@ export const sendVideoLink = functions.pubsub
       videoMatches.forEach((doc) => {
         const userA = usersById[doc.get("user_a_id")];
         const userB = usersById[doc.get("user_b_id")];
-        const bodyA = `Hi ${
-          userA.firstName
-        }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
-          "videoId"
-        )}/a. In case you need it, the passcode is ${doc.get(
-          "videoPasscode"
-        )}. Happy chatting!`;
-        const bodyB = `Hi ${
-          userB.firstName
-        }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
-          "videoId"
-        )}/b. In case you need it, the passcode is ${doc.get(
-          "videoPasscode"
-        )}. Happy chatting!`;
+        const bodyA = `Hi ${userA.firstName
+          }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
+            "videoId"
+          )}/a. In case you need it, the passcode is ${doc.get(
+            "videoPasscode"
+          )}. Happy chatting!`;
+        const bodyB = `Hi ${userB.firstName
+          }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
+            "videoId"
+          )}/b. In case you need it, the passcode is ${doc.get(
+            "videoPasscode"
+          )}. Happy chatting!`;
         allPromises.push(
           sendSms({ body: bodyA, from: TWILIO_NUMBER, to: userA.phone })
         );
@@ -568,6 +566,7 @@ export const revealRequestVideo = functions.pubsub
   .onRun(async (context) => {
     const createdAt = moment().utc().startOf("hour");
     createdAt.subtract(1, "hour");
+    const today = moment().tz("America/Los_Angeles").format("dddd");
     await admin.firestore().runTransaction(async (txn) => {
       const matches = await txn.get(
         admin
@@ -585,7 +584,8 @@ export const revealRequestVideo = functions.pubsub
             "reveal_request",
             doc.data() as IMatch,
             new Firestore(),
-            true
+            true,
+            today
           );
           txn.update(doc.ref, "revealRequested", true);
         })
@@ -615,12 +615,14 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
   } catch (err) {
     console.log(err);
   }
-  await callStudio("reveal_request", match, new Firestore(), false);
+  const today = moment().tz("America/Los_Angeles").format("dddd");
+  await callStudio("reveal_request", match, new Firestore(), false, today);
 }
 
 export const saveReveal = functions.https.onRequest(
   async (request, response) => {
-    const res = await saveRevealHelper(request.body, new Firestore());
+    const today = moment().tz("America/Los_Angeles").format("dddd");
+    const res = await saveRevealHelper(request.body, new Firestore(), today);
     if (res) {
       response.send(res);
     } else {

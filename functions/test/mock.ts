@@ -10,7 +10,7 @@ export const firestore = {
     getUserByPhone: jest.fn(),
     getMatch: jest.fn(),
     updateMatch: jest.fn(),
-    latestMatchForUser: jest.fn(),
+    nextMatchForUser: jest.fn(),
     createSchedulingRecords: jest.fn(),
 };
 

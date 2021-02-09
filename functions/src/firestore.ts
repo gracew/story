@@ -59,12 +59,12 @@ export class Firestore {
         return admin.firestore().collection("matches").doc(id).update(update);
     }
 
-    public async latestMatchForUser(id: string): Promise<IMatch | undefined> {
+    public async nextMatchForUser(id: string): Promise<IMatch | undefined> {
         const latestMatchOther = await admin.firestore().collection("matches")
             .where("user_ids", "array-contains", id)
             .where("canceled", "==", false)
             .where("created_at", ">=", new Date())
-            .orderBy("created_at", "desc")
+            .orderBy("created_at", "asc")
             .limit(1)
             .get();
         return latestMatchOther.empty ? undefined : latestMatchOther.docs[0].data() as IMatch;

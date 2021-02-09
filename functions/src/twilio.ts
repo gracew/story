@@ -53,17 +53,16 @@ export async function getConferenceTwimlForPhone(phone: string) {
     return twiml;
 }
 
-export async function callStudio(mode: string, match: IMatch, firestore: Firestore, video: boolean) {
+export async function callStudio(mode: string, match: IMatch, firestore: Firestore, video: boolean, today: string) {
     console.log(`executing '${mode}' for match ${match.id}`);
     const allUsersById = await firestore.getUsersForMatches([match]);
 
-    const latestMatchesByUserId: Record<string, any> = {}
+    const nextMatchesByUserId: Record<string, any> = {}
     for (const id of Object.keys(allUsersById)) {
-        latestMatchesByUserId[id] = await firestore.latestMatchForUser(id);
+        nextMatchesByUserId[id] = await firestore.nextMatchForUser(id);
     };
 
-    const today = moment().tz("America/Los_Angeles").format("dddd");
-    const nextDays = getNextDays(today, latestMatchesByUserId[match.user_a_id], latestMatchesByUserId[match.user_b_id]);
+    const nextDays = getNextDays(today, nextMatchesByUserId[match.user_a_id], nextMatchesByUserId[match.user_b_id]);
     const userAId = match.user_a_id;
     const userA = allUsersById[match.user_a_id];
     const userB = allUsersById[match.user_b_id];
@@ -77,7 +76,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
             firstName: userA.firstName,
             matchName: userB.firstName,
             matchPhone: userB.phone.substring(2),
-            ...(await nextMatchNameAndDate(latestMatchesByUserId, userAId, firestore)),
+            ...(await nextMatchNameAndDate(nextMatchesByUserId, userAId, firestore)),
             nextDays,
             video,
         }
@@ -94,7 +93,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
             firstName: userB.firstName,
             matchName: userA.firstName,
             matchPhone: userA.phone.substring(2),
-            ...(await nextMatchNameAndDate(latestMatchesByUserId, userBId, firestore)),
+            ...(await nextMatchNameAndDate(nextMatchesByUserId, userBId, firestore)),
             nextDays,
             video,
         }
@@ -103,7 +102,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
     await Promise.all([userAPromise, userBPromise]);
 }
 
-export async function saveRevealHelper(body: { phone: string, reveal: string, matchId: string }, firestore: Firestore) {
+export async function saveRevealHelper(body: { phone: string, reveal: string, matchId: string }, firestore: Firestore, today: string) {
     const phone = body.phone;
     const reveal = parseUserReveal(body.reveal);
     if (reveal === undefined) {
@@ -140,10 +139,10 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
         console.error("Requested match doesnt have the requested users");
         return;
     }
-    const latestMatchRevealing = await firestore.latestMatchForUser(revealingUser.id);
-    const latestMatchOther = await firestore.latestMatchForUser(otherUser.id)
+    const nextMatchRevealing = await firestore.nextMatchForUser(revealingUser.id);
+    const nextMatchOther = await firestore.nextMatchForUser(otherUser.id)
     const otherNextMatch = await nextMatchNameAndDate(
-        { [otherUser.id]: latestMatchOther }, otherUser.id, firestore);
+        { [otherUser.id]: nextMatchOther }, otherUser.id, firestore);
 
     const otherData = {
         userId: otherUser.id,
@@ -153,8 +152,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
     };
 
     if (reveal && otherReveal) {
-        const today = moment().tz("America/Los_Angeles").format("dddd");
-        const nextDays = getNextDays(today, latestMatchRevealing, latestMatchOther);
+        const nextDays = getNextDays(today, nextMatchRevealing, nextMatchOther);
         await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
             to: otherUser.phone,
             from: TWILIO_NUMBER,
@@ -190,13 +188,13 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
     return;
 }
 
-export function getNextDays(today: string, latestMatchRevealing?: IMatch, latestMatchOther?: IMatch) {
+export function getNextDays(today: string, nextMatchRevealing?: IMatch, nextMatchOther?: IMatch) {
     const nextMatchDays = new Set();
-    if (latestMatchRevealing) {
-        nextMatchDays.add(moment(latestMatchRevealing.created_at.toDate()).tz("America/Los_Angeles").format("dddd"));
+    if (nextMatchRevealing) {
+        nextMatchDays.add(moment(nextMatchRevealing.created_at.toDate()).tz("America/Los_Angeles").format("dddd"));
     }
-    if (latestMatchOther) {
-        nextMatchDays.add(moment(latestMatchOther.created_at.toDate()).tz("America/Los_Angeles").format("dddd"));
+    if (nextMatchOther) {
+        nextMatchDays.add(moment(nextMatchOther.created_at.toDate()).tz("America/Los_Angeles").format("dddd"));
     }
     
     const potentialNextDays = ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
