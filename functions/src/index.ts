@@ -1,3 +1,4 @@
+import * as firestore from "@google-cloud/firestore";
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
@@ -5,7 +6,20 @@ import * as os from "os";
 import * as path from "path";
 import * as twilio from "twilio";
 import * as util from "util";
-import * as firestore from "@google-cloud/firestore";
+import {
+  createMatchFirestore,
+  processAvailabilityCsv,
+  processBulkSmsCsv,
+  processMatchCsv
+} from "./csv";
+import { Firestore, IMatch, IUser } from "./firestore";
+import {
+  bipartite,
+  generateAvailableMatches,
+  generateRemainingMatchCount
+} from "./remainingMatches";
+import { sendWelcomeEmail } from "./sendgrid";
+import { flakeApology, flakeWarning, reminder, videoReminder } from "./smsCopy";
 import {
   BASE_URL,
   callStudio,
@@ -13,24 +27,10 @@ import {
   getConferenceTwimlForPhone,
   saveRevealHelper,
   sendSms,
-  TWILIO_NUMBER,
+  TWILIO_NUMBER
 } from "./twilio";
-import {
-  createMatchFirestore,
-  processAvailabilityCsv,
-  processBulkSmsCsv,
-  processMatchCsv,
-} from "./csv";
-import { Firestore, IMatch, IUser } from "./firestore";
-import { flakeApology, flakeWarning, reminder, videoReminder } from "./smsCopy";
-import {
-  bipartite,
-  generateAvailableMatches,
-  generateRemainingMatchCount,
-} from "./remainingMatches";
-
 import { analyzeCollection as analyzeCollectionHelper } from "./validateMatches2";
-import { sendWelcomeEmail } from "./sendgrid";
+
 
 admin.initializeApp();
 
@@ -393,20 +393,18 @@ export const sendVideoLink = functions.pubsub
       videoMatches.forEach((doc) => {
         const userA = usersById[doc.get("user_a_id")];
         const userB = usersById[doc.get("user_b_id")];
-        const bodyA = `Hi ${
-          userA.firstName
-        }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
-          "videoId"
-        )}/a. In case you need it, the passcode is ${doc.get(
-          "videoPasscode"
-        )}. Happy chatting!`;
-        const bodyB = `Hi ${
-          userB.firstName
-        }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
-          "videoId"
-        )}/b. In case you need it, the passcode is ${doc.get(
-          "videoPasscode"
-        )}. Happy chatting!`;
+        const bodyA = `Hi ${userA.firstName
+          }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
+            "videoId"
+          )}/a. In case you need it, the passcode is ${doc.get(
+            "videoPasscode"
+          )}. Happy chatting!`;
+        const bodyB = `Hi ${userB.firstName
+          }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
+            "videoId"
+          )}/b. In case you need it, the passcode is ${doc.get(
+            "videoPasscode"
+          )}. Happy chatting!`;
         allPromises.push(
           sendSms({ body: bodyA, from: TWILIO_NUMBER, to: userA.phone })
         );
@@ -531,6 +529,13 @@ export const markJoined = functions.https.onCall(async (request) => {
   return { redirect: match.get("videoLink") };
 });
 
+function connected(match: IMatch) {
+  if (match.mode === "video") {
+    return match.joined && Object.keys(match.joined).length === 2;
+  }
+  return match.twilioSid !== undefined;
+}
+
 export const revealRequest = functions.pubsub
   .schedule("20,50 * * * *")
   .onRun(async (context) => {
@@ -546,9 +551,7 @@ export const revealRequest = functions.pubsub
           .where("created_at", "==", createdAt)
           .where("revealRequested", "==", false)
       );
-      const connectedMatches = matches.docs.filter(
-        (doc) => doc.get("twilioSid") !== undefined
-      );
+      const connectedMatches = matches.docs.filter((doc) => connected(doc.data() as IMatch));
       await Promise.all(
         connectedMatches.map(async (doc) => {
           await playCallOutro(doc.data() as IMatch, doc.get("twilioSid"));
@@ -563,6 +566,7 @@ export const revealRequestVideo = functions.pubsub
   .onRun(async (context) => {
     const createdAt = moment().utc().startOf("hour");
     createdAt.subtract(1, "hour");
+    const today = moment().tz("America/Los_Angeles").format("dddd");
     await admin.firestore().runTransaction(async (txn) => {
       const matches = await txn.get(
         admin
@@ -580,7 +584,8 @@ export const revealRequestVideo = functions.pubsub
             "reveal_request",
             doc.data() as IMatch,
             new Firestore(),
-            true
+            true,
+            today
           );
           txn.update(doc.ref, "revealRequested", true);
         })
@@ -610,12 +615,14 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
   } catch (err) {
     console.log(err);
   }
-  await callStudio("reveal_request", match, new Firestore(), false);
+  const today = moment().tz("America/Los_Angeles").format("dddd");
+  await callStudio("reveal_request", match, new Firestore(), false, today);
 }
 
 export const saveReveal = functions.https.onRequest(
   async (request, response) => {
-    const res = await saveRevealHelper(request.body, new Firestore());
+    const today = moment().tz("America/Los_Angeles").format("dddd");
+    const res = await saveRevealHelper(request.body, new Firestore(), today);
     if (res) {
       response.send(res);
     } else {
