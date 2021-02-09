@@ -626,6 +626,7 @@ export const saveReveal = functions.https.onRequest(
     if (res) {
       response.send(res);
     } else {
+      await notifyIncomingTextHelper(request.body.phone, request.body.reveal);
       response.end();
     }
   }
@@ -857,25 +858,29 @@ export const notifyIncomingText = functions.https.onRequest(
       // special case grace's phone number...
       response.end();
     }
-    const userQuery = await admin
-      .firestore()
-      .collection("users")
-      .where("phone", "==", phone)
-      .get();
-    if (userQuery.empty) {
-      console.error("No user with phone " + phone);
-      response.end();
-      return;
-    }
-    const user = userQuery.docs[0];
-    const fullName = user.get("firstName") + " " + user.get("lastName");
-    await client.conversations.conversations
-      .get("CH3b12dac2b9484e5fb719bd2a32f16272")
-      .messages.create({
-        author: "+12036338466",
-        body: `From: ${fullName}
-Body: ${request.body.message}`,
-      });
+    await notifyIncomingTextHelper(phone, request.body.message)
     response.end();
   }
 );
+
+async function notifyIncomingTextHelper(phone: string, message: string) {
+  const userQuery = await admin
+    .firestore()
+    .collection("users")
+    .where("phone", "==", phone)
+    .get();
+  if (userQuery.empty) {
+    console.error("No user with phone " + phone);
+    return;
+  }
+  const user = userQuery.docs[0];
+  const fullName = user.get("firstName") + " " + user.get("lastName");
+  await client.conversations.conversations
+    .get("CH3b12dac2b9484e5fb719bd2a32f16272")
+    .messages.create({
+      author: "+12036338466",
+      body: `From: ${fullName}
+Body: ${message}`,
+    });
+
+}
