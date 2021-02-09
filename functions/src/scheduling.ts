@@ -1,6 +1,37 @@
-/* tslint:disable */
-// @ts-nocheck
 import * as admin from "firebase-admin";
+import * as functions from "firebase-functions";
+
+/** Used in each round to determine which users should be included (based on number of potential matches). */
+export const generateRemainingMatchReport = functions.https.onRequest(
+  async (request, response) => {
+    const result = await generateRemainingMatchCount(
+      request.body.excludeIds || []
+    );
+    response.send(result);
+  }
+);
+
+/** Used in each round after obtaining availability to generate matches. */
+export const generateMatchesUsingAvailability = functions.https.onRequest(
+  async (request, response) => {
+    const result = await generateAvailableMatches(
+      request.body.schedulingView,
+      request.body.tz
+    );
+    response.send(result);
+  }
+);
+
+export const bipartiteAvailability = functions.https.onRequest(
+  async (request, response) => {
+    const result = await bipartite(
+      request.body.schedulingView,
+      request.body.tz
+    );
+    response.send(result);
+  }
+);
+
 
 function formatUser(d: any) {
     // convert wants to Gender Field options
@@ -14,7 +45,7 @@ function formatUser(d: any) {
     };
 }
 
-export async function generateRemainingMatchCount(excludeIds: string[]) {
+async function generateRemainingMatchCount(excludeIds: string[]) {
     const usersRaw = await admin.firestore().collection("users").where("status", "in", ["waitlist", "contacted", "pause", "resurrected"]).get();
     const users = usersRaw.docs.filter(d => !excludeIds.includes(d.id)).map(d => formatUser(d));
     const [prevMatches, blocklist] = await Promise.all([getPrevMatches(), getBlocklist()]);
@@ -71,7 +102,7 @@ async function getBlocklist() {
     return ret;
 }
 
-export async function generateAvailableMatches(week: string, tz: string) {
+async function generateAvailableMatches(week: string, tz: string) {
     const usersRaw = await admin.firestore().collection("users").where("status", "in", ["waitlist", "contacted", "pause", "resurrected"]).get();
     const users = usersRaw.docs.map(d => formatUser(d));
 
@@ -187,7 +218,7 @@ function areUsersCompatible(user: any, match: any, prevMatches: Record<string, s
     return true;
 }
 
-export async function bipartite(week: string, tz: string) {
+async function bipartite(week: string, tz: string) {
     const usersRaw = await admin.firestore().collection("users").where("status", "in", ["waitlist", "contacted", "pause", "resurrected"]).get();
     const users = usersRaw.docs.map(d => formatUser(d));
 
@@ -219,7 +250,7 @@ export async function bipartite(week: string, tz: string) {
     const menIds: string[] = []
     const edges: any[] = []
     Object.keys(possibleMatches).forEach(matchStr => {
-        let [fUserId, mUserId] = matchStr.split('_')
+        const [fUserId, mUserId] = matchStr.split('_')
         edges.push([
             addOrFindInArray(womenIds, fUserId),
             addOrFindInArray(menIds, mUserId)
@@ -270,7 +301,7 @@ export async function bipartite(week: string, tz: string) {
 
 // Return index in array of found or added new value
 function addOrFindInArray(arr: any[], newVal: any) {
-    let existingIdx = arr.findIndex(v => v === newVal)
+    const existingIdx = arr.findIndex(v => v === newVal)
     if (existingIdx > -1) {
         return existingIdx
     } else {
@@ -279,6 +310,8 @@ function addOrFindInArray(arr: any[], newVal: any) {
     }
 }
 
+/* tslint:disable */
+// @ts-nocheck
 // Bipartite matching, lightly modified from
 // https://github.com/mikolalysenko/bipartite-matching/blob/master/match.js
 function bipartiteMatching(n: any, m: any, edges: any) {

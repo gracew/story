@@ -1,10 +1,10 @@
+import * as admin from "firebase-admin";
 import * as fs from 'fs';
 import * as moment from "moment-timezone";
+import * as neatCsv from 'neat-csv';
 import { Firestore, IMatch } from "./firestore";
 import { availability, matchNotification } from "./smsCopy";
-import * as neatCsv from 'neat-csv';
 import { TWILIO_NUMBER } from './twilio';
-import admin = require('firebase-admin');
 
 export async function processBulkSmsCsv(tempFilePath: string, sendSms: (opts: any) => Promise<any>) {
     const contents = fs.readFileSync(tempFilePath).toString();
