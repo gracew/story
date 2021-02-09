@@ -149,11 +149,11 @@ function generatePairs(array: any[]) {
 }
 
 function defaultMatchMax(gender: string, age: number) {
-    return gender === "Female" ? age + 7 : age + 4
+    return gender === "Female" ? age + 6 : age + 4
 }
 
 function defaultMatchMin(gender: string, age: number) {
-    return gender === "Female" ? age - 1 : age - 5
+    return gender === "Female" ? age - 2 : age - 4
 }
 
 function areUsersCompatible(user: any, match: any, prevMatches: Record<string, string[]>, blocklist: Record<string, string[]>) {
