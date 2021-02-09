@@ -11,9 +11,6 @@ const accountSid = 'AC07d4a9a61ac7c91f7e5cecf1e27c45a6';
 const authToken = functions.config().twilio.auth_token;
 export const client = twilio(accountSid, authToken);
 
-export function sendSms(opts: any) {
-    return client.messages.create(opts).catch(err => console.error(err));
-}
 
 export async function getConferenceTwimlForPhone(phone: string) {
     const users = admin.firestore().collection("users");
@@ -236,4 +233,8 @@ async function nextMatchNameAndDate(matchesByUserId: Record<string, IMatch | und
         nextMatchName: nextMatchUser!.firstName,
         nextMatchDate,
     }
+}
+
+export function sendSms(opts: any) {
+    return client.messages.create(opts).catch(err => console.error(err));
 }
