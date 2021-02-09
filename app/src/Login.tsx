@@ -1,16 +1,15 @@
-import { Button, Input, Spin } from "antd";
 import "firebase/analytics";
 import * as firebase from "firebase/app";
 import * as firebaseui from "firebaseui";
-import parsePhoneNumber, { AsYouType } from "libphonenumber-js";
-import { useHistory, useLocation } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import "firebase/remote-config";
 import "firebase/storage";
-import React, { isValidElement, useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import "./Login.css";
 import 'firebaseui/dist/firebaseui.css'
 
 function Login() {
+  const history = useHistory();
   useEffect(() => {
     const ui = new firebaseui.auth.AuthUI(firebase.auth());
     ui.start('#firebaseui-auth-container', {
@@ -18,11 +17,18 @@ function Login() {
         {
           provider: firebase.auth.PhoneAuthProvider.PROVIDER_ID,
           recaptchaParameters: {
-            size: 'invisible', 
+            size: 'invisible',
           },
         }
       ],
-      signInSuccessUrl: "/profile"
+      callbacks: {
+        signInSuccessWithAuthResult: (authResult: firebase.auth.UserCredential) => {
+          if (authResult.user && authResult.user.phoneNumber) {
+            history.push("/profile")
+          }
+          return false;
+        }
+      },
     });
   })
 

@@ -6,6 +6,8 @@ import React, { useEffect, useState } from "react";
 import "./Profile.css";
 import Preference from "./Preference";
 import EditPreference, { PreferenceType } from "./EditPreference";
+import { useHistory } from "react-router-dom";
+import firebase from "firebase";
 
 const user: Record<string, any> = {
   firstName: "Grace",
@@ -72,6 +74,7 @@ const prefs: Record<string, any> = {
         "Seattle",
         "Washington, DC",
       ],
+      allowOther: true,
     },
     {
       id: "locationFlexibility",
@@ -138,6 +141,11 @@ const prefs: Record<string, any> = {
 
 function Profile() {
   const [selectedPref, setSelectedPref] = useState<string>();
+  const history = useHistory();
+
+  if (!firebase.auth().currentUser) {
+    history.push("/login")
+  }
 
   if (selectedPref) {
     const prefMeta = prefs.basic.find((p: any) => p.id === selectedPref);
