@@ -5,7 +5,6 @@ import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.less";
 import Home from "./Home";
-import Listener from "./Listener";
 import Login from "./Login";
 import PhoneAlreadyExists from "./PhoneAlreadyExists";
 import Privacy from "./Privacy";
@@ -13,6 +12,7 @@ import Profile from "./Profile";
 import Recorder from "./Recorder";
 import RegisterComplete from "./RegisterComplete";
 import Terms from "./Terms";
+import Listen from "./vday/Listen";
 import VideoRedirect from "./VideoRedirect";
 import VoiceBio from "./VoiceBio";
 
@@ -81,8 +81,8 @@ function App() {
             <Route path="/register/error">
               <PhoneAlreadyExists />
             </Route>
-            <Route path="/listen/:bioId">
-              <Listener />
+            <Route path="/listen">
+              <Listen />
             </Route>
             <Route path="/profile" exact>
               <Profile />
