@@ -140,11 +140,24 @@ const prefs: Record<string, any> = {
 }
 
 function Profile() {
+  const [userLoading, setUserLoading] = useState(true);
   const [selectedPref, setSelectedPref] = useState<string>();
   const history = useHistory();
 
-  if (!firebase.auth().currentUser) {
+  firebase.auth().onAuthStateChanged(function (user) {
+    setUserLoading(false);
+    if (!user) {
+      history.push("/login")
+    }
+  });
+
+  async function logout() {
+    await firebase.auth().signOut();
     history.push("/login")
+  }
+
+  if (userLoading) {
+    return <Spin size="large" />
   }
 
   if (selectedPref) {
@@ -192,7 +205,7 @@ function Profile() {
       ))
       }
 
-      <Button className="logout">Log out</Button>
+      <Button className="logout" onClick={logout}>Log out</Button>
     </div>
 
   );
