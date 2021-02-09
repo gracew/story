@@ -1,0 +1,24 @@
+.edit-preference {
+  margin: 50px 0;
+}
+
+.multiple-selection-desc {
+  font-style: italic;
+}
+
+.pref-options {
+  text-align: center;
+}
+
+.pref-option {
+  margin: 3px;
+}
+
+.save-cancel {
+  display: flex;
+  justify-content: space-between;
+}
+
+.save-cancel button {
+  width: 48%;
+}

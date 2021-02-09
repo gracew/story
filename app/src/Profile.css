@@ -1,0 +1,27 @@
+.profile-container {
+  width: 100%;
+  text-align: center;
+}
+
+.profile-header {
+  margin-top: 30px;
+  padding: 0 5px;
+}
+
+.profile-header h1 {
+  margin: 0;
+}
+
+.prefs-header {
+  margin-top: 30px;
+  padding: 0 5px;
+}
+
+.ant-divider {
+  margin: 0;
+}
+
+.logout {
+  margin: 30px 0;
+  width: 100%;
+}

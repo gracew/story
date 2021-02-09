@@ -1,0 +1,45 @@
+.pref-block-arrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+}
+
+.pref-block {
+  width: 100%;
+  height: 100%;
+}
+
+.pref {
+  display: flex;
+  justify-content: space-between;
+  margin: 3px 0;
+}
+
+.pref-description {
+  color: black;
+  font-weight: 500;
+}
+
+.pref-value {
+  text-align: right;
+}
+
+.dealbreaker-label {
+  font-style: italic;
+}
+
+.pref-value {
+  max-width: 200px;
+}
+
+.pref-value span {
+  max-width: 100%;
+}
+
+.pref-arrow {
+  color: black;
+  margin-left: 8px;
+}
