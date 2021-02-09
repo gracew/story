@@ -9,7 +9,7 @@ import { processAvailabilityCsv, processBulkSmsCsv, processMatchCsv } from "./cs
 import { Firestore } from "./firestore";
 import { registerUser } from "./register";
 import { cancelMatch, createMatch } from "./retool";
-import { bipartiteAvailability, generateMatchesUsingAvailability, generateRemainingMatchReport } from "./scheduling";
+import { bipartiteMatches, potentialMatches, remainingMatches } from "./scheduling";
 import { sendSms } from "./twilio";
 import { analyzeCollection as analyzeCollectionHelper } from "./validateMatches2";
 
@@ -20,7 +20,7 @@ export {
   announce1Min,
   announce5Min,
   announceUser,
-  bipartiteAvailability,
+  bipartiteMatches,
   call1MinWarning,
   call5MinWarning,
   callOutro,
@@ -28,8 +28,8 @@ export {
   cancelMatch,
   conferenceStatusWebhook,
   createMatch,
-  generateMatchesUsingAvailability,
-  generateRemainingMatchReport,
+  potentialMatches,
+  remainingMatches,
   handleFlakes,
   issueCalls,
   markJoined,
