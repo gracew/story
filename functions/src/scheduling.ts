@@ -2,19 +2,33 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 
 /** Used in each round to determine which users should be included (based on number of potential matches). */
-export const generateRemainingMatchReport = functions.https.onRequest(
+export const remainingMatches = functions.https.onRequest(
   async (request, response) => {
-    const result = await generateRemainingMatchCount(
-      request.body.excludeIds || []
-    );
-    response.send(result);
+    const excludeIds = request.body.excludeIds || [];
+    const usersRaw = await admin.firestore().collection("users").where("status", "in", ["waitlist", "contacted", "pause", "resurrected"]).get();
+    const users = usersRaw.docs.filter(d => !excludeIds.includes(d.id)).map(d => formatUser(d));
+    const [prevMatches, blocklist] = await Promise.all([getPrevMatches(), getBlocklist()]);
+
+    const results = [];
+    for (const user of users) {
+        const remainingMatches = users.filter(match => areUsersCompatible(user, match, prevMatches, blocklist));
+
+        results.push({
+            ...user,
+            remainingMatches,
+            // @ts-ignore
+            prevMatches: prevMatches[user.id],
+        });
+    }
+
+    response.send(results);
   }
 );
 
 /** Used in each round after obtaining availability to generate matches. */
-export const generateMatchesUsingAvailability = functions.https.onRequest(
+export const potentialMatches = functions.https.onRequest(
   async (request, response) => {
-    const result = await generateAvailableMatches(
+    const result = await potentialMatchesHelper(
       request.body.schedulingView,
       request.body.tz
     );
@@ -22,9 +36,9 @@ export const generateMatchesUsingAvailability = functions.https.onRequest(
   }
 );
 
-export const bipartiteAvailability = functions.https.onRequest(
+export const bipartiteMatches = functions.https.onRequest(
   async (request, response) => {
-    const result = await bipartite(
+    const result = await bipartiteMatchesHelper(
       request.body.schedulingView,
       request.body.tz
     );
@@ -43,26 +57,6 @@ function formatUser(d: any) {
         matchMax: o.matchMax || defaultMatchMax(o.gender, o.age),
         matchMin: o.matchMin || defaultMatchMin(o.gender, o.age),
     };
-}
-
-async function generateRemainingMatchCount(excludeIds: string[]) {
-    const usersRaw = await admin.firestore().collection("users").where("status", "in", ["waitlist", "contacted", "pause", "resurrected"]).get();
-    const users = usersRaw.docs.filter(d => !excludeIds.includes(d.id)).map(d => formatUser(d));
-    const [prevMatches, blocklist] = await Promise.all([getPrevMatches(), getBlocklist()]);
-
-    const results = [];
-    for (const user of users) {
-        const remainingMatches = users.filter(match => areUsersCompatible(user, match, prevMatches, blocklist));
-
-        results.push({
-            ...user,
-            remainingMatches,
-            // @ts-ignore
-            prevMatches: prevMatches[user.id],
-        });
-    }
-
-    return results;
 }
 
 async function getPrevMatches() {
@@ -102,19 +96,16 @@ async function getBlocklist() {
     return ret;
 }
 
-async function generateAvailableMatches(week: string, tz: string) {
-    const usersRaw = await admin.firestore().collection("users").where("status", "in", ["waitlist", "contacted", "pause", "resurrected"]).get();
-    const users = usersRaw.docs.map(d => formatUser(d));
-
+async function potentialMatchesHelper(week: string, tz: string) {
     const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
     const availabilityByUserId = Object.assign({}, ...availability.docs.map(doc => ({ [doc.id]: doc.data() })))
 
-    // @ts-ignore
-    const usersInTZ = users.filter(u => u.id in availabilityByUserId && u.timezone === tz);
+    const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
+    const users = (await admin.firestore().getAll(...userRefs)).map(d => formatUser(d));
 
     const pairs = [];
     const [prevMatches, blocklist] = await Promise.all([getPrevMatches(), getBlocklist()]);
-    for (const [userA, userB] of generatePairs(usersInTZ)) {
+    for (const [userA, userB] of generatePairs(users)) {
         if (!areUsersCompatible(userA, userB, prevMatches, blocklist)) {
             continue;
         }
@@ -195,11 +186,6 @@ function areUsersCompatible(user: any, match: any, prevMatches: Record<string, s
         }
     }
 
-    // check timezone
-    if (match.timezone !== user.timezone) {
-        return false;
-    }
-
     // if users are in different locations, check if both are flexible. defaults to true if flexibility is unknown
     if (match.location !== user.location) {
         if (match.locationFlexibility === false || user.locationFlexibility === false) {
@@ -218,21 +204,18 @@ function areUsersCompatible(user: any, match: any, prevMatches: Record<string, s
     return true;
 }
 
-async function bipartite(week: string, tz: string) {
-    const usersRaw = await admin.firestore().collection("users").where("status", "in", ["waitlist", "contacted", "pause", "resurrected"]).get();
-    const users = usersRaw.docs.map(d => formatUser(d));
-
+async function bipartiteMatchesHelper(week: string, tz: string) {
     const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
     const availabilityByUserId = Object.assign({}, ...availability.docs.map(doc => ({ [doc.id]: doc.data() })))
 
-    // @ts-ignore
-    const usersInTZ = users.filter(u => u.id in availabilityByUserId && u.timezone === tz);
+    const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
+    const users = (await admin.firestore().getAll(...userRefs)).map(d => formatUser(d));
 
-    const usersById = Object.assign({}, ...usersInTZ.map(user => ({ [user.id]: user })))
+    const usersById = Object.assign({}, ...users.map(user => ({ [user.id]: user })))
     const [prevMatches, blocklist] = await Promise.all([getPrevMatches(), getBlocklist()]);
 
     const possibleMatches: Record<string, boolean> = {}
-    generatePairs(usersInTZ)
+    generatePairs(users)
         .forEach(([userA, userB]: [any, any]) => {
             if (!areUsersCompatible(userA, userB, prevMatches, blocklist)) {
                 return;
@@ -278,7 +261,7 @@ async function bipartite(week: string, tz: string) {
             days: findCommonAvailability(availabilityByUserId[userA.id], availabilityByUserId[userB.id]),
         }
     })
-    const unmatchedUsers = usersInTZ
+    const unmatchedUsers = users
         .filter(user => {
             const av = availabilityByUserId[user.id];
             if (!av || Object.keys(av).length === 0) {
