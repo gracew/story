@@ -11,11 +11,10 @@ export const remainingMatches = functions.https.onRequest(
 
     const results = [];
     for (const user of users) {
-        const remainingMatches = users.filter(match => areUsersCompatible(user, match, prevMatches, blocklist));
 
         results.push({
             ...user,
-            remainingMatches,
+            remainingMatches: users.filter(match => areUsersCompatible(user, match, prevMatches, blocklist)),
             // @ts-ignore
             prevMatches: prevMatches[user.id],
         });
