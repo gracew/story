@@ -16,7 +16,6 @@ const user: Record<string, any> = {
   matchMin: 27,
   matchMax: 35,
   genderPreference: "Men",
-  phone: "+15714816721",
   funFacts: "I collect pressed pennies. I lived in Airbnbs in NYC for a year. I want to hike the PCT someday."
 };
 
@@ -36,12 +35,12 @@ const userDetailed: Record<string, any> = {
     dealbreakers: ["Very religious"],
   },
   drugsAlcohol: {
-    value: "Occasional alcohol drinker",
+    value: ["Occasional alcohol drinker"],
     dealbreakers: ["Frequent alcohol drinker"],
   },
   smoking: {
-    value: "Not a smoker",
-    dealbreakers: ["Smoke", "Use e-cigarettes"]
+    value: ["No"],
+    dealbreakers: ["Yes", "Yes, e-cigarettes"]
   },
   kids: {
     value: ["Want to have kids in the future"],
@@ -77,8 +76,7 @@ const prefs: Record<string, any> = {
     {
       id: "locationFlexibility",
       label: "Open to matches in other locations",
-      type: PreferenceType.MULTIPLE_CHOICE,
-      options: ["Yes", "No"]
+      type: PreferenceType.BOOLEAN,
     },
     {
       id: "funFacts",
@@ -148,10 +146,14 @@ function Profile() {
     const editProps = {
       ...prefMeta,
       ...prefMeta2,
-      selected: user[selectedPref] || userDetailed[selectedPref].value,
+      selected: detailed ? userDetailed[selectedPref].value : user[selectedPref],
       selectedDealbreakers: detailed ? userDetailed[selectedPref].dealbreakers : [],
       back: () => setSelectedPref(undefined),
     };
+    if (selectedPref === "age") {
+      editProps.matchMin = user.matchMin;
+      editProps.matchMax = user.matchMax;
+    }
     return <div className="profile-container"><EditPreference {...editProps} /></div>
   }
   return (
