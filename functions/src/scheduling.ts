@@ -27,20 +27,14 @@ export const remainingMatches = functions.https.onRequest(
 /** Used in each round after obtaining availability to generate matches. */
 export const potentialMatches = functions.https.onRequest(
   async (request, response) => {
-    const result = await potentialMatchesHelper(
-      request.body.schedulingView,
-      request.body.tz
-    );
+    const result = await potentialMatchesHelper(request.body.schedulingView);
     response.send(result);
   }
 );
 
 export const bipartiteMatches = functions.https.onRequest(
   async (request, response) => {
-    const result = await bipartiteMatchesHelper(
-      request.body.schedulingView,
-      request.body.tz
-    );
+    const result = await bipartiteMatchesHelper(request.body.schedulingView);
     response.send(result);
   }
 );
@@ -95,7 +89,7 @@ async function getBlocklist() {
     return ret;
 }
 
-async function potentialMatchesHelper(week: string, tz: string) {
+async function potentialMatchesHelper(week: string) {
     const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
     const availabilityByUserId = Object.assign({}, ...availability.docs.map(doc => ({ [doc.id]: doc.data() })))
 
@@ -203,7 +197,7 @@ function areUsersCompatible(user: any, match: any, prevMatches: Record<string, s
     return true;
 }
 
-async function bipartiteMatchesHelper(week: string, tz: string) {
+async function bipartiteMatchesHelper(week: string) {
     const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
     const availabilityByUserId = Object.assign({}, ...availability.docs.map(doc => ({ [doc.id]: doc.data() })))
 
