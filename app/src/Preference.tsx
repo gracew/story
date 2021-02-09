@@ -1,12 +1,10 @@
-import { Button, Spin, Typography } from "antd";
+import { RightOutlined } from "@ant-design/icons";
+import { Button, Typography } from "antd";
 import "firebase/analytics";
-import * as firebase from "firebase/app";
 import "firebase/remote-config";
 import "firebase/storage";
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React from "react";
 import "./Preference.css";
-import { RightOutlined } from "@ant-design/icons";
 
 interface PreferenceProps {
   id: string;

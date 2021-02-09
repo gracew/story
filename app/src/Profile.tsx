@@ -1,13 +1,13 @@
 import { Button, Divider, Spin } from "antd";
+import firebase from "firebase";
 import "firebase/analytics";
 import "firebase/remote-config";
 import "firebase/storage";
-import React, { useEffect, useState } from "react";
-import "./Profile.css";
-import Preference from "./Preference";
-import EditPreference, { PreferenceType } from "./EditPreference";
+import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
-import firebase from "firebase";
+import EditPreference, { PreferenceType } from "./EditPreference";
+import Preference from "./Preference";
+import "./Profile.css";
 
 const user: Record<string, any> = {
   firstName: "Grace",

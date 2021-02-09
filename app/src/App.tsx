@@ -1,21 +1,20 @@
 import "firebase/analytics";
 import * as firebase from "firebase/app";
 import "firebase/remote-config";
-import React, { useState } from "react";
+import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.less";
-import EditPreference, { EditPreferenceProps } from "./EditPreference";
 import Home from "./Home";
 import Listener from "./Listener";
+import Login from "./Login";
 import PhoneAlreadyExists from "./PhoneAlreadyExists";
-import Profile from "./Profile";
 import Privacy from "./Privacy";
+import Profile from "./Profile";
 import Recorder from "./Recorder";
 import RegisterComplete from "./RegisterComplete";
 import Terms from "./Terms";
 import VideoRedirect from "./VideoRedirect";
 import VoiceBio from "./VoiceBio";
-import Login from "./Login";
 
 const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://storydating.com")
   ? {
