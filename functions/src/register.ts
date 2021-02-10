@@ -2,6 +2,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { IUser } from "./firestore";
 import { sendWelcomeEmail } from "./sendgrid";
+import { welcome } from "./smsCopy";
 import { client, TWILIO_NUMBER } from "./twilio";
 
 /** Called upon typeform submission to save user data in firebase. */
@@ -98,19 +99,14 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
   await reff.set(user);
   if (user.phone.length === 12 && user.phone.startsWith("+1")) {
     // US or Canada
-    await sendWelcomeText(user as IUser);
+    await client.messages.create({
+      body: welcome(user as IUser),
+      from: TWILIO_NUMBER,
+      to: user.phone,
+    });
   } else {
     await sendWelcomeEmail(user as IUser);
   }
 
   response.end();
 });
-
-async function sendWelcomeText(user: IUser) {
-  const body = `Hi ${user.firstName}, thanks for joining Story Dating! Think of us as a personalized matchmaker that finds great matches for you and handles all of the scheduling. You're currently on the waitlist, but we'll notify you as soon as we have some matches we think you'll like. In the meantime, feel free to text us with any questions, and refer your friends with this link to get off the waitlist sooner: https://storydating.com/join?r=${user.id}`;
-  await client.messages.create({
-    body,
-    from: TWILIO_NUMBER,
-    to: user.phone,
-  });
-}

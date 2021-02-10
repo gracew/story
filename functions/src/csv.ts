@@ -44,10 +44,28 @@ export const createSchedulingRecords = functions.storage
     await new Firestore().createSchedulingRecords(week, userIds);
   });
 
-export const sendAvailabilityTexts = functions.pubsub
+export const sendWaitlistTexts = functions.pubsub
   .schedule("every saturday 13:00")
   .onRun(async (context) => {
     const week = moment().startOf("week").add(1, "weeks").format("YYYY-MM-DD");
+    const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
+    const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
+    const users = await admin.firestore().getAll(...userRefs);
+    const waitlistUsers = users.map(doc => doc.data() as IUser).filter(user => user.status === "waitlist");
+
+    await Promise.all(waitlistUsers.map(async user => {
+        return sendSms({
+            body: await availabilityCopy(user, user.timezone),
+            from: TWILIO_NUMBER,
+            to: user.phone,
+        });
+    }));
+  });
+
+export const sendAvailabilityTexts = functions.pubsub
+  .schedule("every sunday 13:00")
+  .onRun(async (context) => {
+    const week = moment().startOf("week").format("YYYY-MM-DD");
     const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
     const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
     const users = await admin.firestore().getAll(...userRefs);
