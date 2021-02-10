@@ -23,10 +23,10 @@ const user: Record<string, any> = {
 
 const userDetailed: Record<string, any> = {
   connectionType: {
-    value: ["Serious dating", "Casual dating"],
+    value: "Open to either"
   },
   relationshipType: {
-    value: ["Monogamous", "Non-monogamous"],
+    value: "Open to either"
   },
   politics: {
     value: "Liberal",
@@ -80,33 +80,41 @@ const prefs: Record<string, any> = {
       id: "locationFlexibility",
       label: "Open to matches in other locations",
       type: PreferenceType.BOOLEAN,
+      description: "We'll be able to find you more matches if you answer yes!"
     },
     {
       id: "funFacts",
       label: "Fun facts",
       type: PreferenceType.FREE_TEXT,
-      description: "These will be shared with your matches, so make them good 🙂",
+      description: `These will be shared with your matches, so make them good 🙂
+
+Some ideas:
++ What are you passionate about?
++ How might your friends describe you?
++ What's something you want to learn?
++ What do you take pride in?`,
     },
   ],
   details: [{
     id: "connectionType",
-    label: "Connection type",
-    type: PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE,
-    options: ["Serious dating", "Casual dating"],
+    label: "Serious or casual dating",
+    type: PreferenceType.MULTIPLE_CHOICE,
+    options: ["Serious dating", "Casual dating", "Open to either"],
   },
   {
     id: "relationshipType",
     label: "Relationship type",
-    type: PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE,
-    options: ["Monogamous", "Non-monogamous"],
+    type: PreferenceType.MULTIPLE_CHOICE,
+    options: ["Monogamous", "Non-monogamous", "Open to either"],
   },
   {
     id: "politics",
     label: "Politics",
     type: PreferenceType.MULTIPLE_CHOICE,
     options: ["Very liberal", "Liberal", "Moderate", "Conservative", "Very conservative", "I'm not into politics"],
-    dealbreakers: true,
     allowOther: true,
+    dealbreakers: true,
+    dealbreakerOptions: ["Very liberal", "Liberal", "Moderate", "Conservative", "Very conservative", "Not into politics"],
   },
   {
     id: "religion",
@@ -120,8 +128,9 @@ const prefs: Record<string, any> = {
     label: "Drugs & alcohol",
     type: PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE,
     options: ["Occasional alcohol drinker", "Frequent alcohol drinker", "420 friendly", "I'm adventurous ;)", "I don't drink or use drugs"],
-    dealbreakers: true,
     allowOther: true,
+    dealbreakers: true,
+    dealbreakerOptions: ["Occasional alcohol drinker", "Frequent alcohol drinker", "420 friendly", "Adventurous ;)", "Don't drink or use drugs"],
   },
   {
     id: "smoking",
@@ -129,6 +138,7 @@ const prefs: Record<string, any> = {
     type: PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE,
     options: ["Yes", "Yes, e-cigarettes", "No"],
     dealbreakers: true,
+    dealbreakerOptions: ["Smoke", "Use e-cigarettes", "Do not smoke"],
   },
   {
     id: "kids",
@@ -136,6 +146,7 @@ const prefs: Record<string, any> = {
     type: PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE,
     options: ["Currently have kids", "Want to have kids in the future", "Don't want to have kids in the future", "Not sure"],
     dealbreakers: true,
+    dealbreakerOptions: ["Currently have kids", "Want to have kids in the future", "Don't want to have kids in the future", "Aren't sure if they want kids"],
   }],
 }
 
@@ -167,8 +178,8 @@ function Profile() {
     const editProps = {
       ...prefMeta,
       ...prefMeta2,
-      selected: detailed ? userDetailed[selectedPref].value : user[selectedPref],
-      selectedDealbreakers: detailed ? userDetailed[selectedPref].dealbreakers : [],
+      value: detailed ? userDetailed[selectedPref].value : user[selectedPref],
+      dealbreakers: detailed ? userDetailed[selectedPref].dealbreakers : [],
       back: () => setSelectedPref(undefined),
     };
     if (selectedPref === "age") {
