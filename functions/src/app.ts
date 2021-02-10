@@ -86,6 +86,7 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
     location,
     locationFlexibility,
     genderPreference,
+    funFacts,
     ...otherPrefs
   } = data;
 
@@ -95,6 +96,9 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
   }
   if (matchMax !== undefined) {
     mainPrefs.matchMax = matchMax;
+  }
+  if (funFacts !== undefined) {
+    mainPrefs.funFacts = funFacts.value;
   }
   if (locationFlexibility !== undefined) {
     mainPrefs.locationFlexibility = locationFlexibility.value === "Yes";

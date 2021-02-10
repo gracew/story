@@ -181,8 +181,8 @@ function EditPreference(props: EditPreferenceProps) {
       </div>
 
       <div className="save-cancel">
-        <Button type="primary" onClick={onSave}>Save</Button>
         <Button onClick={props.back}>Cancel</Button>
+        <Button type="primary" onClick={onSave}>Save</Button>
       </div>
 
     </div>
