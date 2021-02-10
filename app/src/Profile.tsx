@@ -9,18 +9,6 @@ import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPrefe
 import Preference from "./Preference";
 import "./Profile.css";
 
-const user: Record<string, any> = {
-  firstName: "Grace",
-  gender: "Female",
-  age: 28,
-  location: "San Francisco Bay Area",
-  locationFlexibility: false,
-  matchMin: 27,
-  matchMax: 35,
-  genderPreference: "Men",
-  funFacts: "I collect pressed pennies. I lived in Airbnbs in NYC for a year. I want to hike the PCT someday."
-};
-
 const prefs: Record<string, any> = {
   basic: [
     {
@@ -51,20 +39,23 @@ const prefs: Record<string, any> = {
     {
       id: "locationFlexibility",
       label: "Open to matches in other locations",
-      type: PreferenceType.BOOLEAN,
+      type: PreferenceType.MULTIPLE_CHOICE,
+      options: ["Yes", "No"],
       description: "We'll be able to find you more matches if you answer yes!"
     },
     {
       id: "funFacts",
       label: "Fun facts",
       type: PreferenceType.FREE_TEXT,
-      description: `These will be shared with your matches, so make them good 🙂
-
-Some ideas:
-+ What are you passionate about?
-+ How might your friends describe you?
-+ What's something you want to learn?
-+ What do you take pride in?`,
+      description: `<p>These will be shared with your matches, so make them good 🙂</p>
+<p>Some ideas:</p>
+<ul style="list-style: none; padding: 0">
+<li>What are you passionate about?</li>
+<li>How might your friends describe you?</li>
+<li>What's something you want to learn?</li>
+<li>What do you take pride in?</li>
+</ul>
+`,
     },
   ],
   details: [{
@@ -75,7 +66,7 @@ Some ideas:
   },
   {
     id: "relationshipType",
-    label: "Relationship type",
+    label: "Mono or poly relationship",
     type: PreferenceType.MULTIPLE_CHOICE,
     options: ["Monogamous", "Non-monogamous", "Open to either"],
   },
@@ -125,7 +116,7 @@ Some ideas:
 function Profile() {
   const [userLoading, setUserLoading] = useState(true);
   const [selectedPref, setSelectedPref] = useState<string>();
-  const [userDetailed, setUserDetailed] = useState<Record<string, any>>();
+  const [userPrefs, setUserPrefs] = useState<Record<string, any>>();
   const history = useHistory();
 
   useEffect(() => {
@@ -133,7 +124,7 @@ function Profile() {
       .functions()
       .httpsCallable("getPreferences")()
       .then((res) => {
-        setUserDetailed(res.data);
+        setUserPrefs(res.data);
       })
   }, [userLoading]);
 
@@ -149,23 +140,21 @@ function Profile() {
     history.push("/login")
   }
 
-  if (userLoading || !userDetailed) {
+  if (userLoading || !userPrefs) {
     return <Spin size="large" />
   }
 
   if (selectedPref) {
     const prefMeta = prefs.basic.find((p: any) => p.id === selectedPref);
     const prefMeta2 = prefs.details.find((p: any) => p.id === selectedPref);
-    const detailed = selectedPref in userDetailed;
     const editProps: EditPreferenceProps = {
       metadata: prefMeta || prefMeta2,
-      value: detailed ? userDetailed[selectedPref].value : user[selectedPref],
-      dealbreakers: detailed ? userDetailed[selectedPref].dealbreakers : [],
+      ...userPrefs[selectedPref],
       back: () => setSelectedPref(undefined),
     };
     if (selectedPref === "age") {
-      editProps.matchMin = user.matchMin;
-      editProps.matchMax = user.matchMax;
+      editProps.matchMin = userPrefs.matchMin;
+      editProps.matchMax = userPrefs.matchMax;
     }
     return <div className="profile-container"><EditPreference {...editProps} /></div>
   }
@@ -173,8 +162,8 @@ function Profile() {
     <div className="profile-container">
       <div className="profile-header">
         <div>
-          <h1>{user.firstName}</h1>
-          <h3>{user.gender}, {user.age}</h3>
+          <h1>{userPrefs.firstName}</h1>
+          <h3>{userPrefs.gender}, {userPrefs.age}</h3>
         </div>
       </div>
 
@@ -183,8 +172,8 @@ function Profile() {
       {prefs.basic.map((pref: any, i: number) => (
         <div>
           { i !== 0 && <Divider />}
-          {pref.id !== "age" && <Preference id={pref.id} label={pref.label} value={user[pref.id]} onSelect={setSelectedPref} />}
-          {pref.id === "age" && <Preference id={pref.id} label={pref.label} value={`${user["matchMin"]} - ${user["matchMax"]}`} onSelect={setSelectedPref} />}
+          {pref.id !== "age" && <Preference id={pref.id} label={pref.label} value={userPrefs[pref.id].value} onSelect={setSelectedPref} />}
+          {pref.id === "age" && <Preference id={pref.id} label={pref.label} value={`${userPrefs.matchMin} - ${userPrefs.matchMax}`} onSelect={setSelectedPref} />}
         </div>
       ))}
 
@@ -192,7 +181,7 @@ function Profile() {
       {prefs.details.map((pref: any, i: number) => (
         <div className="detailed-pref">
           {i !== 0 && <Divider />}
-          <Preference id={pref.id} label={pref.label} value={userDetailed[pref.id].value} dealbreakers={userDetailed[pref.id].dealbreakers} onSelect={setSelectedPref} />
+          <Preference id={pref.id} label={pref.label} value={userPrefs[pref.id].value} dealbreakers={userPrefs[pref.id].dealbreakers} onSelect={setSelectedPref} />
         </div>
       ))
       }

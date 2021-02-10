@@ -46,10 +46,10 @@ function EditPreference(props: EditPreferenceProps) {
 
   function noneSelected() {
     if (props.metadata.type === PreferenceType.MULTIPLE_CHOICE) {
-      return props.metadata.options.includes(props.value as string);
+      return !props.metadata.options.includes(props.value as string);
     }
     const optionsSet = new Set(props.metadata.options);
-    return Array.isArray(props.value) && props.value.some(v => optionsSet.has(v));
+    return Array.isArray(props.value) && !props.value.some(v => optionsSet.has(v));
   }
 
   return (
@@ -57,11 +57,11 @@ function EditPreference(props: EditPreferenceProps) {
       <h1>{props.metadata.label}</h1>
 
       <div className="edit-preference">
-        {props.metadata.dealbreakers && <h3 className="prefs-header">About me</h3>}
-        {props.metadata.description && <p>{props.metadata.description}</p>}
+        {props.metadata.dealbreakers && <h3>About me</h3>}
+        {props.metadata.description && <div className="edit-pref-description" dangerouslySetInnerHTML={{ __html: props.metadata.description}}></div>}
 
         {props.metadata.type === PreferenceType.FREE_TEXT && <TextArea value={props.value as string} allowClear autoSize={{ minRows: 4 }} />}
-        {props.metadata.type === PreferenceType.AGE && <Slider range min={18} max={65} tooltipVisible defaultValue={[props.matchMin!, props.matchMax!]} />}
+        {props.metadata.type === PreferenceType.AGE && <Slider className="edit-pref-age" range min={18} max={65} tooltipVisible defaultValue={[props.matchMin!, props.matchMax!]} />}
 
         <div className="pref-options">
           {props.metadata.type === PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE && <p className="multiple-selection-desc">Choose as many as you like</p>}
@@ -80,12 +80,12 @@ function EditPreference(props: EditPreferenceProps) {
           }
           {props.metadata.allowOther && <div>
             <Button className="pref-option" shape="round" type={noneSelected() ? "primary" : "default"}>Other</Button>
-            <Input value={props.value as string} />
+            {noneSelected() && <Input value={props.value as string} />}
           </div>
           }
         </div>
 
-        {props.dealbreakers &&
+        {props.metadata.dealbreakers &&
           <div>
             <h3 className="prefs-header">Match dealbreakers</h3>
             <p className="multiple-selection-desc">Choose as many as you like</p>

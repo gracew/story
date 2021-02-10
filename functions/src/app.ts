@@ -29,12 +29,42 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
   if (user.empty) {
     throw new functions.https.HttpsError("not-found", "unknown user");
   }
+  const { 
+    firstName,
+    gender, 
+    age, 
+    location, 
+    locationFlexibility, 
+    matchMin, 
+    matchMax, 
+    genderPreference,
+    funFacts 
+  } = user.docs[0].data();
   const prefs = await admin
     .firestore()
     .collection("preferences")
     .doc(user.docs[0].id)
     .get();
-  return prefs.data();
+  return {
+    firstName,
+    gender,
+    age,
+    matchMin,
+    matchMax,
+    location: {
+      value: location,
+    },
+    locationFlexibility: {
+      value: locationFlexibility ? "Yes" : "No",
+    },
+    genderPreference: {
+      value: genderPreference.length === 1 ? genderPreference[0] : "Everyone",
+    },
+    funFacts: {
+      value: funFacts,
+    },
+    ...prefs.data()
+  };
 });
 
 export const savePreferences = functions.https.onCall(async (data, context) => {

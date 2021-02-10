@@ -1,5 +1,13 @@
 .edit-preference {
-  margin: 50px 0;
+  margin: 40px 0;
+}
+
+.edit-pref-age {
+  margin-top: 60px;
+}
+
+.edit-pref-description {
+  margin-bottom: 30px;
 }
 
 .multiple-selection-desc {
