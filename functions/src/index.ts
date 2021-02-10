@@ -4,19 +4,20 @@ import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
 import * as os from "os";
 import * as path from "path";
+import { getPreferences, getUserByUsername } from "./app";
 import { addUserToCall, announce1Min, announce5Min, announceUser, call1MinWarning, call5MinWarning, callOutro, callUser, conferenceStatusWebhook, handleFlakes, issueCalls, markJoined, notifyIncomingTextHelper, revealRequest, revealRequestVideo, saveReveal, screenCall, sendReminderTexts, sendVideoLink } from "./calls";
 import { createSchedulingRecords, processBulkSmsCsv, processMatchCsv, sendAvailabilityTexts, sendWaitlistTexts } from "./csv";
 import { Firestore } from "./firestore";
 import { registerUser } from "./register";
-import { cancelMatch, createMatch } from "./retool";
+import { analyzeCollection, cancelMatch, createMatch } from "./retool";
 import { bipartiteMatches, potentialMatches, remainingMatches } from "./scheduling";
 import { sendSms } from "./twilio";
-import { analyzeCollection as analyzeCollectionHelper } from "./validateMatches2";
 
 admin.initializeApp();
 
 export {
   addUserToCall,
+  analyzeCollection,
   announce1Min,
   announce5Min,
   announceUser,
@@ -32,6 +33,8 @@ export {
   potentialMatches,
   remainingMatches,
   handleFlakes,
+  getPreferences,
+  getUserByUsername,
   issueCalls,
   markJoined,
   registerUser,
@@ -44,29 +47,6 @@ export {
   sendWaitlistTexts,
   sendVideoLink,
 };
-
-export const analyzeCollection = functions.https.onRequest(
-  async (req, response) => {
-    const analysis = await analyzeCollectionHelper(req.body.collectionName);
-    response.send(analysis);
-  }
-);
-
-/**
- * Used by the frontend to look up metadata for a user based on username (e.g. when navigating to storydating.com/grace).
- */
-export const getUserByUsername = functions.https.onCall(async (request) => {
-  const user = await admin
-    .firestore()
-    .collection("users")
-    .where("username", "==", request.username)
-    .get();
-  if (user.empty) {
-    throw new functions.https.HttpsError("not-found", "unknown username");
-  }
-  const { firstName, age, bio, prompt, gender } = user.docs[0].data();
-  return { firstName, age, bio, prompt, gender };
-});
 
 /**
  * Sends an SMS for each row in a CSV. The CSV should be in the format: phone,textBody. There should not be a header
