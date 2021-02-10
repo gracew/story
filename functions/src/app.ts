@@ -29,16 +29,16 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
   if (user.empty) {
     throw new functions.https.HttpsError("not-found", "unknown user");
   }
-  const { 
+  const {
     firstName,
-    gender, 
-    age, 
-    location, 
-    locationFlexibility, 
-    matchMin, 
-    matchMax, 
+    gender,
+    age,
+    location,
+    locationFlexibility,
+    matchMin,
+    matchMax,
     genderPreference,
-    funFacts 
+    funFacts
   } = user.docs[0].data();
   const prefs = await admin
     .firestore()
@@ -80,9 +80,49 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("not-found", "unknown user");
   }
 
-  await admin
-    .firestore()
-    .collection("preferences")
-    .doc(user.docs[0].id)
-    .update(data.prefs);
+  const {
+    matchMin,
+    matchMax,
+    location,
+    locationFlexibility,
+    genderPreference,
+    ...otherPrefs
+  } = data;
+
+  const mainPrefs: Record<string, any> = {};
+  if (matchMin !== undefined) {
+    mainPrefs.matchMin = matchMin;
+  }
+  if (matchMax !== undefined) {
+    mainPrefs.matchMax = matchMax;
+  }
+  if (locationFlexibility !== undefined) {
+    mainPrefs.locationFlexibility = locationFlexibility.value === "Yes";
+  }
+  if (genderPreference !== undefined) {
+    if (genderPreference.value === "Men") {
+      mainPrefs.genderPreference = ["Men"];
+    } 
+    if (genderPreference.value === "Women") {
+      mainPrefs.genderPreference = ["Women"];
+    }
+    if (genderPreference.value === "Everyone") {
+      mainPrefs.genderPreference = ["Men", "Women"];
+    }
+  }
+  if (Object.keys(mainPrefs).length > 0) {
+    await admin
+      .firestore()
+      .collection("users")
+      .doc(user.docs[0].id)
+      .update(mainPrefs);
+  }
+
+  if (Object.keys(otherPrefs).length > 0) {
+    await admin
+      .firestore()
+      .collection("preferences")
+      .doc(user.docs[0].id)
+      .update(otherPrefs);
+  }
 });
