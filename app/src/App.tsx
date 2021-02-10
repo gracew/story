@@ -84,7 +84,10 @@ function App() {
             <Route path="/listen/:bioId">
               <Listener />
             </Route>
-            <Route path="/profile">
+            <Route path="/profile" exact>
+              <Profile />
+            </Route>
+            <Route path="/profile/:userId">
               <Profile />
             </Route>
             <Route path="/login">

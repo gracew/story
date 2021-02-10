@@ -4,7 +4,7 @@ import "firebase/analytics";
 import "firebase/remote-config";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPreference";
 import Preference from "./Preference";
 import "./Profile.css";
@@ -118,15 +118,16 @@ function Profile() {
   const [selectedPref, setSelectedPref] = useState<string>();
   const [userPrefs, setUserPrefs] = useState<Record<string, any>>();
   const history = useHistory();
+  const { userId } = useParams();
 
   useEffect(() => {
     firebase
       .functions()
-      .httpsCallable("getPreferences")()
+      .httpsCallable("getPreferences")({ userId })
       .then((res) => {
         setUserPrefs(res.data);
       })
-  }, [userLoading, selectedPref]);
+  }, [userLoading, userId]);
 
   firebase.auth().onAuthStateChanged(function (user) {
     setUserLoading(false);
@@ -182,7 +183,7 @@ function Profile() {
       {prefs.details.map((pref: any, i: number) => (
         <div className="detailed-pref">
           {i !== 0 && <Divider />}
-          <Preference id={pref.id} label={pref.label} value={userPrefs[pref.id].value} dealbreakers={userPrefs[pref.id].dealbreakers} onSelect={setSelectedPref} />
+          <Preference id={pref.id} label={pref.label} value={userPrefs[pref.id]?.value} dealbreakers={userPrefs[pref.id]?.dealbreakers} onSelect={setSelectedPref} />
         </div>
       ))
       }

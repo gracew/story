@@ -47,6 +47,12 @@ function EditPreference(props: EditPreferenceProps) {
   const [matchMax, setMatchMax] = useState(props.matchMax);
   const [saving, setSaving] = useState(false);
 
+  function emptyState() {
+    const emptyValue = value === undefined || (Array.isArray(value) && value.length === 0);
+    const emptyDealbreakers = props.metadata.dealbreakers ? (dealbreakers === undefined || dealbreakers.length === undefined || dealbreakers.length === 0) : true;
+    return emptyValue && emptyDealbreakers;
+  }
+
   function isSelected(option: string) {
     if (props.metadata.type === PreferenceType.MULTIPLE_CHOICE) {
       return option === value;
@@ -198,7 +204,7 @@ function EditPreference(props: EditPreferenceProps) {
 
       <div className="save-cancel">
         <Button onClick={props.back}>Cancel</Button>
-        <Button type="primary" onClick={onSave} disabled={saving}>
+        <Button type="primary" onClick={onSave} disabled={emptyState() || saving}>
           {!saving && <div>Save</div>}
           {saving && <div>Saving... <Spin size="small" ></Spin></div>}
         </Button>
