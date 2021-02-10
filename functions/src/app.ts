@@ -140,6 +140,6 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
       .firestore()
       .collection("preferences")
       .doc(user.docs[0].id)
-      .update(otherPrefs);
+      .set(otherPrefs, { merge: true });
   }
 });
