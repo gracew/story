@@ -5,7 +5,7 @@ import "firebase/remote-config";
 import "firebase/storage";
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
-import EditPreference, { PreferenceType } from "./EditPreference";
+import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPreference";
 import Preference from "./Preference";
 import "./Profile.css";
 
@@ -175,9 +175,8 @@ function Profile() {
     const prefMeta = prefs.basic.find((p: any) => p.id === selectedPref);
     const prefMeta2 = prefs.details.find((p: any) => p.id === selectedPref);
     const detailed = selectedPref in userDetailed;
-    const editProps = {
-      ...prefMeta,
-      ...prefMeta2,
+    const editProps: EditPreferenceProps = {
+      metadata: prefMeta || prefMeta2,
       value: detailed ? userDetailed[selectedPref].value : user[selectedPref],
       dealbreakers: detailed ? userDetailed[selectedPref].dealbreakers : [],
       back: () => setSelectedPref(undefined),

@@ -14,14 +14,18 @@ export enum PreferenceType {
   AGE,
 }
 
-export interface EditPreferenceProps {
-  // metadata
+interface PreferenceMetadata {
   label: string,
   type: PreferenceType,
   description?: string,
   options: string[],
-  dealbreakerOptions?: boolean,
   allowOther?: boolean;
+  dealbreakers?: boolean,
+  dealbreakerOptions?: string[],
+}
+export interface EditPreferenceProps {
+  // metadata
+  metadata: PreferenceMetadata;
 
   // user selection
   value?: string | string[] | boolean,
@@ -34,59 +38,59 @@ export interface EditPreferenceProps {
 
 function EditPreference(props: EditPreferenceProps) {
   function isSelected(option: string) {
-    if (props.type === PreferenceType.MULTIPLE_CHOICE) {
+    if (props.metadata.type === PreferenceType.MULTIPLE_CHOICE) {
       return option === props.value;
     }
     return Array.isArray(props.value) && props.value.includes(option);
   }
 
   function noneSelected() {
-    if (props.type === PreferenceType.MULTIPLE_CHOICE) {
-      return props.options.includes(props.value as string);
+    if (props.metadata.type === PreferenceType.MULTIPLE_CHOICE) {
+      return props.metadata.options.includes(props.value as string);
     }
-    const optionsSet = new Set(props.options);
+    const optionsSet = new Set(props.metadata.options);
     return Array.isArray(props.value) && props.value.some(v => optionsSet.has(v));
   }
 
   return (
     <div className="profile-container">
-      <h1>{props.label}</h1>
+      <h1>{props.metadata.label}</h1>
 
       <div className="edit-preference">
-        {props.dealbreakerOptions && <h3 className="prefs-header">About me</h3>}
-        {props.description && <p>{props.description}</p>}
+        {props.metadata.dealbreakers && <h3 className="prefs-header">About me</h3>}
+        {props.metadata.description && <p>{props.metadata.description}</p>}
 
-        {props.type === PreferenceType.FREE_TEXT && <TextArea value={props.value as string} allowClear autoSize={{ minRows: 4 }} />}
-        {props.type === PreferenceType.AGE && <Slider range min={18} max={65} tooltipVisible defaultValue={[props.matchMin!, props.matchMax!]} />}
+        {props.metadata.type === PreferenceType.FREE_TEXT && <TextArea value={props.value as string} allowClear autoSize={{ minRows: 4 }} />}
+        {props.metadata.type === PreferenceType.AGE && <Slider range min={18} max={65} tooltipVisible defaultValue={[props.matchMin!, props.matchMax!]} />}
 
         <div className="pref-options">
-          {props.type === PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE && <p className="multiple-selection-desc">Choose as many as you like</p>}
-          {(props.type === PreferenceType.MULTIPLE_CHOICE || props.type === PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE) &&
+          {props.metadata.type === PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE && <p className="multiple-selection-desc">Choose as many as you like</p>}
+          {(props.metadata.type === PreferenceType.MULTIPLE_CHOICE || props.metadata.type === PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE) &&
             <div>
-              {props.options.map(o => (
+              {props.metadata.options.map(o => (
                 <Button className="pref-option" shape="round" type={isSelected(o) ? "primary" : "default"}>{o}</Button>
               ))}
             </div>
           }
-          {props.type === PreferenceType.BOOLEAN &&
+          {props.metadata.type === PreferenceType.BOOLEAN &&
             <div>
               <Button className="pref-option" shape="round" type={props.value ? "primary" : "default"}>Yes</Button>
               <Button className="pref-option" shape="round" type={!props.value ? "primary" : "default"}>No</Button>
             </div>
           }
-          {props.allowOther && <div>
+          {props.metadata.allowOther && <div>
             <Button className="pref-option" shape="round" type={noneSelected() ? "primary" : "default"}>Other</Button>
             <Input value={props.value as string} />
           </div>
           }
         </div>
 
-        {props.dealbreakerOptions &&
+        {props.dealbreakers &&
           <div>
             <h3 className="prefs-header">Match dealbreakers</h3>
             <p className="multiple-selection-desc">Choose as many as you like</p>
             <div className="pref-options">
-              {props.options.map(o => (
+              {(props.metadata.dealbreakerOptions || props.metadata.options).map(o => (
                 <Button className="pref-option" shape="round" type={props.dealbreakers?.includes(o) ? "primary" : "default"}>{o}</Button>
               ))}
               <Button className="pref-option" shape="round" type={props.dealbreakers?.includes("None of these are dealbreakers") || props.dealbreakers?.length === 0 ? "primary" : "default"}>None of these are dealbreakers</Button>
