@@ -21,13 +21,23 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "authentication required");
   }
-  const user = await admin
-    .firestore()
-    .collection("users")
-    .where("phone", "==", context.auth.token.phone_number)
-    .get();
-  if (user.empty) {
-    throw new functions.https.HttpsError("not-found", "unknown user");
+  let user;
+  if (data.userId && context.auth.uid === "eE0qZ35KnRXPNCzHzaiOIHu650t1") {
+    user = await admin
+      .firestore()
+      .collection("users")
+      .doc(data.userId)
+      .get();
+  } else {
+    const users = await admin
+      .firestore()
+      .collection("users")
+      .where("phone", "==", context.auth.token.phone_number)
+      .get();
+    if (users.empty) {
+      throw new functions.https.HttpsError("not-found", "unknown user");
+    }
+    user = users.docs[0];
   }
   const {
     firstName,
@@ -39,11 +49,11 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
     matchMax,
     genderPreference,
     funFacts
-  } = user.docs[0].data();
+  } = user.data() as any;
   const prefs = await admin
     .firestore()
     .collection("preferences")
-    .doc(user.docs[0].id)
+    .doc(user.id)
     .get();
   return {
     firstName,
@@ -109,7 +119,7 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
   if (genderPreference !== undefined) {
     if (genderPreference.value === "Men") {
       mainPrefs.genderPreference = ["Men"];
-    } 
+    }
     if (genderPreference.value === "Women") {
       mainPrefs.genderPreference = ["Women"];
     }
