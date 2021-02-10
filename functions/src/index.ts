@@ -4,7 +4,7 @@ import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
 import * as os from "os";
 import * as path from "path";
-import { getPreferences, getUserByUsername } from "./app";
+import { getPreferences, getUserByUsername, savePreferences } from "./app";
 import { addUserToCall, announce1Min, announce5Min, announceUser, call1MinWarning, call5MinWarning, callOutro, callUser, conferenceStatusWebhook, handleFlakes, issueCalls, markJoined, notifyIncomingTextHelper, revealRequest, revealRequestVideo, saveReveal, screenCall, sendReminderTexts, sendVideoLink } from "./calls";
 import { createSchedulingRecords, processBulkSmsCsv, processMatchCsv, sendAvailabilityTexts, sendWaitlistTexts } from "./csv";
 import { Firestore } from "./firestore";
@@ -40,6 +40,7 @@ export {
   registerUser,
   revealRequest,
   revealRequestVideo,
+  savePreferences,
   saveReveal,
   screenCall,
   sendAvailabilityTexts,
