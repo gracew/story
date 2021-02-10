@@ -8,7 +8,6 @@ import "./EditPreference.css";
 
 export enum PreferenceType {
   FREE_TEXT,
-  BOOLEAN,
   MULTIPLE_CHOICE,
   MULTIPLE_CHOICE_ALLOW_MULTIPLE,
   AGE,
@@ -24,12 +23,10 @@ interface PreferenceMetadata {
   dealbreakerOptions?: string[],
 }
 export interface EditPreferenceProps {
-  // metadata
   metadata: PreferenceMetadata;
 
   // user selection
-  value?: string | string[] | boolean,
-  otherValue?: string;
+  value?: string | string[],
   dealbreakers?: string[],
   matchMin?: number,
   matchMax?: number,
@@ -70,12 +67,6 @@ function EditPreference(props: EditPreferenceProps) {
               {props.metadata.options.map(o => (
                 <Button className="pref-option" shape="round" type={isSelected(o) ? "primary" : "default"}>{o}</Button>
               ))}
-            </div>
-          }
-          {props.metadata.type === PreferenceType.BOOLEAN &&
-            <div>
-              <Button className="pref-option" shape="round" type={props.value ? "primary" : "default"}>Yes</Button>
-              <Button className="pref-option" shape="round" type={!props.value ? "primary" : "default"}>No</Button>
             </div>
           }
           {props.metadata.allowOther && <div>
