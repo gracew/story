@@ -21,6 +21,7 @@ export function user(firstName: string, funFacts?: string, location?: string, lo
         phone: uuid.v4(),
         funFacts,
         location: location || "San Francisco Bay Area",
+        timezone: "PT",
         locationFlexibility,
     }
 }

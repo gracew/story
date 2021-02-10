@@ -2,7 +2,16 @@ import * as admin from "firebase-admin";
 import * as moment from "moment-timezone";
 import { IMatch, IUser } from "./firestore";
 
-export async function availability(user: IUser, tz: string) {
+export function welcome(user: IUser) {
+  return `Hi ${user.firstName}, thanks for joining Story Dating! Think of us as a personalized matchmaker that finds great matches for you and handles all of the scheduling. You're currently on the waitlist, but we'll notify you as soon as we have some matches we think you'll like. In the meantime, feel free to text us with any questions, and refer your friends with this link to get off the waitlist sooner: https://storydating.com/join#r=${user.id}`;
+}
+
+export async function waitlist(user: IUser) {
+  await admin.firestore().collection("users").doc(user.id).update("status", "contacted");
+  return `Hi ${user.firstName}, it's Story Dating. Good news: you're off our waitlist! We've got some potential matches for you, so look out for a message from us tomorrow to schedule this week's date. In the meantime, you can fill out this form to tell us about your preferences and help us find the perfect match for you: https://storydating.com/prefs#u=${user.id}`;
+}
+
+export async function availability(user: IUser) {
     const week = moment().startOf("week").format("YYYY-MM-DD");
     const smsCopy = await admin.firestore().collection("smsCopy").doc(week).get();
     let availabilityTexts;
@@ -12,7 +21,7 @@ export async function availability(user: IUser, tz: string) {
     } else {
         availabilityTexts = smsCopy.get("availability");
     }
-    return `${availabilityTexts.map((text: string) => text.replace("FIRST_NAME", user.firstName).replace("TIMEZONE", tz).replace("USER_ID", user.id)).join("\n\n")}`;
+    return `${availabilityTexts.map((text: string) => text.replace("FIRST_NAME", user.firstName).replace("TIMEZONE", user.timezone).replace("USER_ID", user.id)).join("\n\n")}`;
 }
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {

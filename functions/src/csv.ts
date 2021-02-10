@@ -1,16 +1,19 @@
 import * as admin from "firebase-admin";
+import * as functions from "firebase-functions";
 import * as fs from 'fs';
 import * as moment from "moment-timezone";
 import * as neatCsv from 'neat-csv';
-import { Firestore, IMatch } from "./firestore";
-import { availability, matchNotification } from "./smsCopy";
-import { TWILIO_NUMBER } from './twilio';
+import * as os from "os";
+import * as path from "path";
+import { Firestore, IMatch, IUser } from "./firestore";
+import { availability as availabilityCopy, matchNotification, waitlist } from "./smsCopy";
+import { sendSms, TWILIO_NUMBER } from './twilio';
 
-export async function processBulkSmsCsv(tempFilePath: string, sendSms: (opts: any) => Promise<any>) {
+export async function processBulkSmsCsv(tempFilePath: string, sendSmsFn: (opts: any) => Promise<any>) {
     const contents = fs.readFileSync(tempFilePath).toString();
     const rows = await neatCsv(contents, { headers: ["phone", "body"] });
     return Promise.all(rows.map(async data => {
-        return sendSms({
+        return sendSmsFn({
             body: data.body,
             from: TWILIO_NUMBER,
             to: data.phone,
@@ -18,35 +21,73 @@ export async function processBulkSmsCsv(tempFilePath: string, sendSms: (opts: an
     }))
 }
 
-export async function processAvailabilityCsv(tempFilePath: string, firestore: Firestore, sendSms: (opts: any) => Promise<any>) {
+/**
+ * Creates scheduling records for each row in a CSV. The CSV should have a single column, userId. There should not be a 
+ * header line.
+ */
+export const createSchedulingRecords = functions.storage
+  .object()
+  .onFinalize(async (object) => {
+    if (!(object.name && object.name.startsWith("availability"))) {
+      return;
+    }
+    const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
+    await admin
+      .storage()
+      .bucket(object.bucket)
+      .file(object.name)
+      .download({ destination: tempFilePath });
     const contents = fs.readFileSync(tempFilePath).toString();
     const rows = await neatCsv(contents, { headers: ["userId", "timezone"] });
-    const userIds: string[] = [];
-    await Promise.all(rows.map(async data => {
-        userIds.push(data.userId);
-        const user = await firestore.getUser(data.userId)
-        if (!user) {
-            console.error("cannot find user with id " + data.userId);
-            return;
-        }
+    const userIds = rows.map(data => data.userId);
+    const week = moment().startOf("week").format("YYYY-MM-DD");
+    await new Firestore().createSchedulingRecords(week, userIds);
+  });
+
+export const sendWaitlistTexts = functions.pubsub
+  .schedule("every saturday 13:00")
+  .onRun(async (context) => {
+    const week = moment().startOf("week").add(1, "weeks").format("YYYY-MM-DD");
+    const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
+    const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
+    const users = await admin.firestore().getAll(...userRefs);
+    const waitlistUsers = users.map(doc => doc.data() as IUser).filter(user => user.status === "waitlist");
+
+    await Promise.all(waitlistUsers.map(async user => {
         return sendSms({
-            body: await availability(user, data.timezone),
+            body: await waitlist(user),
             from: TWILIO_NUMBER,
             to: user.phone,
         });
     }));
-    const week = moment().startOf("week").format("YYYY-MM-DD");
-    await firestore.createSchedulingRecords(week, userIds);
-}
+  });
 
-export async function processMatchCsv(tempFilePath: string, firestore: Firestore, sendSms: (opts: any) => Promise<any>) {
+export const sendAvailabilityTexts = functions.pubsub
+  .schedule("every sunday 13:00")
+  .onRun(async (context) => {
+    const week = moment().startOf("week").format("YYYY-MM-DD");
+    const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
+    const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
+    const users = await admin.firestore().getAll(...userRefs);
+
+    await Promise.all(users.map(async doc => {
+        const user = doc.data() as IUser;
+        return sendSms({
+            body: await availabilityCopy(user),
+            from: TWILIO_NUMBER,
+            to: user.phone,
+        });
+    }));
+  });
+
+export async function processMatchCsv(tempFilePath: string, firestore: Firestore, sendSmsFn: (opts: any) => Promise<any>) {
     const contents = fs.readFileSync(tempFilePath).toString();
     const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "date", "time", "timezone"] })
     const matches = await Promise.all(rows.map(data => createMatchFirestore(data, firestore)));
     return sendMatchNotificationTexts(
         matches.filter(m => m !== undefined) as IMatch[],
         firestore,
-        sendSms);
+        sendSmsFn);
 }
 
 export async function createMatchFirestore(data: any, firestore: Firestore) {
@@ -97,7 +138,7 @@ function processTimeZone(tz: string) {
     return undefined;
 }
 
-async function sendMatchNotificationTexts(matches: IMatch[], firestore: Firestore, sendSms: (opts: any) => Promise<any>) {
+async function sendMatchNotificationTexts(matches: IMatch[], firestore: Firestore, sendSmsFn: (opts: any) => Promise<any>) {
     // create map from userId to matches
     const userToMatches: Record<string, IMatch[]> = {};
     matches.forEach(m => {
@@ -119,7 +160,7 @@ async function sendMatchNotificationTexts(matches: IMatch[], firestore: Firestor
             const texts = matchNotification(userId, userToMatches[userId], usersById)
             // send these linearly
             for (const t of texts) {
-                await sendSms({
+                await sendSmsFn({
                     body: t,
                     from: TWILIO_NUMBER,
                     to: usersById[userId].phone,
