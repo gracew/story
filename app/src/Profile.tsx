@@ -3,7 +3,7 @@ import firebase from "firebase";
 import "firebase/analytics";
 import "firebase/remote-config";
 import "firebase/storage";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPreference";
 import Preference from "./Preference";
@@ -21,34 +21,6 @@ const user: Record<string, any> = {
   funFacts: "I collect pressed pennies. I lived in Airbnbs in NYC for a year. I want to hike the PCT someday."
 };
 
-const userDetailed: Record<string, any> = {
-  connectionType: {
-    value: "Open to either"
-  },
-  relationshipType: {
-    value: "Open to either"
-  },
-  politics: {
-    value: "Liberal",
-    dealbreakers: [],
-  },
-  religion: {
-    value: "Not religious",
-    dealbreakers: ["Very religious"],
-  },
-  drugsAlcohol: {
-    value: ["Occasional alcohol drinker"],
-    dealbreakers: ["Frequent alcohol drinker"],
-  },
-  smoking: {
-    value: ["No"],
-    dealbreakers: ["Yes", "Yes, e-cigarettes"]
-  },
-  kids: {
-    value: ["Want to have kids in the future"],
-    dealbreakers: ["Currently have kids", "Don't want to have kids in the future"]
-  }
-}
 const prefs: Record<string, any> = {
   basic: [
     {
@@ -153,7 +125,17 @@ Some ideas:
 function Profile() {
   const [userLoading, setUserLoading] = useState(true);
   const [selectedPref, setSelectedPref] = useState<string>();
+  const [userDetailed, setUserDetailed] = useState<Record<string, any>>();
   const history = useHistory();
+
+  useEffect(() => {
+    firebase
+      .functions()
+      .httpsCallable("getPreferences")()
+      .then((res) => {
+        setUserDetailed(res.data);
+      })
+  }, [userLoading]);
 
   firebase.auth().onAuthStateChanged(function (user) {
     setUserLoading(false);
@@ -167,7 +149,7 @@ function Profile() {
     history.push("/login")
   }
 
-  if (userLoading) {
+  if (userLoading || !userDetailed) {
     return <Spin size="large" />
   }
 
