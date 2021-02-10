@@ -5,7 +5,7 @@ import * as moment from "moment-timezone";
 import * as os from "os";
 import * as path from "path";
 import { addUserToCall, announce1Min, announce5Min, announceUser, call1MinWarning, call5MinWarning, callOutro, callUser, conferenceStatusWebhook, handleFlakes, issueCalls, markJoined, notifyIncomingTextHelper, revealRequest, revealRequestVideo, saveReveal, screenCall, sendReminderTexts, sendVideoLink } from "./calls";
-import { createSchedulingRecords, processBulkSmsCsv, processMatchCsv } from "./csv";
+import { createSchedulingRecords, processBulkSmsCsv, processMatchCsv, sendAvailabilityTexts, sendWaitlistTexts } from "./csv";
 import { Firestore } from "./firestore";
 import { registerUser } from "./register";
 import { cancelMatch, createMatch } from "./retool";
@@ -39,7 +39,9 @@ export {
   revealRequestVideo,
   saveReveal,
   screenCall,
+  sendAvailabilityTexts,
   sendReminderTexts,
+  sendWaitlistTexts,
   sendVideoLink,
 };
 
