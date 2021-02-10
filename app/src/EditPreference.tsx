@@ -1,4 +1,4 @@
-import { Button, Slider } from "antd";
+import { Button, Slider, Spin } from "antd";
 import TextArea from "antd/lib/input/TextArea";
 import firebase from "firebase";
 import "firebase/analytics";
@@ -34,14 +34,18 @@ export interface EditPreferenceProps {
   matchMin?: number,
   matchMax?: number,
 
+  update: (u: Record<string, any>) => void;
   back: () => void;
 }
+
+const NO_DEALBREAKERS = "None of these are dealbreakers";
 
 function EditPreference(props: EditPreferenceProps) {
   const [value, setValue] = useState(props.value);
   const [dealbreakers, setDealbreakers] = useState(props.dealbreakers);
   const [matchMin, setMatchMin] = useState(props.matchMin);
   const [matchMax, setMatchMax] = useState(props.matchMax);
+  const [saving, setSaving] = useState(false);
 
   function isSelected(option: string) {
     if (props.metadata.type === PreferenceType.MULTIPLE_CHOICE) {
@@ -82,32 +86,44 @@ function EditPreference(props: EditPreferenceProps) {
 
   function onDealbreakerSelect(option: string) {
     let dbs = dealbreakers || [];
+    if (dbs.includes(NO_DEALBREAKERS)) {
+      // if any option is selected, remove NO_DEALBREAKERS
+      const i = dbs.indexOf(NO_DEALBREAKERS);
+      dbs = dbs.slice(0, i).concat(dbs.slice(i + 1));
+    }
+
     if (dbs.includes(option)) {
       const i = dbs.indexOf(option);
       setDealbreakers(dbs.slice(0, i).concat(dbs.slice(i + 1)));
+    } else if (option === NO_DEALBREAKERS) {
+      setDealbreakers([option]);
     } else {
       setDealbreakers([...dbs, option])
     }
   }
 
   function onSave() {
+    setSaving(true);
     const update: Record<string, any> = {};
-    if (value && value !== props.value) {
-      update[`${props.metadata.id}.value`] = value;
-    }
-    if (dealbreakers && dealbreakers !== props.dealbreakers) {
-      update[`${props.metadata.id}.dealbreakers`] = dealbreakers;
+    if ((value && value !== props.value) || (dealbreakers && dealbreakers !== props.dealbreakers)) {
+      if (props.metadata.dealbreakers) {
+        update[props.metadata.id] = { value, dealbreakers };
+      } else {
+        update[props.metadata.id] = { value };
+      }
     }
     if (matchMin !== undefined && matchMin !== props.matchMin) {
-      update["matchMin"] = matchMin;
+      update.matchMin = matchMin;
     }
     if (matchMax !== undefined && matchMax !== props.matchMax) {
-      update["matchMax"] = matchMax;
+      update.matchMax = matchMax;
     }
     firebase
       .functions()
       .httpsCallable("savePreferences")(update)
       .then((res) => {
+        setSaving(false);
+        props.update(update)
         props.back();
       })
   }
@@ -128,7 +144,7 @@ function EditPreference(props: EditPreferenceProps) {
           max={65}
           tooltipVisible
           defaultValue={[matchMin!, matchMax!]}
-          onChange={([min, max]) => { setMatchMin(min); setMatchMax(max);}}
+          onChange={([min, max]) => { setMatchMin(min); setMatchMax(max); }}
         />}
 
         <div className="pref-options">
@@ -172,9 +188,9 @@ function EditPreference(props: EditPreferenceProps) {
               <Button
                 className="pref-option"
                 shape="round"
-                type={dealbreakers?.includes("None of these are dealbreakers") ? "primary" : "default"}
-                onClick={() => onDealbreakerSelect("None of these are dealbreakers")}
-              >None of these are dealbreakers</Button>
+                type={dealbreakers?.includes(NO_DEALBREAKERS) ? "primary" : "default"}
+                onClick={() => onDealbreakerSelect(NO_DEALBREAKERS)}
+              >{NO_DEALBREAKERS}</Button>
             </div>
           </div>
         }
@@ -182,7 +198,10 @@ function EditPreference(props: EditPreferenceProps) {
 
       <div className="save-cancel">
         <Button onClick={props.back}>Cancel</Button>
-        <Button type="primary" onClick={onSave}>Save</Button>
+        <Button type="primary" onClick={onSave} disabled={saving}>
+          {!saving && <div>Save</div>}
+          {saving && <div>Saving... <Spin size="small" ></Spin></div>}
+        </Button>
       </div>
 
     </div>

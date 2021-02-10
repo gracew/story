@@ -126,7 +126,7 @@ function Profile() {
       .then((res) => {
         setUserPrefs(res.data);
       })
-  }, [userLoading]);
+  }, [userLoading, selectedPref]);
 
   firebase.auth().onAuthStateChanged(function (user) {
     setUserLoading(false);
@@ -150,6 +150,7 @@ function Profile() {
     const editProps: EditPreferenceProps = {
       metadata: prefMeta || prefMeta2,
       ...userPrefs[selectedPref],
+      update: (u: Record<string, any>) => setUserPrefs({ ...userPrefs, ...u}),
       back: () => setSelectedPref(undefined),
     };
     if (selectedPref === "age") {

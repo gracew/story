@@ -100,6 +100,9 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
   if (funFacts !== undefined) {
     mainPrefs.funFacts = funFacts.value;
   }
+  if (location !== undefined) {
+    mainPrefs.location = location.value;
+  }
   if (locationFlexibility !== undefined) {
     mainPrefs.locationFlexibility = locationFlexibility.value === "Yes";
   }
