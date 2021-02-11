@@ -5,6 +5,7 @@ import "firebase/analytics";
 import "firebase/remote-config";
 import "firebase/storage";
 import React, { useState } from "react";
+import { useParams } from "react-router-dom";
 import "./EditPreference.css";
 
 export enum PreferenceType {
@@ -46,10 +47,11 @@ function EditPreference(props: EditPreferenceProps) {
   const [matchMin, setMatchMin] = useState(props.matchMin);
   const [matchMax, setMatchMax] = useState(props.matchMax);
   const [saving, setSaving] = useState(false);
+  const { userId } = useParams();
 
   function emptyState() {
     const emptyValue = value === undefined || (Array.isArray(value) && value.length === 0);
-    const emptyDealbreakers = props.metadata.dealbreakers ? (dealbreakers === undefined || dealbreakers.length === undefined || dealbreakers.length === 0) : true;
+    const emptyDealbreakers = props.metadata.dealbreakers ? (!dealbreakers || dealbreakers.length === undefined || dealbreakers.length === 0) : true;
     return emptyValue && emptyDealbreakers;
   }
 
@@ -86,6 +88,8 @@ function EditPreference(props: EditPreferenceProps) {
         } else {
           setValue([...value, option])
         }
+      } else if (value === undefined) {
+        setValue([option])
       }
     }
   }
@@ -123,6 +127,9 @@ function EditPreference(props: EditPreferenceProps) {
     }
     if (matchMax !== undefined && matchMax !== props.matchMax) {
       update.matchMax = matchMax;
+    }
+    if (userId) {
+      update.userId = userId;
     }
     firebase
       .functions()

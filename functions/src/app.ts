@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
+import { CallableContext } from "firebase-functions/lib/providers/https";
 
 /**
  * Used by the frontend to look up metadata for a user based on username (e.g. when navigating to storydating.com/grace).
@@ -17,28 +18,31 @@ export const getUserByUsername = functions.https.onCall(async (data) => {
   return { firstName, age, bio, prompt, gender };
 });
 
-export const getPreferences = functions.https.onCall(async (data, context) => {
+async function getUser(data: any, context: CallableContext) {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "authentication required");
   }
-  let user;
-  if (data.userId && context.auth.uid === "eE0qZ35KnRXPNCzHzaiOIHu650t1") {
-    user = await admin
+  if (data.userId && context.auth.uid === "EfR3VzvvQHVAE1DbtQbCE546Q1F3") {
+    return admin
       .firestore()
       .collection("users")
       .doc(data.userId)
       .get();
-  } else {
-    const users = await admin
-      .firestore()
-      .collection("users")
-      .where("phone", "==", context.auth.token.phone_number)
-      .get();
-    if (users.empty) {
-      throw new functions.https.HttpsError("not-found", "unknown user");
-    }
-    user = users.docs[0];
   }
+
+  const users = await admin
+    .firestore()
+    .collection("users")
+    .where("phone", "==", context.auth.token.phone_number)
+    .get();
+  if (users.empty) {
+    throw new functions.https.HttpsError("not-found", "unknown user");
+  }
+  return users.docs[0];
+}
+
+export const getPreferences = functions.https.onCall(async (data, context) => {
+  const user = await getUser(data, context);
   const {
     firstName,
     gender,
@@ -78,17 +82,7 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
 });
 
 export const savePreferences = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "authentication required");
-  }
-  const user = await admin
-    .firestore()
-    .collection("users")
-    .where("phone", "==", context.auth.token.phone_number)
-    .get();
-  if (user.empty) {
-    throw new functions.https.HttpsError("not-found", "unknown user");
-  }
+  const user = await getUser(data, context);
 
   const {
     matchMin,
@@ -97,6 +91,7 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
     locationFlexibility,
     genderPreference,
     funFacts,
+    userId,
     ...otherPrefs
   } = data;
 
@@ -106,9 +101,6 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
   }
   if (matchMax !== undefined) {
     mainPrefs.matchMax = matchMax;
-  }
-  if (funFacts !== undefined) {
-    mainPrefs.funFacts = funFacts.value;
   }
   if (location !== undefined) {
     mainPrefs.location = location.value;
@@ -127,19 +119,22 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
       mainPrefs.genderPreference = ["Men", "Women"];
     }
   }
+  if (funFacts !== undefined) {
+    mainPrefs.funFacts = funFacts.value;
+  }
+
   if (Object.keys(mainPrefs).length > 0) {
     await admin
       .firestore()
       .collection("users")
-      .doc(user.docs[0].id)
+      .doc(user.id)
       .update(mainPrefs);
   }
-
   if (Object.keys(otherPrefs).length > 0) {
     await admin
       .firestore()
       .collection("preferences")
-      .doc(user.docs[0].id)
+      .doc(user.id)
       .set(otherPrefs, { merge: true });
   }
 });
