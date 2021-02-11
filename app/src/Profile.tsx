@@ -83,7 +83,7 @@ const prefs: Record<string, any> = {
     id: "religion",
     label: "Religion",
     type: PreferenceType.MULTIPLE_CHOICE,
-    options: ["Very religious", "somewhat religious", "Not religious"],
+    options: ["Very religious", "Somewhat religious", "Not religious"],
     dealbreakers: true,
   },
   {
