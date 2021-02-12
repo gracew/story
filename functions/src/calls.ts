@@ -256,13 +256,6 @@ export const markJoined = functions.https.onCall(async (request) => {
   return { redirect: match.get("videoLink") };
 });
 
-function connected(match: IMatch) {
-  if (match.mode === "video") {
-    return match.joined && Object.keys(match.joined).length === 2;
-  }
-  return match.twilioSid !== undefined;
-}
-
 export const revealRequest = functions.pubsub
   .schedule("20,50 * * * *")
   .onRun(async (context) => {
@@ -278,7 +271,7 @@ export const revealRequest = functions.pubsub
           .where("created_at", "==", createdAt)
           .where("revealRequested", "==", false)
       );
-      const connectedMatches = matches.docs.filter((doc) => connected(doc.data() as IMatch));
+      const connectedMatches = matches.docs.filter((doc) => doc.get("twilioSid") !== undefined);
       await Promise.all(
         connectedMatches.map(async (doc) => {
           await playCallOutro(doc.data() as IMatch, doc.get("twilioSid"));
@@ -303,7 +296,7 @@ export const revealRequestVideo = functions.pubsub
           .where("revealRequested", "==", false)
       );
       const videoMatches = matches.docs.filter(
-        (doc) => doc.get("canceled") === false && doc.get("mode") === "video"
+        (doc) => doc.get("canceled") === false && doc.get("mode") === "video" && Object.keys(doc.get("joined")).length === 2
       );
       await Promise.all(
         videoMatches.map(async (doc) => {
