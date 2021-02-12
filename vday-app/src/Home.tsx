@@ -1,9 +1,11 @@
+/* eslint-disable jsx-a11y/anchor-is-valid */
+
 import { PauseCircleFilled, PlayCircleFilled, PlusCircleFilled } from "@ant-design/icons";
 import { Button } from "antd";
 import * as firebase from "firebase/app";
 import "firebase/storage";
 import React, { useEffect, useRef, useState } from "react";
-import { useHistory, useLocation } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import seedrandom from "seedrandom";
 import Bars from "./Bars";
 import "./Home.css";
@@ -50,7 +52,6 @@ function VDayHome() {
   const [bioUrl, setBioUrl] = useState();
   const [playing, setPlaying] = useState(false);
   const [selected, setSelected] = useState<string>();
-  const query = new URLSearchParams(useLocation().search);
   const history = useHistory();
   const audioElement = useRef(null);
 

@@ -57,9 +57,6 @@ function iOS() {
 
 function Recorder() {
   const history = useHistory();
-  const [phoneRegistered, setPhoneRegistered] = useState();
-  const [referrer, setReferrer] = useState<any>();
-  const [loadingReferrer, setLoadingReferrer] = useState(false);
   const [recording, setRecording] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [bio, setBio] = useState<ReactMicStopEvent>();
@@ -95,7 +92,7 @@ function Recorder() {
       <div>
 
         <h2>Tell us about your experience with dating apps.</h2>
-        <p>We want to know the good, the bad, and the ugly. Or the meh 🤷‍♀️</p>
+        <p>We want to know the good, the bad, and the ugly. Or the meh <span role="img" aria-label="shrug-emoji">🤷‍♀️</span></p>
         {recording ? (
           <TimedRecordButton
             stopRecording={() => setRecording(false)}
