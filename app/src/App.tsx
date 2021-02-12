@@ -9,7 +9,6 @@ import Login from "./Login";
 import Privacy from "./Privacy";
 import Profile from "./Profile";
 import Terms from "./Terms";
-import VDay from "./vday/VDay";
 import VideoRedirect from "./VideoRedirect";
 import VoiceBio from "./VoiceBio";
 
@@ -55,10 +54,6 @@ function App() {
   return (
     <Router>
       <Switch>
-        <Route path="/vday">
-          <VDay />
-        </Route>
-
         <Route>
           <header>
             <a href="/">Story Dating</a>
