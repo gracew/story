@@ -7,8 +7,8 @@ import "firebase/functions";
 import "firebase/storage";
 import React, { useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
+import * as uuid from "uuid";
 import "./Recorder.css";
-const uuid = require("uuid");
 
 function TimedRecordButton({
   stopRecording,
@@ -129,7 +129,8 @@ function Recorder() {
         )}
 
         {bio && (
-          <div>
+          <div className="submit-container">
+            <p>Almost there!</p>
             <Input className="se-submit-bio" placeholder="First name" />
             <Input className="se-submit-bio" placeholder="Email" />
             <Checkbox className="se-submit-bio">Sign up for email updates from Story Dating</Checkbox>

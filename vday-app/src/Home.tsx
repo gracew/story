@@ -6,7 +6,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import seedrandom from "seedrandom";
 import Bars from "./Bars";
-import "./VDayHome.css";
+import "./Home.css";
 
 // first 8 from https://html-color.codes/pink
 const colors: Record<string, string> = {
@@ -78,7 +78,7 @@ function VDayHome() {
   }
 
   function handleAddYoursClick() {
-    history.push("/vday/record")
+    history.push("/record")
   }
 
   return (
@@ -118,7 +118,7 @@ function VDayHome() {
 
       <div className="cta-container">
         <p>Tired of swiping and texting, only to find that when you do talk to someone, their personality doesn't match their profile at all?</p>
-        <p className="better-way">There's a better way.</p>
+        <h2 className="better-way">There's a better way.</h2>
         <p>With Story Dating, we send you a match each week. You have a blind phone date first to
         see if your personalities click, then you can connect again over video. We handle all of the scheduling which
           our users love, and we see who you get along with to find you even better matches.</p>

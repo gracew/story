@@ -1,5 +1,4 @@
 .vday-prompt {
-  color: white;
   margin-top: 40px;
 }
 
@@ -78,7 +77,7 @@ blockquote {
   font-family: Georgia, serif;
   font-size:  30px;
   position: relative;
-  color: white;
+  color: #eee;
 }
 
 blockquote:before {
@@ -86,7 +85,7 @@ blockquote:before {
   font-size: 100px;
   position: relative;
   top: 10px;
-  color:#ccc;
+  color:#bbb;
 }
 
 blockquote:after {
@@ -94,21 +93,24 @@ blockquote:after {
   font-size: 100px;
   position: relative;
   bottom: -90px;
-  color: #ccc;
+  color: #bbb;
 }
 
 .cta-container {
   width: 600px;
-  color: white;
   font-size: 12pt;
   margin: 50px auto;
 }
 
-.cta-container button {
-  margin: 20px 0;
+.better-way {
+  font-variant: small-caps;
 }
 
-.better-way {
-  font-size: 22pt;
+.cta-container button {
+  height: 65px;
+  width: 300px;
+  margin: 20px 0;
+  font-size: 16pt;
   font-variant: small-caps;
+  font-weight: 500;
 }

@@ -4,8 +4,8 @@ import "firebase/remote-config";
 import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.less";
+import VDayHome from "./Home";
 import Recorder from "./Recorder";
-import VDayHome from "./VDayHome";
 
 /*const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://storydating.com")
   ? {
@@ -51,17 +51,16 @@ function App() {
       <header>
         Brought to you by <a href="/">Story Dating</a>
       </header>
-      <Switch>
-        <div className="App">
+      <div className="App">
+        <Switch>
           <Route path="/record">
             <Recorder />
           </Route>
           <Route>
             <VDayHome />
           </Route>
-        </div>
-
-      </Switch>
+        </Switch>
+      </div>
     </Router>
   );
 }
