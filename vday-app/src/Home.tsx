@@ -78,7 +78,7 @@ function VDayHome() {
   }
 
   function handleAddYoursClick() {
-    history.push("/record")
+    history.push("/vday/record")
   }
 
   return (

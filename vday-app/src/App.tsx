@@ -53,10 +53,10 @@ function App() {
       </header>
       <div className="App">
         <Switch>
-          <Route path="/record">
+          <Route path="/vday/record">
             <Recorder />
           </Route>
-          <Route>
+          <Route path="/vday">
             <VDayHome />
           </Route>
         </Switch>
