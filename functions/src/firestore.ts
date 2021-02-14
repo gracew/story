@@ -84,8 +84,12 @@ export class Firestore {
 
     public async createSchedulingRecords(week: string, userIds: string[]) {
         const batch = admin.firestore().batch();
+        const data = {
+            availability: false,
+            reminder: false,
+        }
         userIds.forEach(userId => {
-            batch.create(admin.firestore().collection("scheduling").doc(week).collection("users").doc(userId), {});
+            batch.create(admin.firestore().collection("scheduling").doc(week).collection("users").doc(userId), data);
         })
         return batch.commit();
     }
