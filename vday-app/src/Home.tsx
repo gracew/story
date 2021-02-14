@@ -22,9 +22,9 @@ const colors: Record<string, string> = {
   "#fddde6": "dark",
 }
 
-function randomColor(i: number) {
+function randomColor(id: string) {
   const c = Object.keys(colors);
-  const color = c[Math.floor(seedrandom(`${i}`)() * c.length)];
+  const color = c[Math.floor(seedrandom(id)() * c.length)];
   const textColor = colors[color] === "dark" ? "#333" : "white";
   return { backgroundColor: color, color: textColor };
 };
@@ -36,7 +36,7 @@ function VDayHome() {
   const [playing, setPlaying] = useState(false);
   const [selected, setSelected] = useState<string>();
   const history = useHistory();
-  const audioElement = useRef(null);
+  const audioElements = useRef<Record<string, any>>({});
 
   useEffect(() => {
     firebase.firestore().collection("vday")
@@ -46,7 +46,7 @@ function VDayHome() {
         setLoading(false);
         setClips(res.docs);
       });
-  });
+  }, []);
 
   useEffect(() => {
     clips.map(clip =>
@@ -61,10 +61,10 @@ function VDayHome() {
     setSelected(id);
     if (playing) {
       // @ts-ignore
-      audioElement.current.pause();
+      audioElements.current[id].pause();
     } else {
       // @ts-ignore
-      audioElement.current.play();
+      audioElements.current[id].play();
     }
 
     setPlaying(!playing)
@@ -82,7 +82,7 @@ function VDayHome() {
 
 
   if (loading) {
-    return <Spin size="large" />
+    return <div className="spin-container"><Spin size="large" /></div>
   }
 
   const text = clips.length === 1 ? "1 person has" : clips.length + " people have";
@@ -98,17 +98,16 @@ function VDayHome() {
       </div>
 
       <div className="clip-container">
-        {clips.map((clip, i) => {
-          const color = randomColor(i);
-          const id = "clip-" + i;
+        {clips.map((clip) => {
+          const color = randomColor(clip.id);
           return <div>
-            <audio className="clip-audio" src={clipUrls[clip.id]} ref={audioElement} />
-            <a className="clip" style={color} onClick={() => handleClick(id)}>
+            <audio className="clip-audio" src={clipUrls[clip.id]} ref={el => audioElements.current[clip.id] = el} />
+            <a className="clip" style={color} onClick={() => handleClick(clip.id)}>
               <div className="clip-inner">
                 <div>
-                  {(!playing || selected !== id) && <PlayCircleFilled className="clip-play clip-icon" />}
-                  {playing && selected === id && <Bars color={color.color} />}
-                  {playing && selected === id && <PauseCircleFilled className="clip-pause clip-icon" />}
+                  {(!playing || selected !== clip.id) && <PlayCircleFilled className="clip-play clip-icon" />}
+                  {playing && selected === clip.id && <Bars color={color.color} />}
+                  {playing && selected === clip.id && <PauseCircleFilled className="clip-pause clip-icon" />}
                   <p className="clip-p" style={color}>{clip.get("firstName")}</p>
                 </div>
               </div>
