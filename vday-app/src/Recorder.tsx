@@ -36,18 +36,6 @@ function TimedRecordButton({
   );
 }
 
-// https://stackoverflow.com/questions/9038625/detect-if-device-is-ios
-function iOS() {
-  return [
-    "iPad Simulator",
-    "iPhone Simulator",
-    "iPod Simulator",
-    "iPad",
-    "iPhone",
-    "iPod",
-  ].includes(navigator.platform);
-}
-
 function Recorder() {
   const history = useHistory();
   const [recording, setRecording] = useState(false);
@@ -87,10 +75,10 @@ function Recorder() {
 }
 
   function startRecording() {
+    setRecording(true);
     firebase
       .analytics()
       .logEvent("vday_record_start");
-    setRecording(true);
   }
 
   return (
@@ -116,7 +104,7 @@ function Recorder() {
         <ReactMic
           backgroundColor="black"
           strokeColor="white"
-          className={recording && !iOS() ? "se-react-mic" : "se-react-mic-hide"}
+          className={recording ? "se-react-mic" : "se-react-mic-hide"}
           record={recording}
           // @ts-ignore
           mimeType="audio/mp3"
