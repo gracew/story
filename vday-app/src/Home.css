@@ -42,10 +42,6 @@
   padding: 1rem;
 }
 
-a.clip:hover {
-  transform: scale(1.05);
-}
-
 .clip::before {
   content: "";
   padding-bottom: 100%;
@@ -110,6 +106,10 @@ a.clip:hover {
 
   .clip:hover .clip-play {
     visibility: visible;
+  }
+
+  a.clip:hover {
+    transform: scale(1.05);
   }
 }
 
