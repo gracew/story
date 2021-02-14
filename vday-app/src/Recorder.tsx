@@ -67,24 +67,26 @@ function Recorder() {
     const ref = firebase.storage().ref(`/vday/${uuid.v4()}`);
     await ref.put(bio!.blob);
     try {
-      await firebase.firestore().collection("vday").add({
+      const res = await firebase.firestore().collection("vday").add({
         firstName,
-        email,
         emailUpdates,
         recording: ref.fullPath,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
+      await firebase.firestore().collection("vday-emails").doc(res.id).set({ email });
       history.push(`/submitted?name=${firstName}`);
     } catch (err) {
-      console.log(err);
-      history.push("/register/error");
+      firebase
+        .analytics()
+        .logEvent("vday_submit_error", err);
+      history.push("/error");
     }
   }
 
   function validEmail(email: string) {
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(email.toLowerCase());
-}
+  }
 
   function startRecording() {
     setRecording(true);
@@ -97,7 +99,7 @@ function Recorder() {
     <div className="vday-record">
       <div>
 
-        <h2>Tell us about your experience with dating apps.</h2>
+        <h2>What's your experience with dating apps?</h2>
         <p>We want to know the good, the bad, and the ugly. Or the meh <span role="img" aria-label="shrug-emoji">🤷‍♀️</span></p>
         {recording ? (
           <TimedRecordButton

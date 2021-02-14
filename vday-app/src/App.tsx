@@ -7,6 +7,7 @@ import "./App.less";
 import VDayHome from "./Home";
 import Recorder from "./Recorder";
 import SubmitComplete from "./SubmitComplete";
+import SubmitError from "./SubmitError";
 
 /*const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://storydating.com")
   ? {
@@ -49,9 +50,6 @@ function App() {
 
   return (
     <Router>
-      <header>
-        Brought to you by <a href="/">Story Dating</a>
-      </header>
       <div className="App">
         <Switch>
           <Route path="/record">
@@ -60,10 +58,16 @@ function App() {
           <Route path="/submitted">
             <SubmitComplete />
           </Route>
+          <Route path="/error">
+            <SubmitError />
+          </Route>
           <Route>
             <VDayHome />
           </Route>
         </Switch>
+        <footer>
+          Brought to you by <a href="/">Story Dating</a>
+        </footer>
       </div>
     </Router>
   );

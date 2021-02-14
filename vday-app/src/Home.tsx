@@ -40,6 +40,7 @@ function VDayHome() {
 
   useEffect(() => {
     firebase.firestore().collection("vday")
+      .where("featured", "==", true)
       .orderBy("createdAt", "desc")
       .get()
       .then(res => {
@@ -92,7 +93,7 @@ function VDayHome() {
         <p className="vday-prompt-intro">Hear what {text} said in response to...</p>
         <div className="vday-prompt">
           <div className="vday-quote-left">“</div>
-          <div className="vday-prompt-text">Tell us about your experience with dating apps.</div>
+          <div className="vday-prompt-text">What's your experience with dating apps?</div>
           <div className="vday-quote-right">”</div>
         </div>
       </div>
