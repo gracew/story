@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.less";
 import VDayHome from "./Home";
 import Recorder from "./Recorder";
+import SubmitComplete from "./SubmitComplete";
 
 /*const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://storydating.com")
   ? {
@@ -53,10 +54,13 @@ function App() {
       </header>
       <div className="App">
         <Switch>
-          <Route path="/vday/record">
+          <Route path="/record">
             <Recorder />
           </Route>
-          <Route path="/vday">
+          <Route path="/submitted">
+            <SubmitComplete />
+          </Route>
+          <Route>
             <VDayHome />
           </Route>
         </Switch>

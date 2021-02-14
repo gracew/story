@@ -2,6 +2,7 @@
 
 import { PauseCircleFilled, PlayCircleFilled, PlusCircleFilled } from "@ant-design/icons";
 import { Button } from "antd";
+import "firebase/analytics";
 import * as firebase from "firebase/app";
 import "firebase/storage";
 import React, { useEffect, useRef, useState } from "react";
@@ -14,7 +15,7 @@ import "./Home.css";
 const colors: Record<string, string> = {
   "#ffc0cb": "dark",
   "#ffe4e1": "dark",
-  "#ffb6c1": "light",
+  "#ffb6c1": "dark",
   "#ff69b4": "light",
   "#db7093": "light",
   "#ff1493": "light",
@@ -79,14 +80,25 @@ function VDayHome() {
   }
 
   function handleAddYoursClick() {
-    history.push("/vday/record")
+    firebase.analytics().logEvent("vday_home_add_yours");
+    history.push("/record")
   }
+
+  function handleCtaClick() {
+    firebase.analytics().logEvent("vday_home_cta");
+    window.location.href = "https://storydating.com/join#r=vday";
+  }
+
 
   return (
     <div className="vday-container">
-      <div className="vday-prompt">
-        <p>Hear what {n} people have said in response to...</p>
-        <blockquote>Tell us about your experience with dating apps.</blockquote>
+      <div className="vday-header">
+        <p className="vday-prompt-intro">Hear what {n} people have said in response to...</p>
+        <div className="vday-prompt">
+          <div className="vday-quote-left">“</div>
+          <div className="vday-prompt-text">Tell us about your experience with dating apps.</div>
+          <div className="vday-quote-right">”</div>
+        </div>
       </div>
 
       <audio className="clip-audio" src={bioUrl} ref={audioElement} />
@@ -124,7 +136,7 @@ function VDayHome() {
         see if your personalities click, then you can connect again over video. We handle all of the scheduling which
           our users love, and we see who you get along with to find you even better matches.</p>
         <p>We're LIVE and have run 500+ dates. Date better this Valentine's Day.</p>
-        <Button size="large" type="primary">Try a blind phone date</Button>
+        <Button size="large" type="primary" onClick={handleCtaClick}>Try a blind phone date</Button>
       </div>
     </div>
   );

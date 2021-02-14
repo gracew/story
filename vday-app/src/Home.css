@@ -1,10 +1,29 @@
-.vday-prompt {
-  margin-top: 40px;
+.vday-container {
+  padding: 40px 0 20px 0;
 }
 
-.vday-prompt p {
-  font-size: 13pt;
-  font-variant: small-caps;
+.vday-prompt-intro {
+  font-size: 12pt;
+  margin: 0;
+}
+
+.vday-prompt {
+  font-family: Georgia, serif;
+}
+
+.vday-prompt-text {
+  font-size:  30px;
+}
+
+.vday-quote-left,
+.vday-quote-right {
+  font-size: 100px;
+  height: 80px;
+  position: relative;
+}
+
+.vday-quote-right {
+  top: -20px;
 }
 
 /* https://css-tricks.com/a-grid-of-logos-in-squares/ */
@@ -71,35 +90,21 @@ a.clip:hover {
   font-weight: 600;
 }
 
-/* https://stackoverflow.com/questions/16325687/make-big-quotes-with-blockquote */
-blockquote {
-  margin-top: -70px;
-  font-family: Georgia, serif;
-  font-size:  30px;
-  position: relative;
-  color: #eee;
-}
-
-blockquote:before {
-  content: "\201C";
-  font-size: 100px;
-  position: relative;
-  top: 10px;
-  color:#bbb;
-}
-
-blockquote:after {
-  content: "\201D";
-  font-size: 100px;
-  position: relative;
-  bottom: -90px;
-  color: #bbb;
-}
-
 .cta-container {
-  width: 600px;
   font-size: 12pt;
   margin: 50px auto;
+}
+
+@media only screen and (min-width: 700px) {
+  .cta-container {
+      width: 600px;
+  }
+}
+
+@media only screen and (max-width: 699px) {
+  .cta-container {
+    width: 90%;
+  }
 }
 
 .better-way {

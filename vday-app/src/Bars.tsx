@@ -2,6 +2,7 @@ import "firebase/storage";
 import React from "react";
 import "./Bars.css";
 
+// https://codepen.io/elalemanyo/pen/wueft
 function Bars(props: { color: string }) {
   return (
     <div id="bars">
