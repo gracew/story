@@ -139,34 +139,38 @@ function Recorder() {
               If we love your answer we'll feature it on our homepage or on our social accounts. Please let us know
               your first name so we can credit you, and your email so we can thank you. Your email won't be shared.
             </p>
-            <Input
-              className="se-submit-bio"
-              placeholder="First name"
-              value={firstName}
-              onChange={e => setFirstName(e.target.value)} />
-            <Input
-              className="se-submit-bio"
-              placeholder="Email"
-              value={email}
-              onChange={e => setEmail(e.target.value)} />
-            <Checkbox
-              className="se-submit-bio"
-              checked={emailUpdates}
-              onChange={e => setEmailUpdates(!emailUpdates)}
-            >Sign up for email updates from Story Dating</Checkbox>
-            <Button
-              className="se-submit-bio"
-              disabled={bio === undefined || recording || !firstName || !email || !validEmail(email) || submitting}
-              onClick={onSubmit}
-              type="primary"
-            >
-              {!submitting && <div>Submit</div>}
-              {submitting && (
-                <div>
-                  Submitting... <Spin size="small" />
-                </div>
-              )}
-            </Button>
+            <form>
+              <Input
+                className="se-submit-bio"
+                placeholder="First name"
+                autoComplete="given-name"
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)} />
+              <Input
+                className="se-submit-bio"
+                placeholder="Email"
+                autoComplete="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)} />
+              <Checkbox
+                className="se-submit-bio"
+                checked={emailUpdates}
+                onChange={e => setEmailUpdates(!emailUpdates)}
+              >Sign up for email updates from Story Dating</Checkbox>
+              <Button
+                className="se-submit-bio"
+                disabled={bio === undefined || recording || !firstName || !email || !validEmail(email) || submitting}
+                onClick={onSubmit}
+                type="primary"
+              >
+                {!submitting && <div>Submit</div>}
+                {submitting && (
+                  <div>
+                    Submitting... <Spin size="small" />
+                  </div>
+                )}
+              </Button>
+            </form>
           </div>
         )}
       </div>
