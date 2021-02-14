@@ -65,10 +65,10 @@ function App() {
             <VDayHome />
           </Route>
         </Switch>
-        <footer>
-          Brought to you by <a href="/">Story Dating</a>
-        </footer>
       </div>
+      <footer>
+        Brought to you by <a href="/">Story Dating</a>
+      </footer>
     </Router>
   );
 }
