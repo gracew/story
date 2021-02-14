@@ -29,8 +29,6 @@
 /* https://css-tricks.com/a-grid-of-logos-in-squares/ */
 .clip-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  grid-gap: 1rem;
 }
 
 .clip {
@@ -61,20 +59,8 @@ a.clip:hover {
   bottom: -20px;
 }
 
-.clip-icon {
-  font-size: 60px;
-}
-
-.clip-play {
-  visibility: hidden;
-}
-
 .clip-pause {
   display: none;
-}
-
-.clip:hover .clip-play {
-  visibility: visible;
 }
 
 .clip:hover .clip-pause {
@@ -86,7 +72,6 @@ a.clip:hover {
 }
 
 .clip-p {
-  margin-top: 25px;
   font-weight: 600;
 }
 
@@ -99,11 +84,45 @@ a.clip:hover {
   .cta-container {
       width: 600px;
   }
+
+  .clip-container {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-gap: 1rem;
+  }
+
+  .clip-icon {
+    font-size: 60px;
+  }
+
+  .clip-p {
+    margin-top: 25px;
+  }
+
+  .clip-play {
+    visibility: hidden;
+  }
+
+  .clip:hover .clip-play {
+    visibility: visible;
+  }
 }
 
 @media only screen and (max-width: 699px) {
   .cta-container {
     width: 90%;
+  }
+
+  .clip-container {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-gap: .95rem;
+  }
+
+  .clip-icon {
+    font-size: 40px;
+  }
+
+  .clip-p {
+    margin-top: 15px;
   }
 }
 

@@ -10,7 +10,6 @@
 }
 
 .bar {
-    bottom: 75px;
     height: 3px;
     position: absolute;
     width: 3px;      
@@ -38,3 +37,23 @@
 .bar:nth-child(8)  { left: 29px; animation-duration: 419ms; }
 .bar:nth-child(9)  { left: 33px; animation-duration: 487ms; }
 .bar:nth-child(10) { left: 37px; animation-duration: 442ms; }
+
+@media only screen and (min-width: 700px) {
+    #bars {
+        height: 60px;
+    }
+
+    .bar {
+        bottom: 75px;
+    }
+}
+
+@media only screen and (max-width: 699px) {
+    #bars {
+        height: 40px;
+    }
+
+    .bar {
+        bottom: 60px;
+    }
+}
