@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 
 import { PauseCircleFilled, PlayCircleFilled, PlusCircleFilled } from "@ant-design/icons";
-import { Button } from "antd";
+import { Button, Spin } from "antd";
 import "firebase/analytics";
 import * as firebase from "firebase/app";
 import "firebase/storage";
@@ -22,22 +22,6 @@ const colors: Record<string, string> = {
   "#fddde6": "dark",
 }
 
-const names = [
-  "George",
-  "Emma",
-  "Elissa",
-  "Kathryn",
-  "Mike",
-  "Yitian",
-  "Abhi",
-  "Zack",
-  "Charlotte",
-  "Jason",
-  "Christine",
-  "Div",
-  "Grace"
-]
-
 function randomColor(i: number) {
   const c = Object.keys(colors);
   const color = c[Math.floor(seedrandom(`${i}`)() * c.length)];
@@ -45,26 +29,33 @@ function randomColor(i: number) {
   return { backgroundColor: color, color: textColor };
 };
 
-function randomName(i: number) {
-  return names[Math.floor(seedrandom(`${i}`)() * names.length)];
-};
-
 function VDayHome() {
-  const [bioUrl, setBioUrl] = useState();
+  const [loading, setLoading] = useState(true);
+  const [clips, setClips] = useState<Array<any>>([]);
+  const [clipUrls, setClipUrls] = useState<Record<string, string>>({});
   const [playing, setPlaying] = useState(false);
   const [selected, setSelected] = useState<string>();
   const history = useHistory();
   const audioElement = useRef(null);
 
   useEffect(() => {
-    firebase
-      .storage()
-      .ref(`bios/89f6ddce-2dae-474e-b7a8-29fafa73e1f8`)
-      .getDownloadURL()
-      .then((url) => setBioUrl(url));
+    firebase.firestore().collection("vday")
+      .orderBy("createdAt", "desc")
+      .get()
+      .then(res => {
+        setLoading(false);
+        setClips(res.docs);
+      });
   });
 
-  const n = 28;
+  useEffect(() => {
+    clips.map(clip =>
+      firebase
+        .storage()
+        .ref(clip.get("recording"))
+        .getDownloadURL()
+        .then((url) => setClipUrls({ [clip.id]: url })));
+  }, [clips]);
 
   function handleClick(id: string) {
     setSelected(id);
@@ -90,10 +81,15 @@ function VDayHome() {
   }
 
 
+  if (loading) {
+    return <Spin size="large" />
+  }
+
+  const text = clips.length === 1 ? "1 person has" : clips.length + " people have";
   return (
     <div className="vday-container">
       <div className="vday-header">
-        <p className="vday-prompt-intro">Hear what {n} people have said in response to...</p>
+        <p className="vday-prompt-intro">Hear what {text} said in response to...</p>
         <div className="vday-prompt">
           <div className="vday-quote-left">“</div>
           <div className="vday-prompt-text">Tell us about your experience with dating apps.</div>
@@ -101,19 +97,19 @@ function VDayHome() {
         </div>
       </div>
 
-      <audio className="clip-audio" src={bioUrl} ref={audioElement} />
       <div className="clip-container">
-        {[...Array(n)].map((el, i) => {
+        {clips.map((clip, i) => {
           const color = randomColor(i);
           const id = "clip-" + i;
           return <div>
+            <audio className="clip-audio" src={clipUrls[clip.id]} ref={audioElement} />
             <a className="clip" style={color} onClick={() => handleClick(id)}>
               <div className="clip-inner">
                 <div>
                   {(!playing || selected !== id) && <PlayCircleFilled className="clip-play clip-icon" />}
                   {playing && selected === id && <Bars color={color.color} />}
                   {playing && selected === id && <PauseCircleFilled className="clip-pause clip-icon" />}
-                  <p className="clip-p" style={color}>{randomName(i)}</p>
+                  <p className="clip-p" style={color}>{clip.get("firstName")}</p>
                 </div>
               </div>
             </a>

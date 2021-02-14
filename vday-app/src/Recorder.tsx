@@ -72,6 +72,7 @@ function Recorder() {
         email,
         emailUpdates,
         recording: ref.fullPath,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
       history.push(`/submitted?name=${firstName}`);
     } catch (err) {
