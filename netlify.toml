@@ -1,10 +1,4 @@
 [[redirects]]
-  from = "/"
-  to = "https://webflow.storydating.com"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/efficient"
   to = "https://webflow.storydating.com/efficient"
   status = 200
