@@ -54,7 +54,7 @@ function Recorder() {
   const [submitting, setSubmitting] = useState(false);
   const [firstName, setFirstName] = useState<string>();
   const [email, setEmail] = useState<string>();
-  const [emailUpdates, setEmailUpdates] = useState(false);
+  const [emailUpdates, setEmailUpdates] = useState(true);
   const [bio, setBio] = useState<ReactMicStopEvent>();
   const query = new URLSearchParams(useLocation().search);
   const request: Record<string, string> = {};
