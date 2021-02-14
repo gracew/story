@@ -159,7 +159,7 @@ function Recorder() {
               >Sign up for email updates from Story Dating</Checkbox>
               <Button
                 className="se-submit-bio"
-                disabled={bio === undefined || recording || !firstName || !email || !validEmail(email) || submitting}
+                disabled={bio === undefined || recording || !firstName || !email || !validEmail(email.trim()) || submitting}
                 onClick={onSubmit}
                 type="primary"
               >
