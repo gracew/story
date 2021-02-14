@@ -11,7 +11,7 @@ function SubmitComplete() {
     const history = useHistory();
 
     return (
-        <div className="vday-record">
+        <div className="submit-complete">
             <div>
                 <h2>Thanks so much, {firstName}!</h2>
                 <p>We can't wait to hear about your experience with dating apps. If we love it we'll feature it on our homepage or on our social accounts!</p>
