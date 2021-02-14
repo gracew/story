@@ -3,6 +3,7 @@ import useInterval from "@use-it/interval";
 import { Button, Checkbox, Input, Spin } from "antd";
 import "firebase/analytics";
 import * as firebase from "firebase/app";
+import "firebase/firestore";
 import "firebase/functions";
 import "firebase/storage";
 import React, { useState } from "react";
@@ -51,8 +52,9 @@ function Recorder() {
   const history = useHistory();
   const [recording, setRecording] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [firstName, setFirstName] = useState();
-  const [email, setEmail] = useState();
+  const [firstName, setFirstName] = useState<string>();
+  const [email, setEmail] = useState<string>();
+  const [emailUpdates, setEmailUpdates] = useState(false);
   const [bio, setBio] = useState<ReactMicStopEvent>();
   const query = new URLSearchParams(useLocation().search);
   const request: Record<string, string> = {};
@@ -65,17 +67,23 @@ function Recorder() {
     const ref = firebase.storage().ref(`/vday/${uuid.v4()}`);
     await ref.put(bio!.blob);
     try {
-      const res = await firebase.functions().httpsCallable("registerUser")({
-        ...request,
-        bio: ref.fullPath,
+      await firebase.firestore().collection("vday").add({
+        firstName,
+        email,
+        emailUpdates,
+        recording: ref.fullPath,
       });
-      history.push(
-        `/submitted?name=${firstName}`
-      );
+      history.push(`/submitted?name=${firstName}`);
     } catch (err) {
+      console.log(err);
       history.push("/register/error");
     }
   }
+
+  function validEmail(email: string) {
+    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(email.toLowerCase());
+}
 
   function startRecording() {
     firebase
@@ -128,12 +136,24 @@ function Recorder() {
               If we love your answer we'll feature it on our homepage or on our social accounts. Please let us know
               your first name so we can credit you, and your email so we can thank you. Your email won't be shared.
             </p>
-            <Input className="se-submit-bio" placeholder="First name" />
-            <Input className="se-submit-bio" placeholder="Email" />
-            <Checkbox className="se-submit-bio">Sign up for email updates from Story Dating</Checkbox>
+            <Input
+              className="se-submit-bio"
+              placeholder="First name"
+              value={firstName}
+              onChange={e => setFirstName(e.target.value)} />
+            <Input
+              className="se-submit-bio"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)} />
+            <Checkbox
+              className="se-submit-bio"
+              checked={emailUpdates}
+              onChange={e => setEmailUpdates(!emailUpdates)}
+            >Sign up for email updates from Story Dating</Checkbox>
             <Button
               className="se-submit-bio"
-              disabled={bio === undefined || recording || submitting}
+              disabled={bio === undefined || recording || !firstName || !email || !validEmail(email) || submitting}
               onClick={onSubmit}
               type="primary"
             >
