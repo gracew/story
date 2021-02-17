@@ -144,12 +144,14 @@ function Recorder() {
               <Input
                 className="se-submit-bio"
                 placeholder="First name"
+                name="fname"
                 autoComplete="given-name"
                 value={firstName}
                 onChange={e => setFirstName(e.target.value)} />
               <Input
                 className="se-submit-bio"
                 placeholder="Email"
+                name="email"
                 autoComplete="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)} />
