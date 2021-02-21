@@ -8,27 +8,6 @@
   padding: 0 5px;
 }
 
-.profile-photo-container {
-  height: 70px;
-  width: 70px;
-  margin: 0 auto;
-  background:#ddd;
-  border-radius: 35px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.profile-photo {
-  width: 100%;
-  padding: 0;
-}
-
-.profile-photo-placeholder {
-  font-size: 40px;
-}
-
 .profile-photo-edit {
   width: 35px;
   height: 35px;

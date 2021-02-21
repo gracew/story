@@ -4,12 +4,11 @@ import "firebase/remote-config";
 import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.less";
-import Home from "./Home";
-import Listener from "./Listener";
 import Login from "./Login";
 import PhoneAlreadyExists from "./PhoneAlreadyExists";
 import Privacy from "./Privacy";
 import Profile from "./Profile";
+import PublicProfile from "./PublicProfile";
 import Recorder from "./Recorder";
 import RegisterComplete from "./RegisterComplete";
 import Terms from "./Terms";
@@ -81,23 +80,20 @@ function App() {
             <Route path="/register/error">
               <PhoneAlreadyExists />
             </Route>
-            <Route path="/listen/:bioId">
-              <Listener />
-            </Route>
             <Route path="/profile" exact>
               <Profile />
             </Route>
             <Route path="/profile/:userId">
               <Profile />
             </Route>
+            <Route path="/u/:userId">
+              <PublicProfile />
+            </Route>
             <Route path="/login">
               <Login />
             </Route>
             <Route path="/:username">
               <VoiceBio />
-            </Route>
-            <Route path="/">
-              <Home />
             </Route>
           </Switch>
         </div>
