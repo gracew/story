@@ -4,66 +4,77 @@ import moment = require("moment");
 
 /** Used in each round to determine which users should be included (based on number of potential matches). */
 export const remainingMatches = functions.https.onRequest(
-  async (request, response) => {
-    const excludeIds = request.body.excludeIds || [];
-    const usersRaw = await admin.firestore().collection("users").where("status", "in", ["waitlist", "contacted", "pause", "resurrected"]).get();
-    const users = usersRaw.docs.filter(d => !excludeIds.includes(d.id)).map(d => formatUser(d));
-    const [prevMatches, blocklist, optInLikelihood] = await Promise.all([getPrevMatches(), getBlocklist(), getOptInLikelihood()]);
+    async (request, response) => {
+        const excludeIds = request.body.excludeIds || [];
+        const usersRaw = await admin.firestore().collection("users").where("status", "in", ["waitlist", "contacted", "pause", "resurrected"]).get();
+        const users = usersRaw.docs.filter(d => !excludeIds.includes(d.id)).map(d => formatUser(d));
+        const [prevMatches, blocklist, optInLikelihood] = await Promise.all([getPrevMatches(), getBlocklist(), getOptInLikelihood()]);
 
-    const results = [];
-    for (const user of users) {
-        const remaining = users.filter(match => areUsersCompatible(user, match, prevMatches, blocklist));
-        const remainingSameTz = remaining.filter(match => match.timezone === user.timezone);
+        const results = [];
+        for (const user of users) {
+            const remaining = users.filter(match => areUsersCompatible(user, match, prevMatches, blocklist));
+            const remainingSameTz = remaining.filter(match => match.timezone === user.timezone);
 
-        const remainingLikely = remaining.reduce((acc, u) => acc + (optInLikelihood[u.id] || 0), 0);
-        const remainingSameTzLikely = remainingSameTz.reduce((acc, u) => acc + (optInLikelihood[u.id] || 0), 0);
+            const remainingLikely = remaining.reduce((acc, u) => acc + (optInLikelihood[u.id] || 0), 0);
+            const remainingSameTzLikely = remainingSameTz.reduce((acc, u) => acc + (optInLikelihood[u.id] || 0), 0);
 
-        results.push({
-            ...user,
-            remainingMatches: remaining,
-            remainingMatchesSameTz: remainingSameTz,
-            remainingLikely,
-            remainingSameTzLikely,
-            // @ts-ignore
-            prevMatches: prevMatches[user.id],
-        });
+            results.push({
+                ...user,
+                optInLikelihood: optInLikelihood[user.id],
+                remainingMatches: remaining,
+                remainingMatchesSameTz: remainingSameTz,
+                remainingLikely,
+                remainingSameTzLikely,
+                // @ts-ignore
+                prevMatches: prevMatches[user.id],
+            });
+        }
+
+        response.send(results);
     }
-
-    response.send(results);
-  }
 );
 
 async function getOptInLikelihood() {
     // check the last 4 weeks of history
-    const ret: Record<string, number> = {};
+    const optIns: Record<string, number> = {};
+    const count: Record<string, number> = {};
     for (let i = 1; i <= 4; i++) {
         const week = moment().startOf("week").subtract(i, "weeks").format("YYYY-MM-DD");
         const results = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
         results.forEach(doc => {
+            if (!(doc.id in count)) {
+                count[doc.id] = 0;
+            }
+            count[doc.id]++;
+
             if (doc.get("tue") || doc.get("wed") || doc.get("thu")) {
-                if (!(doc.id in ret)) {
-                    ret[doc.id] = 0;
+                if (!(doc.id in optIns)) {
+                    optIns[doc.id] = 0;
                 }
-                ret[doc.id] += .25;
+                optIns[doc.id]++;
             }
         })
     }
-    return ret;
+    const likelihood: Record<string, number> = {};
+    Object.entries(count).forEach(([userId, n]) => {
+        likelihood[userId] = (optIns[userId] || 0) / n;
+    })
+    return likelihood;
 }
 
 /** Used in each round after obtaining availability to generate matches. */
 export const potentialMatches = functions.https.onRequest(
-  async (request, response) => {
-    const result = await potentialMatchesHelper(request.body.schedulingView);
-    response.send(result);
-  }
+    async (request, response) => {
+        const result = await potentialMatchesHelper(request.body.schedulingView);
+        response.send(result);
+    }
 );
 
 export const bipartiteMatches = functions.https.onRequest(
-  async (request, response) => {
-    const result = await bipartiteMatchesHelper(request.body.schedulingView);
-    response.send(result);
-  }
+    async (request, response) => {
+        const result = await bipartiteMatchesHelper(request.body.schedulingView);
+        response.send(result);
+    }
 );
 
 
