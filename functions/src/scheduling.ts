@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
+import moment = require("moment");
 
 /** Used in each round to determine which users should be included (based on number of potential matches). */
 export const remainingMatches = functions.https.onRequest(
@@ -7,14 +8,22 @@ export const remainingMatches = functions.https.onRequest(
     const excludeIds = request.body.excludeIds || [];
     const usersRaw = await admin.firestore().collection("users").where("status", "in", ["waitlist", "contacted", "pause", "resurrected"]).get();
     const users = usersRaw.docs.filter(d => !excludeIds.includes(d.id)).map(d => formatUser(d));
-    const [prevMatches, blocklist] = await Promise.all([getPrevMatches(), getBlocklist()]);
+    const [prevMatches, blocklist, optInLikelihood] = await Promise.all([getPrevMatches(), getBlocklist(), getOptInLikelihood()]);
 
     const results = [];
     for (const user of users) {
+        const remaining = users.filter(match => areUsersCompatible(user, match, prevMatches, blocklist));
+        const remainingSameTz = remaining.filter(match => match.timezone === user.timezone);
+
+        const remainingLikely = remaining.reduce((acc, u) => acc + (optInLikelihood[u.id] || 0), 0);
+        const remainingSameTzLikely = remainingSameTz.reduce((acc, u) => acc + (optInLikelihood[u.id] || 0), 0);
 
         results.push({
             ...user,
-            remainingMatches: users.filter(match => areUsersCompatible(user, match, prevMatches, blocklist)),
+            remainingMatches: remaining,
+            remainingMatchesSameTz: remainingSameTz,
+            remainingLikely,
+            remainingSameTzLikely,
             // @ts-ignore
             prevMatches: prevMatches[user.id],
         });
@@ -23,6 +32,24 @@ export const remainingMatches = functions.https.onRequest(
     response.send(results);
   }
 );
+
+async function getOptInLikelihood() {
+    // check the last 4 weeks of history
+    const ret: Record<string, number> = {};
+    for (let i = 1; i <= 4; i++) {
+        const week = moment().startOf("week").subtract(i, "weeks").format("YYYY-MM-DD");
+        const results = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
+        results.forEach(doc => {
+            if (doc.get("tue") || doc.get("wed") || doc.get("thu")) {
+                if (!(doc.id in ret)) {
+                    ret[doc.id] = 0;
+                }
+                ret[doc.id] += .25;
+            }
+        })
+    }
+    return ret;
+}
 
 /** Used in each round after obtaining availability to generate matches. */
 export const potentialMatches = functions.https.onRequest(
