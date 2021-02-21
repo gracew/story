@@ -151,7 +151,7 @@ function Profile() {
   });
 
   async function uploadProfilePhoto(files: FileList | null) {
-    if (!userPrefs || !files || files.length < 1) {
+    if (!files || files.length < 1) {
       return;
     }
     setPhotoUploading(true);
