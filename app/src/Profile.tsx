@@ -1,5 +1,5 @@
-import { EditOutlined, UserOutlined } from "@ant-design/icons";
-import { Button, Divider, Image, Spin } from "antd";
+import { EditOutlined } from "@ant-design/icons";
+import { Button, Divider, Spin } from "antd";
 import firebase from "firebase";
 import "firebase/analytics";
 import "firebase/remote-config";
@@ -10,6 +10,7 @@ import * as uuid from "uuid";
 import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPreference";
 import Preference from "./Preference";
 import "./Profile.css";
+import ProfilePhoto from "./ProfilePhoto";
 
 const prefs: Record<string, any> = {
   basic: [
@@ -120,7 +121,6 @@ function Profile() {
   const [selectedPref, setSelectedPref] = useState<string>();
   const [userPrefs, setUserPrefs] = useState<Record<string, any>>();
   const [photoUploading, setPhotoUploading] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState<string>();
   const history = useHistory();
   const { userId } = useParams();
 
@@ -132,16 +132,6 @@ function Profile() {
         setUserPrefs(res.data);
       })
   }, [userLoading, userId]);
-
-  useEffect(() => {
-    if (userPrefs && userPrefs.photo) {
-      firebase
-        .storage()
-        .ref(userPrefs.photo)
-        .getDownloadURL()
-        .then((url) => setPhotoUrl(url));
-    }
-  }, [userPrefs]);
 
   firebase.auth().onAuthStateChanged(function (user) {
     setUserLoading(false);
@@ -196,14 +186,7 @@ function Profile() {
     <div className="profile-container">
       <div className="profile-header">
         <div>
-          <div className="profile-photo-container">
-            {userPrefs.photo && <Image
-              src={photoUrl}
-              preview={{ mask: "" }}
-              className="profile-photo"
-            />}
-            {!photoUploading && !userPrefs.photo && <UserOutlined className="profile-photo-placeholder" />}
-          </div>
+          <ProfilePhoto photoPath={userPrefs.photo} uploading={photoUploading} />
           <div className="profile-photo-edit">
             <Button type="text">
               <label htmlFor="profile-photo-upload">
