@@ -44,6 +44,7 @@ async function getUser(data: any, context: CallableContext) {
 export const getPreferences = functions.https.onCall(async (data, context) => {
   const user = await getUser(data, context);
   const {
+    id,
     firstName,
     gender,
     age,
@@ -52,7 +53,8 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
     matchMin,
     matchMax,
     genderPreference,
-    funFacts
+    funFacts,
+    photo,
   } = user.data() as any;
   const prefs = await admin
     .firestore()
@@ -60,7 +62,9 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
     .doc(user.id)
     .get();
   return {
+    id,
     firstName,
+    photo,
     gender,
     age,
     matchMin,
@@ -85,6 +89,7 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
   const user = await getUser(data, context);
 
   const {
+    photo,
     matchMin,
     matchMax,
     location,
@@ -96,6 +101,9 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
   } = data;
 
   const mainPrefs: Record<string, any> = {};
+  if (photo !== undefined) {
+    mainPrefs.photo = photo;
+  }
   if (matchMin !== undefined) {
     mainPrefs.matchMin = matchMin;
   }

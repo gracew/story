@@ -8,6 +8,53 @@
   padding: 0 5px;
 }
 
+.profile-photo-container {
+  height: 70px;
+  width: 70px;
+  margin: 0 auto;
+  background:#ddd;
+  border-radius: 35px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-photo {
+  width: 100%;
+  padding: 0;
+}
+
+.profile-photo-placeholder {
+  font-size: 40px;
+}
+
+.profile-photo-edit {
+  width: 35px;
+  height: 35px;
+  font-size: 20px;
+  border-radius: 20px;
+  position: relative;
+  bottom: 20px;
+  left: 20px;
+  margin: 0 auto;
+  background: #eee;
+}
+
+.profile-photo-edit button {
+  padding: 0;
+}
+
+.profile-photo-edit input {
+  opacity: 0;
+}
+
+.profile-photo-desc {
+  margin: -10px 0 20px 0;;
+  font-size: 12px;
+  font-style: italic;
+}
+
 .profile-header h1 {
   margin: 0;
 }

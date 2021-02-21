@@ -1,10 +1,12 @@
-import { Button, Divider, Spin } from "antd";
+import { EditOutlined, UserOutlined } from "@ant-design/icons";
+import { Button, Divider, Image, Spin } from "antd";
 import firebase from "firebase";
 import "firebase/analytics";
 import "firebase/remote-config";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
+import * as uuid from "uuid";
 import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPreference";
 import Preference from "./Preference";
 import "./Profile.css";
@@ -117,6 +119,8 @@ function Profile() {
   const [userLoading, setUserLoading] = useState(true);
   const [selectedPref, setSelectedPref] = useState<string>();
   const [userPrefs, setUserPrefs] = useState<Record<string, any>>();
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string>();
   const history = useHistory();
   const { userId } = useParams();
 
@@ -129,12 +133,39 @@ function Profile() {
       })
   }, [userLoading, userId]);
 
+  useEffect(() => {
+    if (userPrefs && userPrefs.photo) {
+      firebase
+        .storage()
+        .ref(userPrefs.photo)
+        .getDownloadURL()
+        .then((url) => setPhotoUrl(url));
+    }
+  }, [userPrefs]);
+
   firebase.auth().onAuthStateChanged(function (user) {
     setUserLoading(false);
     if (!user) {
       history.push("/login")
     }
   });
+
+  async function uploadProfilePhoto(files: FileList | null) {
+    if (!userPrefs || !files || files.length < 1) {
+      return;
+    }
+    setPhotoUploading(true);
+    const path = `photos/${uuid.v4()}`;
+    const ref = firebase.storage().ref(path);
+    await Promise.all([
+      ref.put(files[0]),
+      firebase
+        .functions()
+        .httpsCallable("savePreferences")({ photo: path })
+    ]);
+    setUserPrefs({ ...userPrefs, photo: path });
+    setPhotoUploading(false);
+  }
 
   async function logout() {
     await firebase.auth().signOut();
@@ -151,7 +182,7 @@ function Profile() {
     const editProps: EditPreferenceProps = {
       metadata: prefMeta || prefMeta2,
       ...userPrefs[selectedPref],
-      update: (u: Record<string, any>) => setUserPrefs({ ...userPrefs, ...u}),
+      update: (u: Record<string, any>) => setUserPrefs({ ...userPrefs, ...u }),
       back: () => setSelectedPref(undefined),
     };
     if (selectedPref === "age") {
@@ -160,10 +191,28 @@ function Profile() {
     }
     return <div className="profile-container"><EditPreference {...editProps} /></div>
   }
+
   return (
     <div className="profile-container">
       <div className="profile-header">
         <div>
+          <div className="profile-photo-container">
+            {userPrefs.photo && <Image
+              src={photoUrl}
+              preview={{ mask: "" }}
+              className="profile-photo"
+            />}
+            {!photoUploading && !userPrefs.photo && <UserOutlined className="profile-photo-placeholder" />}
+          </div>
+          <div className="profile-photo-edit">
+            <Button type="text">
+              <label htmlFor="profile-photo-upload">
+                <EditOutlined />
+              </label>
+            </Button>
+            <input id="profile-photo-upload" type="file" accept="image/*" onChange={e => uploadProfilePhoto(e.target.files)} />
+          </div>
+          <div className="profile-photo-desc">Your photo will only be shown to your match after your phone call.</div>
           <h1>{userPrefs.firstName}</h1>
           <h3>{userPrefs.gender}, {userPrefs.age}</h3>
         </div>
