@@ -1,0 +1,13 @@
+.public-profile-container {
+  width: 100%;
+  text-align: center;
+}
+
+.public-profile-header {
+  margin-top: 30px;
+  padding: 0 5px;
+}
+
+.public-profile-header h1 {
+  margin: 10px 0 0 0;
+}

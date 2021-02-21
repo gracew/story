@@ -18,6 +18,26 @@ export const getUserByUsername = functions.https.onCall(async (data) => {
   return { firstName, age, bio, prompt, gender };
 });
 
+export const getPublicProfile = functions.https.onCall(async (data, context) => {
+  const user = await admin
+      .firestore()
+      .collection("users")
+      .doc(data.userId)
+      .get();
+  const {
+    firstName,
+    photo,
+    gender,
+    funFacts,
+  } = user.data() as any;
+  return {
+    firstName,
+    photo,
+    gender,
+    funFacts,
+  };
+});
+
 async function getUser(data: any, context: CallableContext) {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "authentication required");
