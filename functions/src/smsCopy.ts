@@ -25,7 +25,7 @@ export async function availability(user: IUser) {
 }
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
-    const phoneSwapText = `If you miss the call, you can call back. Afterwards, we'll ask if you want to connect again over video. In the case of mutual interest we'll help schedule a second call. If not no sweat!`;
+    const phoneSwapText = `If you miss the call, you can call back. Afterwards, we'll ask if you want to keep chatting. In the case of mutual interest we'll connect you in a text chat. If not no sweat!`;
     const user = usersById[userId];
     if (matches.length === 0) {
         return [];
