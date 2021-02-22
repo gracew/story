@@ -10,6 +10,13 @@ import "./Login.css";
 
 function Login() {
   const history = useHistory();
+
+  firebase.auth().onAuthStateChanged(function (user) {
+    if (user) {
+      history.push("/profile")
+    }
+  });
+
   useEffect(() => {
     const ui = new firebaseui.auth.AuthUI(firebase.auth());
     ui.start('#firebaseui-auth-container', {
