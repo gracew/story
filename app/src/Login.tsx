@@ -1,12 +1,12 @@
 import "firebase/analytics";
-import * as firebase from "firebase/app";
-import * as firebaseui from "firebaseui";
-import { useHistory } from "react-router-dom";
+import firebase from "firebase/app";
 import "firebase/remote-config";
 import "firebase/storage";
+import * as firebaseui from "firebaseui";
+import 'firebaseui/dist/firebaseui.css';
 import React, { useEffect } from "react";
+import { useHistory } from "react-router-dom";
 import "./Login.css";
-import 'firebaseui/dist/firebaseui.css'
 
 function Login() {
   const history = useHistory();

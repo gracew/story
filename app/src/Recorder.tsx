@@ -2,7 +2,7 @@ import { ReactMic, ReactMicStopEvent } from "@cleandersonlobo/react-mic";
 import useInterval from "@use-it/interval";
 import { Button, Spin } from "antd";
 import "firebase/analytics";
-import * as firebase from "firebase/app";
+import firebase from "firebase/app";
 import "firebase/functions";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";

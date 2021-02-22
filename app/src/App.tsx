@@ -1,5 +1,5 @@
 import "firebase/analytics";
-import * as firebase from "firebase/app";
+import firebase from "firebase/app";
 import "firebase/remote-config";
 import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";

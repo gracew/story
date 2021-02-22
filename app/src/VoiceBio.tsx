@@ -1,6 +1,6 @@
 import { Button, Spin } from "antd";
 import "firebase/analytics";
-import * as firebase from "firebase/app";
+import firebase from "firebase/app";
 import "firebase/remote-config";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";

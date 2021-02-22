@@ -7,7 +7,7 @@
     "@types/cleandersonlobo__react-mic": "npm:@types/react-mic",
     "@use-it/interval": "^0.1.3",
     "antd": "^4.6.0",
-    "firebase": "^7.15.5",
+    "firebase": "^8.2.8",
     "firebaseui": "^4.7.3",
     "moment": "^2.27.0",
     "react": "^16.13.1",

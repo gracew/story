@@ -1,6 +1,6 @@
 import { Spin, Typography } from "antd";
 import "firebase/analytics";
-import * as firebase from "firebase/app";
+import firebase from "firebase/app";
 import "firebase/functions";
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
