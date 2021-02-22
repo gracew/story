@@ -50,6 +50,9 @@ function EditPreference(props: EditPreferenceProps) {
   const { userId } = useParams();
 
   function emptyState() {
+    if (props.metadata.type === PreferenceType.AGE) {
+      return matchMin === undefined && matchMax === undefined;
+    }
     const emptyValue = value === undefined || (Array.isArray(value) && value.length === 0);
     const emptyDealbreakers = props.metadata.dealbreakers ? (!dealbreakers || dealbreakers.length === undefined || dealbreakers.length === 0) : true;
     return emptyValue && emptyDealbreakers;
