@@ -14,7 +14,7 @@
   },
   "main": "lib/src/index.js",
   "dependencies": {
-    "@google-cloud/firestore": "^4.4.0",
+    "@google-cloud/firestore": "^4.9.4",
     "@sendgrid/mail": "^7.4.0",
     "csv-parser": "^2.3.3",
     "firebase-admin": "^9.5.0",
