@@ -31,8 +31,9 @@ const prefs: Record<string, any> = {
       type: PreferenceType.MULTIPLE_CHOICE,
       options: [
         "Boston",
-        "New York City",
+        "Chicago",
         "Los Angeles",
+        "New York City",
         "San Francisco Bay Area",
         "Seattle",
         "Washington, DC",
