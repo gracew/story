@@ -529,6 +529,39 @@ export const call1MinWarning = functions.pubsub
     });
   });
 
+export const createSmsChat = functions.https.onRequest(async (request, response) => {
+  const firestore = new Firestore();
+  const match = await firestore.getMatch(request.body.matchId);
+  if (!match) {
+    response.end();
+    return;
+  }
+
+  const usersById = await firestore.getUsersForMatches([match]);
+  const userA = usersById[match.user_a_id];
+  const userB = usersById[match.user_b_id];
+
+  const session = await client.proxy
+    .services("KS58cecadd35af39c56a4cae81837a89f3")
+    .sessions
+    .create({ uniqueName: request.body.matchId });
+  const participants =
+    client.proxy
+      .services("KS58cecadd35af39c56a4cae81837a89f3")
+      .sessions(session.sid)
+      .participants;
+  const [participantA, participantB] = await Promise.all([
+      participants.create({ friendlyName: match.user_a_id, identifier: userA.phone }),
+      participants.create({ friendlyName: match.user_b_id, identifier: userB.phone }),
+  ]);
+  await Promise.all([
+    participants(participantA.sid).messageInteractions.create({ body: `Hi ${userA.firstName}! Just reply here to text with ${userB.firstName}. This chat will expire in 7 days.` }),
+    participants(participantB.sid).messageInteractions.create({ body: `Hi ${userB.firstName}! Just reply here to text with ${userA.firstName}. This chat will expire in 7 days.` })
+  ])
+  response.end();
+});
+
+
 export async function notifyIncomingTextHelper(phone: string, message: string) {
   const userQuery = await admin
     .firestore()
