@@ -74,6 +74,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
             userId: userAId,
             matchId: match.id,
             firstName: userA.firstName,
+            matchUserId: userB.id,
             matchName: userB.firstName,
             matchPhone: userB.phone.substring(2),
             ...(await nextMatchNameAndDate(nextMatchesByUserId, userAId, firestore)),
@@ -91,6 +92,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
             userId: userBId,
             matchId: match.id,
             firstName: userB.firstName,
+            matchUserId: userA.id,
             matchName: userA.firstName,
             matchPhone: userA.phone.substring(2),
             ...(await nextMatchNameAndDate(nextMatchesByUserId, userBId, firestore)),
@@ -147,6 +149,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
     const otherData = {
         userId: otherUser.id,
         firstName: otherUser.firstName,
+        matchUserId: revealingUser.id,
         matchName: revealingUser.firstName,
         matchPhone: revealingUser.phone.substring(2),
     };
