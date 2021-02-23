@@ -330,7 +330,7 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
     await client
       .conferences(conferenceSid)
       .update({ announceUrl: BASE_URL + "callOutro" });
-    await util.promisify(setTimeout)(35_000);
+    await util.promisify(setTimeout)(30_000);
     await client.conferences(conferenceSid).update({ status: "completed" });
   } catch (err) {
     console.log(err);
@@ -445,7 +445,7 @@ export const conferenceStatusWebhook = functions.https.onRequest(
 export const announceUser = functions.https.onRequest((request, response) => {
   const twiml = new twilio.twiml.VoiceResponse();
   twiml.play(
-    "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_video_beep.mp3?alt=media"
+    "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_beep.mp3?alt=media"
   );
   response.set("Content-Type", "text/xml");
   response.send(twiml.toString());
@@ -472,7 +472,7 @@ export const announce1Min = functions.https.onRequest((request, response) => {
 export const callOutro = functions.https.onRequest((request, response) => {
   const twiml = new twilio.twiml.VoiceResponse();
   twiml.play(
-    "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_video.mp3?alt=media"
+    "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro.mp3?alt=media"
   );
   response.set("Content-Type", "text/xml");
   response.send(twiml.toString());
