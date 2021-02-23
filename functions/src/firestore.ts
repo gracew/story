@@ -9,6 +9,7 @@ export interface IUser {
     locationFlexibility?: boolean;
     funFacts?: string;
     status?: string;
+    photo?: string;
 }
 export interface IMatch {
     id: string;

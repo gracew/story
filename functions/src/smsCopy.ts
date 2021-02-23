@@ -125,8 +125,8 @@ export function videoReminder(userA: IUser, userB: IUser) {
 export async function reminder(userA: IUser, userB: IUser) {
     const week = moment().startOf("week").format("YYYY-MM-DD");
     const smsCopy = await admin.firestore().collection("smsCopy").doc(week).get();
-    const prompt = smsCopy.get("prompt") || "What's the longest you've ever gone without using your phone?";
-    return `Hi ${userA.firstName}! Just a reminder that you'll be speaking with ${userB.firstName} in an hour. Here's one idea to get the conversation started: "${prompt}" Hope you two have a good date!`;
+    const reminderTexts = userA.photo ? smsCopy.get("reminder") : smsCopy.get("reminderNoPhoto");
+    return `${reminderTexts.map((text: string) => text.replace("FIRST_NAME", userA.firstName).replace("MATCH_NAME", userB.firstName)).join("\n\n")}`;
 }
 
 export function flakeWarning(userA: IUser, userB: IUser) {
