@@ -19,7 +19,7 @@ function PublicProfile() {
       .then((res) => {
         setData(res.data);
       })
-  });
+  }, [userId]);
 
   if (!data) {
     return <Spin size="large" />
