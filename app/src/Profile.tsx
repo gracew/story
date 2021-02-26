@@ -11,7 +11,7 @@ import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPrefe
 import Header from "./Header";
 import Preference from "./Preference";
 import "./Profile.css";
-import ProfilePhoto from "./ProfilePhoto";
+import ProfileCard from "./ProfileCard";
 
 const prefs: Record<string, any> = {
   basic: [
@@ -184,7 +184,7 @@ function Profile() {
       <Header showLogout={true} />
       <div className="profile-header">
         <div>
-          <ProfilePhoto photoPath={userPrefs.photo} uploading={photoUploading} />
+          <ProfileCard firstName={userPrefs.firstName} gender={userPrefs.gender} age={userPrefs.age} photoPath={userPrefs.photo} uploading={photoUploading} />
           <div className="profile-photo-edit">
             <Button type="text">
               <label htmlFor="profile-photo-upload">
@@ -194,8 +194,6 @@ function Profile() {
             <input id="profile-photo-upload" type="file" accept="image/*" onChange={e => uploadProfilePhoto(e.target.files)} />
           </div>
           <div className="profile-photo-desc">Your photo will only be shown to your match after your phone call.</div>
-          <h1>{userPrefs.firstName}</h1>
-          <h3>{userPrefs.gender}, {userPrefs.age}</h3>
         </div>
       </div>
 

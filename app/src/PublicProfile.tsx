@@ -5,7 +5,7 @@ import "firebase/remote-config";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import ProfilePhoto from "./ProfilePhoto";
+import ProfileCard from "./ProfileCard";
 import "./PublicProfile.css";
 
 function PublicProfile() {
@@ -29,9 +29,7 @@ function PublicProfile() {
     <div className="public-profile-container">
       <div className="public-profile-header">
         <div>
-          <ProfilePhoto photoPath={data.photo} />
-          <h1>{data.firstName}</h1>
-          <h3>{data.gender}</h3>
+          <ProfileCard firstName={data.firstName} gender={data.gender} photoPath={data.photo} />
           <p>{data.funFacts}</p>
         </div>
       </div>

@@ -20,7 +20,6 @@ body,
   height: 100%;
   display: flex;
   flex-direction: column;
-  font-family: FoundersGrotesk, sans-serif;
 }
 
 @font-face {
@@ -89,8 +88,4 @@ body,
   font-weight: 700;
   font-style: italic;
   src: local('FoundersGrotesk'), url(./assets/fonts/FoundersGrotesk-BoldItalic.otf) format('opentype');
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: NimbusSansExd, sans-serif;
 }

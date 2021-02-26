@@ -23,12 +23,12 @@
 }
 
 .pref-value {
-  color: #682873;
   text-align: right;
 }
 
 .pref-value {
   max-width: 200px;
+  color: #682873;
 }
 
 .pref-value span {
