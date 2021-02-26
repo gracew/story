@@ -38,12 +38,10 @@ function Preference(props: PreferenceProps) {
           <Typography.Text className="pref-value" ellipsis={true}>{formatValue()}</Typography.Text>
         </div>
         {props.dealbreakers && props.dealbreakers.length > 0 && (
-          <div className="pref">
-            <div className="dealbreaker-label">
-              <div>Dealbreakers</div>
-            </div>
+          <div className="pref dealbreaker">
+            <div>Dealbreakers</div>
             <div className="pref-value">
-              {props.dealbreakers.map(t => <div><Typography.Text className="dealbreaker" ellipsis={true}>{t}</Typography.Text></div>)}
+              {props.dealbreakers.map(t => <div><Typography.Text className="dealbreaker-value" ellipsis={true}>{t}</Typography.Text></div>)}
             </div>
           </div>
         )}

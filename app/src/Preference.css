@@ -19,16 +19,12 @@
 }
 
 .pref-description {
-  color: black;
-  font-weight: 500;
+  color: #826C86;
 }
 
 .pref-value {
+  color: #682873;
   text-align: right;
-}
-
-.dealbreaker-label {
-  font-style: italic;
 }
 
 .pref-value {
@@ -40,6 +36,14 @@
 }
 
 .pref-arrow {
-  color: black;
+  color: #682873;
   margin-left: 8px;
+}
+
+.dealbreaker {
+  color: #DE3636;
+}
+
+.dealbreaker-value {
+  color: #F57E7E;
 }

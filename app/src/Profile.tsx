@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import * as uuid from "uuid";
 import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPreference";
+import Header from "./Header";
 import Preference from "./Preference";
 import "./Profile.css";
 import ProfilePhoto from "./ProfilePhoto";
@@ -158,11 +159,6 @@ function Profile() {
     setPhotoUploading(false);
   }
 
-  async function logout() {
-    await firebase.auth().signOut();
-    history.push("/login")
-  }
-
   if (userLoading || !userPrefs) {
     return <Spin size="large" />
   }
@@ -185,6 +181,7 @@ function Profile() {
 
   return (
     <div className="profile-container">
+      <Header showLogout={true} />
       <div className="profile-header">
         <div>
           <ProfilePhoto photoPath={userPrefs.photo} uploading={photoUploading} />
@@ -202,7 +199,7 @@ function Profile() {
         </div>
       </div>
 
-      <h3 className="prefs-header">The Basics</h3>
+      <h3 className="prefs-header">Basics</h3>
 
       {prefs.basic.map((pref: any, i: number) => (
         <div>
@@ -221,7 +218,6 @@ function Profile() {
       ))
       }
 
-      <Button className="logout" onClick={logout}>Log out</Button>
     </div>
 
   );
