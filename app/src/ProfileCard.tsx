@@ -39,7 +39,7 @@ function ProfileCard(props: ProfileCardProps) {
         {!props.uploading && !props.photoPath && <UserOutlined className="profile-photo-placeholder" />}
       </div>
       <div className="profile-text">
-        <h1>{props.firstName}</h1>
+        <h3>{props.firstName}</h3>
         <div>{props.gender}, {props.age}</div>
       </div>
     </div>

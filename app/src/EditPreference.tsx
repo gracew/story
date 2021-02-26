@@ -1,4 +1,4 @@
-import { Button, Slider, Spin } from "antd";
+import { Button, Checkbox, Radio, Slider, Spin } from "antd";
 import TextArea from "antd/lib/input/TextArea";
 import firebase from "firebase";
 import "firebase/analytics";
@@ -148,10 +148,10 @@ function EditPreference(props: EditPreferenceProps) {
   return (
     <div className="profile-container">
       <Header />
-      <h1>{props.metadata.label}</h1>
 
       <div className="edit-preference">
-        {props.metadata.dealbreakers && <h3>About me</h3>}
+        <h3>{props.metadata.label}</h3>
+        {props.metadata.dealbreakers && <div>About me</div>}
         {props.metadata.description && <div className="edit-pref-description" dangerouslySetInnerHTML={{ __html: props.metadata.description }}></div>}
 
         {props.metadata.type === PreferenceType.FREE_TEXT && <TextArea value={value} onChange={e => setValue(e.target.value)} allowClear autoSize={{ minRows: 4 }} />}
@@ -168,16 +168,15 @@ function EditPreference(props: EditPreferenceProps) {
         <div className="pref-options">
           {props.metadata.type === PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE && <p className="multiple-selection-desc">Choose as many as you like</p>}
           {(props.metadata.type === PreferenceType.MULTIPLE_CHOICE || props.metadata.type === PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE) &&
-            <div>
+            <Radio.Group value={props.value}>
               {props.metadata.options.map(o => (
-                <Button
+                <Radio
+                  value={o}
                   className="pref-option"
-                  shape="round"
-                  type={isSelected(o) ? "primary" : "default"}
                   onClick={() => onMultipleChoiceSelect(o)}
-                >{o}</Button>
+                >{o}</Radio>
               ))}
-            </div>
+            </Radio.Group>
           }
           {props.metadata.allowOther && <div>
             <Button
@@ -192,31 +191,30 @@ function EditPreference(props: EditPreferenceProps) {
 
         {props.metadata.dealbreakers &&
           <div>
-            <h3 className="prefs-header">Match dealbreakers</h3>
+            <div className="prefs-header">Match dealbreakers</div>
             <p className="multiple-selection-desc">Choose as many as you like</p>
             <div className="pref-options">
-              {(props.metadata.dealbreakerOptions || props.metadata.options).map(o => (
-                <Button
+              <Checkbox.Group value={props.dealbreakers}>
+                {(props.metadata.dealbreakerOptions || props.metadata.options).map(o => (
+                  <Checkbox
+                    className="pref-option"
+                    onClick={() => onDealbreakerSelect(o)}
+                  >{o}</Checkbox>
+                ))}
+                <Checkbox
                   className="pref-option"
-                  shape="round"
-                  type={dealbreakers?.includes(o) ? "primary" : "default"}
-                  onClick={() => onDealbreakerSelect(o)}
-                >{o}</Button>
-              ))}
-              <Button
-                className="pref-option"
-                shape="round"
-                type={dealbreakers?.includes(NO_DEALBREAKERS) ? "primary" : "default"}
-                onClick={() => onDealbreakerSelect(NO_DEALBREAKERS)}
-              >{NO_DEALBREAKERS}</Button>
+                  type={dealbreakers?.includes(NO_DEALBREAKERS) ? "primary" : "default"}
+                  onClick={() => onDealbreakerSelect(NO_DEALBREAKERS)}
+                >{NO_DEALBREAKERS}</Checkbox>
+              </Checkbox.Group>
             </div>
           </div>
         }
       </div>
 
-      <div className="save-cancel">
-        <Button onClick={props.back}>Cancel</Button>
-        <Button type="primary" onClick={onSave} disabled={emptyState() || saving}>
+      <div className="edit-actions">
+        <Button className="edit-cancel" onClick={props.back}>Cancel</Button>
+        <Button className="edit-save" type="primary" onClick={onSave} disabled={emptyState() || saving}>
           {!saving && <div>Save</div>}
           {saving && <div>Saving... <Spin size="small" ></Spin></div>}
         </Button>

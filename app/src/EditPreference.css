@@ -14,19 +14,20 @@
   font-style: italic;
 }
 
-.pref-options {
-  text-align: center;
-}
-
 .pref-option {
   margin: 3px;
+  display: block;
 }
 
-.save-cancel {
+.edit-actions {
   display: flex;
   justify-content: space-between;
 }
 
-.save-cancel button {
-  width: 48%;
+.edit-cancel {
+  width: 36%;
+}
+
+.edit-save {
+  width: 60%;
 }
