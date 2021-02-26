@@ -71,6 +71,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
         from: TWILIO_NUMBER,
         parameters: {
             mode,
+            photo: userA.photo && userB.photo ? "both_photo" : (!userA.photo ? "self_no_photo" : "other_no_photo" ),
             userId: userAId,
             matchId: match.id,
             firstName: userA.firstName,
@@ -89,6 +90,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
         from: TWILIO_NUMBER,
         parameters: {
             mode,
+            photo: userA.photo && userB.photo ? "both_photo" : (!userB.photo ? "self_no_photo" : "other_no_photo" ),
             userId: userBId,
             matchId: match.id,
             firstName: userB.firstName,
