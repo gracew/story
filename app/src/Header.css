@@ -13,8 +13,5 @@
 }
 
 .logout-button:hover {
-    width: 44px;
-    height: 44px;
-    border-radius: 22px;
     background: #54175F;
 }

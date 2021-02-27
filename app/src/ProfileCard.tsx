@@ -1,9 +1,6 @@
 import { UserOutlined } from "@ant-design/icons";
 import { Image } from "antd";
 import firebase from "firebase";
-import "firebase/analytics";
-import "firebase/remote-config";
-import "firebase/storage";
 import React, { FunctionComponent, useEffect, useState } from "react";
 import "./ProfileCard.css";
 
