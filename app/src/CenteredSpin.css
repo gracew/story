@@ -1,0 +1,9 @@
+.centered-spin {
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.centered-spin .ant-spin {
+    margin: 0 auto;
+}

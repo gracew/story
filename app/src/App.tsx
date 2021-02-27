@@ -4,6 +4,7 @@ import "firebase/remote-config";
 import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.less";
+import Header from "./Header";
 import Login from "./Login";
 import Privacy from "./Privacy";
 import Profile from "./Profile";
@@ -63,6 +64,7 @@ function App() {
           <VideoRedirect />
         </Route>
         <div className="App">
+          <Header />
           <Switch>
             <Route path="/profile" exact>
               <Profile />

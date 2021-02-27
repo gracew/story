@@ -7,7 +7,6 @@ import "firebase/storage";
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import "./EditPreference.css";
-import Header from "./Header";
 
 export enum PreferenceType {
   FREE_TEXT,
@@ -141,8 +140,6 @@ function EditPreference(props: EditPreferenceProps) {
   return (
     <div className="edit-preference-container">
       <div>
-
-        <Header />
         <div className="edit-preference">
           <h3>{props.metadata.label}</h3>
           {props.metadata.dealbreakers && <div className="edit-prefs-header">About me</div>}

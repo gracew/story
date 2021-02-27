@@ -1,5 +1,5 @@
 import { EditOutlined } from "@ant-design/icons";
-import { Button, Divider, Spin } from "antd";
+import { Button, Divider } from "antd";
 import firebase from "firebase";
 import "firebase/analytics";
 import "firebase/remote-config";
@@ -7,8 +7,8 @@ import "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import * as uuid from "uuid";
+import CenteredSpin from "./CenteredSpin";
 import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPreference";
-import Header from "./Header";
 import Preference from "./Preference";
 import "./Profile.css";
 import ProfileCard from "./ProfileCard";
@@ -163,7 +163,7 @@ function Profile() {
   }
 
   if (userLoading || !userPrefs) {
-    return <Spin size="large" />
+    return <CenteredSpin />
   }
 
   if (selectedPref) {
@@ -184,7 +184,6 @@ function Profile() {
 
   return (
     <div className="profile-container">
-      <Header showLogout={true} />
       <div className="profile-header">
         <div>
           <div className="profile-photo-edit">

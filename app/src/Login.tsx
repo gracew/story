@@ -13,7 +13,7 @@ function Login() {
 
   firebase.auth().onAuthStateChanged(function (user) {
     if (user) {
-      history.push("/profile")
+      // history.push("/profile")
     }
   });
 
@@ -40,7 +40,9 @@ function Login() {
   })
 
   return (
-    <div id="firebaseui-auth-container"></div>
+    <div className="story-login-container">
+      <div id="firebaseui-auth-container"></div>
+    </div>
   );
 }
 
