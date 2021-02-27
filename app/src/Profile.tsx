@@ -35,8 +35,11 @@ const prefs: Record<string, any> = {
         "Chicago",
         "Los Angeles",
         "New York City",
+        "Philadelphia",
+        "San Diego",
         "San Francisco Bay Area",
         "Seattle",
+        "Toronto",
         "Washington, DC",
       ],
       allowOther: true,
@@ -54,7 +57,7 @@ const prefs: Record<string, any> = {
       type: PreferenceType.FREE_TEXT,
       description: `<p>These will be shared with your matches, so make them good 🙂</p>
 <p>Some ideas:</p>
-<ul style="list-style: none; padding: 0">
+<ul>
 <li>What are you passionate about?</li>
 <li>How might your friends describe you?</li>
 <li>What's something you want to learn?</li>
@@ -184,7 +187,6 @@ function Profile() {
       <Header showLogout={true} />
       <div className="profile-header">
         <div>
-          <ProfileCard firstName={userPrefs.firstName} gender={userPrefs.gender} age={userPrefs.age} photoPath={userPrefs.photo} uploading={photoUploading} />
           <div className="profile-photo-edit">
             <Button type="text">
               <label htmlFor="profile-photo-upload">
@@ -193,7 +195,7 @@ function Profile() {
             </Button>
             <input id="profile-photo-upload" type="file" accept="image/*" onChange={e => uploadProfilePhoto(e.target.files)} />
           </div>
-          <div className="profile-photo-desc">Your photo will only be shown to your match after your phone call.</div>
+          <ProfileCard firstName={userPrefs.firstName} gender={userPrefs.gender} age={userPrefs.age} photoPath={userPrefs.photo} uploading={photoUploading} />
         </div>
       </div>
 

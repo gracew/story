@@ -25,10 +25,10 @@ function Header(props: HeaderProps) {
   return (
     <div className="story-header">
       <a href="/">
-        <img src={logo} />
+        <img src={logo} alt="story-logo" />
       </a>
       {props.showLogout &&
-        <Button className="logout-button" type="link" onClick={logout}><img src={logoutIcon} /></Button>
+        <Button className="logout-button" type="link" onClick={logout}><img src={logoutIcon} alt="logout" /></Button>
       }
     </div>
   );

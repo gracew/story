@@ -1,22 +1,74 @@
+.edit-preference-container {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
 .edit-preference {
   margin: 40px 0;
+}
+
+.edit-preference .ant-input {
+  padding: 20px;
+  background: #F4EEFC;
+  border: 1px solid #D8AAE0;
+  border-radius: 4px;
 }
 
 .edit-pref-age {
   margin-top: 60px;
 }
 
+.edit-pref-age .ant-slider-rail {
+  background: #FFBDA7;
+}
+
+.edit-prefs-header,
+.edit-prefs-header-dealbreakers {
+  font-size: 17px;
+}
+
+.edit-prefs-header {
+  color: #826C86;
+}
+
+.edit-prefs-header-dealbreakers {
+  color: #DE3636;
+}
+
 .edit-pref-description {
-  margin-bottom: 30px;
+  margin-bottom: 15px;
+  color: #826C86;
 }
 
 .multiple-selection-desc {
   font-style: italic;
 }
 
+.pref-options {
+  margin-bottom: 30px;
+}
+
+.pref-options .ant-radio-group {
+  width: 100%;
+}
+
 .pref-option {
-  margin: 3px;
-  display: block;
+  width: 100%;
+  padding: 14px;
+  color: #682873;
+}
+
+.pref-option.ant-checkbox-wrapper {
+  margin: 0;
+}
+
+.pref-option.ant-radio-wrapper-checked,
+.pref-option.ant-checkbox-wrapper-checked {
+  background: #EAE1F6 40%;
+  border-radius: 4px;
+  border: 1px solid #D8AAE0;
 }
 
 .edit-actions {
@@ -24,8 +76,14 @@
   justify-content: space-between;
 }
 
+.edit-actions button {
+  padding: 8px;
+  height: 100%;
+}
+
 .edit-cancel {
   width: 36%;
+  background-color: #E0E0E0;
 }
 
 .edit-save {

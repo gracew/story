@@ -30,18 +30,21 @@ function ProfileCard(props: ProfileCardProps) {
 
   return (
     <div className="profile-card">
-      <div className="profile-photo-container">
-        {props.photoPath && <Image
-          src={photoUrl}
-          preview={{ mask: "" }}
-          className="profile-photo"
-        />}
-        {!props.uploading && !props.photoPath && <UserOutlined className="profile-photo-placeholder" />}
+      <div className="profile-card-top">
+        <div className="profile-photo-container">
+          {props.photoPath && <Image
+            src={photoUrl}
+            preview={{ mask: "" }}
+            className="profile-photo"
+          />}
+          {!props.uploading && !props.photoPath && <UserOutlined className="profile-photo-placeholder" />}
+        </div>
+        <div className="profile-text">
+          <h3>{props.firstName}</h3>
+          <div>{props.gender}, {props.age}</div>
+        </div>
       </div>
-      <div className="profile-text">
-        <h3>{props.firstName}</h3>
-        <div>{props.gender}, {props.age}</div>
-      </div>
+      <div className="profile-card-bottom">Your photo will only be shown after your phone call.</div>
     </div>
   );
 }
