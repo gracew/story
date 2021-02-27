@@ -10,7 +10,6 @@ import Profile from "./Profile";
 import PublicProfile from "./PublicProfile";
 import Terms from "./Terms";
 import VideoRedirect from "./VideoRedirect";
-import VoiceBio from "./VoiceBio";
 
 /*const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://storydating.com")
   ? {
@@ -76,9 +75,6 @@ function App() {
             </Route>
             <Route path="/login">
               <Login />
-            </Route>
-            <Route path="/:username">
-              <VoiceBio />
             </Route>
           </Switch>
         </div>
