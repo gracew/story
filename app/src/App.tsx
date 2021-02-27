@@ -4,6 +4,7 @@ import "firebase/remote-config";
 import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.less";
+import Header from "./Header";
 import Login from "./Login";
 import Privacy from "./Privacy";
 import Profile from "./Profile";
@@ -52,9 +53,6 @@ function App() {
 
   return (
     <Router>
-      <header>
-        <a href="/">Story Dating</a>
-      </header>
       <Switch>
         <Route path="/privacy">
           <Privacy />
@@ -68,15 +66,19 @@ function App() {
         <div className="App">
           <Switch>
             <Route path="/profile" exact>
+              <Header showLogout={true} />
               <Profile />
             </Route>
             <Route path="/profile/:userId">
+              <Header showLogout={true} />
               <Profile />
             </Route>
             <Route path="/u/:userId">
+              <Header />
               <PublicProfile />
             </Route>
             <Route path="/login">
+              <Header />
               <Login />
             </Route>
           </Switch>

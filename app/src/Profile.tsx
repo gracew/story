@@ -1,5 +1,5 @@
 import { EditOutlined } from "@ant-design/icons";
-import { Button, Divider, Spin } from "antd";
+import { Button, Divider } from "antd";
 import firebase from "firebase";
 import "firebase/analytics";
 import "firebase/remote-config";
@@ -7,10 +7,11 @@ import "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import * as uuid from "uuid";
+import CenteredSpin from "./CenteredSpin";
 import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPreference";
 import Preference from "./Preference";
 import "./Profile.css";
-import ProfilePhoto from "./ProfilePhoto";
+import ProfileCard from "./ProfileCard";
 
 const prefs: Record<string, any> = {
   basic: [
@@ -34,8 +35,11 @@ const prefs: Record<string, any> = {
         "Chicago",
         "Los Angeles",
         "New York City",
+        "Philadelphia",
+        "San Diego",
         "San Francisco Bay Area",
         "Seattle",
+        "Toronto",
         "Washington, DC",
       ],
       allowOther: true,
@@ -53,7 +57,7 @@ const prefs: Record<string, any> = {
       type: PreferenceType.FREE_TEXT,
       description: `<p>These will be shared with your matches, so make them good 🙂</p>
 <p>Some ideas:</p>
-<ul style="list-style: none; padding: 0">
+<ul>
 <li>What are you passionate about?</li>
 <li>How might your friends describe you?</li>
 <li>What's something you want to learn?</li>
@@ -158,13 +162,8 @@ function Profile() {
     setPhotoUploading(false);
   }
 
-  async function logout() {
-    await firebase.auth().signOut();
-    history.push("/login")
-  }
-
   if (userLoading || !userPrefs) {
-    return <Spin size="large" />
+    return <CenteredSpin />
   }
 
   if (selectedPref) {
@@ -187,7 +186,6 @@ function Profile() {
     <div className="profile-container">
       <div className="profile-header">
         <div>
-          <ProfilePhoto photoPath={userPrefs.photo} uploading={photoUploading} />
           <div className="profile-photo-edit">
             <Button type="text">
               <label htmlFor="profile-photo-upload">
@@ -196,13 +194,13 @@ function Profile() {
             </Button>
             <input id="profile-photo-upload" type="file" accept="image/*" onChange={e => uploadProfilePhoto(e.target.files)} />
           </div>
-          <div className="profile-photo-desc">Your photo will only be shown to your match after your phone call.</div>
-          <h1>{userPrefs.firstName}</h1>
-          <h3>{userPrefs.gender}, {userPrefs.age}</h3>
+          <ProfileCard firstName={userPrefs.firstName} gender={userPrefs.gender} age={userPrefs.age} photoPath={userPrefs.photo} uploading={photoUploading}>
+            <div className="profile-card-bottom">Your photo will only be shown to your match after your phone call.</div>
+            </ProfileCard>
         </div>
       </div>
 
-      <h3 className="prefs-header">The Basics</h3>
+      <h3 className="prefs-header">Basics</h3>
 
       {prefs.basic.map((pref: any, i: number) => (
         <div>
@@ -221,7 +219,6 @@ function Profile() {
       ))
       }
 
-      <Button className="logout" onClick={logout}>Log out</Button>
     </div>
 
   );

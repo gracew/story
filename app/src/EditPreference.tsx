@@ -1,4 +1,4 @@
-import { Button, Slider, Spin } from "antd";
+import { Button, Checkbox, Radio, Slider, Spin } from "antd";
 import TextArea from "antd/lib/input/TextArea";
 import firebase from "firebase";
 import "firebase/analytics";
@@ -58,22 +58,15 @@ function EditPreference(props: EditPreferenceProps) {
     return emptyValue && emptyDealbreakers;
   }
 
-  function isSelected(option: string) {
-    if (props.metadata.type === PreferenceType.MULTIPLE_CHOICE) {
-      return option === value;
-    }
-    return Array.isArray(value) && value.includes(option);
-  }
-
-  function otherSelected() {
-    if (value === undefined) {
-      return false;
-    }
-    if (props.metadata.type === PreferenceType.MULTIPLE_CHOICE) {
-      return !props.metadata.options.includes(value as string);
+  function valueHandleOther() {
+    if (value && props.metadata.type === PreferenceType.MULTIPLE_CHOICE && !props.metadata.options.includes(value as string)) {
+      return "Other";
     }
     const optionsSet = new Set(props.metadata.options);
-    return Array.isArray(value) && !value.some(v => optionsSet.has(v));
+    if (Array.isArray(value)) {
+      return value.map(v => optionsSet.has(v) ? v : "Other")
+    }
+    return value;
   }
 
   function onMultipleChoiceSelect(option: string) {
@@ -145,81 +138,100 @@ function EditPreference(props: EditPreferenceProps) {
   }
 
   return (
-    <div className="profile-container">
-      <h1>{props.metadata.label}</h1>
+    <div className="edit-preference-container">
+      <div>
+        <div className="edit-preference">
+          <h3>{props.metadata.label}</h3>
+          {props.metadata.dealbreakers && <div className="edit-prefs-header">About me</div>}
+          {props.metadata.description && <div className="edit-pref-description" dangerouslySetInnerHTML={{ __html: props.metadata.description }}></div>}
 
-      <div className="edit-preference">
-        {props.metadata.dealbreakers && <h3>About me</h3>}
-        {props.metadata.description && <div className="edit-pref-description" dangerouslySetInnerHTML={{ __html: props.metadata.description }}></div>}
+          {props.metadata.type === PreferenceType.FREE_TEXT && <TextArea value={value} onChange={e => setValue(e.target.value)} allowClear autoSize={{ minRows: 6 }} />}
+          {props.metadata.type === PreferenceType.AGE && <Slider
+            className="edit-pref-age"
+            range
+            min={18}
+            max={65}
+            tooltipVisible
+            defaultValue={[matchMin!, matchMax!]}
+            onChange={([min, max]) => { setMatchMin(min); setMatchMax(max); }}
+          />}
 
-        {props.metadata.type === PreferenceType.FREE_TEXT && <TextArea value={value} onChange={e => setValue(e.target.value)} allowClear autoSize={{ minRows: 4 }} />}
-        {props.metadata.type === PreferenceType.AGE && <Slider
-          className="edit-pref-age"
-          range
-          min={18}
-          max={65}
-          tooltipVisible
-          defaultValue={[matchMin!, matchMax!]}
-          onChange={([min, max]) => { setMatchMin(min); setMatchMax(max); }}
-        />}
-
-        <div className="pref-options">
-          {props.metadata.type === PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE && <p className="multiple-selection-desc">Choose as many as you like</p>}
-          {(props.metadata.type === PreferenceType.MULTIPLE_CHOICE || props.metadata.type === PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE) &&
-            <div>
-              {props.metadata.options.map(o => (
-                <Button
-                  className="pref-option"
-                  shape="round"
-                  type={isSelected(o) ? "primary" : "default"}
-                  onClick={() => onMultipleChoiceSelect(o)}
-                >{o}</Button>
-              ))}
-            </div>
-          }
-          {props.metadata.allowOther && <div>
-            <Button
-              className="pref-option"
-              shape="round"
-              type={otherSelected() ? "primary" : "default"}
-              onClick={() => onMultipleChoiceSelect("Other")}
-            >Other</Button>
+          <div className="pref-options">
+            {props.metadata.type === PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE &&
+              <div>
+                <p className="multiple-selection-desc">Choose as many as you like</p>
+                <Checkbox.Group value={valueHandleOther() as string[] | undefined}>
+                  {props.metadata.options.map(o => (
+                    <Checkbox
+                      value={o}
+                      className="pref-option"
+                      onClick={() => onMultipleChoiceSelect(o)}
+                    >{o}</Checkbox>
+                  ))}
+                  {props.metadata.allowOther && <div>
+                    <Checkbox
+                      value="Other"
+                      className="pref-option"
+                      onClick={() => onMultipleChoiceSelect("Other")}
+                    >Other</Checkbox>
+                  </div>
+                  }
+                </Checkbox.Group>
+              </div>
+            }
+            {props.metadata.type === PreferenceType.MULTIPLE_CHOICE &&
+              <Radio.Group value={valueHandleOther()}>
+                {props.metadata.options.map(o => (
+                  <Radio
+                    value={o}
+                    className="pref-option"
+                    onClick={() => onMultipleChoiceSelect(o)}
+                  >{o}</Radio>
+                ))}
+                {props.metadata.allowOther && <div>
+                  <Radio
+                    value="Other"
+                    className="pref-option"
+                    onClick={() => onMultipleChoiceSelect("Other")}
+                  >Other</Radio>
+                </div>
+                }
+              </Radio.Group>
+            }
           </div>
+
+          {props.metadata.dealbreakers &&
+            <div>
+              <div className="edit-prefs-header-dealbreakers">Match dealbreakers</div>
+              <p className="multiple-selection-desc">Choose as many as you like</p>
+              <div className="pref-options">
+                <Checkbox.Group value={dealbreakers}>
+                  {(props.metadata.dealbreakerOptions || props.metadata.options).map(o => (
+                    <Checkbox
+                      value={o}
+                      className="pref-option"
+                      onChange={() => onDealbreakerSelect(o)}
+                    >{o}</Checkbox>
+                  ))}
+                  <Checkbox
+                    value={NO_DEALBREAKERS}
+                    className="pref-option"
+                    onChange={() => onDealbreakerSelect(NO_DEALBREAKERS)}
+                  >{NO_DEALBREAKERS}</Checkbox>
+                </Checkbox.Group>
+              </div>
+            </div>
           }
         </div>
-
-        {props.metadata.dealbreakers &&
-          <div>
-            <h3 className="prefs-header">Match dealbreakers</h3>
-            <p className="multiple-selection-desc">Choose as many as you like</p>
-            <div className="pref-options">
-              {(props.metadata.dealbreakerOptions || props.metadata.options).map(o => (
-                <Button
-                  className="pref-option"
-                  shape="round"
-                  type={dealbreakers?.includes(o) ? "primary" : "default"}
-                  onClick={() => onDealbreakerSelect(o)}
-                >{o}</Button>
-              ))}
-              <Button
-                className="pref-option"
-                shape="round"
-                type={dealbreakers?.includes(NO_DEALBREAKERS) ? "primary" : "default"}
-                onClick={() => onDealbreakerSelect(NO_DEALBREAKERS)}
-              >{NO_DEALBREAKERS}</Button>
-            </div>
-          </div>
-        }
       </div>
 
-      <div className="save-cancel">
-        <Button onClick={props.back}>Cancel</Button>
-        <Button type="primary" onClick={onSave} disabled={emptyState() || saving}>
+      <div className="edit-actions">
+        <Button className="edit-cancel" onClick={props.back}>Cancel</Button>
+        <Button className="edit-save" type="primary" onClick={onSave} disabled={emptyState() || saving}>
           {!saving && <div>Save</div>}
           {saving && <div>Saving... <Spin size="small" ></Spin></div>}
         </Button>
       </div>
-
     </div>
   );
 }

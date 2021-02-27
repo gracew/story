@@ -40,7 +40,9 @@ function Login() {
   })
 
   return (
-    <div id="firebaseui-auth-container"></div>
+    <div className="story-login-container">
+      <div id="firebaseui-auth-container"></div>
+    </div>
   );
 }
 
