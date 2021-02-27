@@ -5,12 +5,9 @@ import React from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.less";
 import Login from "./Login";
-import PhoneAlreadyExists from "./PhoneAlreadyExists";
 import Privacy from "./Privacy";
 import Profile from "./Profile";
 import PublicProfile from "./PublicProfile";
-import Recorder from "./Recorder";
-import RegisterComplete from "./RegisterComplete";
 import Terms from "./Terms";
 import VideoRedirect from "./VideoRedirect";
 import VoiceBio from "./VoiceBio";
@@ -63,20 +60,11 @@ function App() {
         <Route path="/terms">
           <Terms />
         </Route>
+        <Route path="/v/:videoId/:user">
+          <VideoRedirect />
+        </Route>
         <div className="App">
           <Switch>
-            <Route path="/v/:videoId/:user">
-              <VideoRedirect />
-            </Route>
-            <Route path="/record">
-              <Recorder />
-            </Route>
-            <Route path="/register/complete">
-              <RegisterComplete />
-            </Route>
-            <Route path="/register/error">
-              <PhoneAlreadyExists />
-            </Route>
             <Route path="/profile" exact>
               <Profile />
             </Route>
