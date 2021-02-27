@@ -13,7 +13,7 @@ function Login() {
 
   firebase.auth().onAuthStateChanged(function (user) {
     if (user) {
-      // history.push("/profile")
+      history.push("/profile")
     }
   });
 

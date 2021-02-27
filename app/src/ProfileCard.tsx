@@ -4,7 +4,7 @@ import firebase from "firebase";
 import "firebase/analytics";
 import "firebase/remote-config";
 import "firebase/storage";
-import React, { useEffect, useState } from "react";
+import React, { FunctionComponent, useEffect, useState } from "react";
 import "./ProfileCard.css";
 
 interface ProfileCardProps {
@@ -15,7 +15,7 @@ interface ProfileCardProps {
   uploading?: boolean;
 }
 
-function ProfileCard(props: ProfileCardProps) {
+const ProfileCard: FunctionComponent<ProfileCardProps> = (props) => {
   const [photoUrl, setPhotoUrl] = useState<string>();
 
   useEffect(() => {
@@ -41,10 +41,10 @@ function ProfileCard(props: ProfileCardProps) {
         </div>
         <div className="profile-text">
           <h3>{props.firstName}</h3>
-          <div>{props.gender}, {props.age}</div>
+          <div>{props.gender}{props.age && `, ${props.age}`}</div>
         </div>
       </div>
-      <div className="profile-card-bottom">Your photo will only be shown after your phone call.</div>
+      {props.children}
     </div>
   );
 }

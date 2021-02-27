@@ -194,7 +194,9 @@ function Profile() {
             </Button>
             <input id="profile-photo-upload" type="file" accept="image/*" onChange={e => uploadProfilePhoto(e.target.files)} />
           </div>
-          <ProfileCard firstName={userPrefs.firstName} gender={userPrefs.gender} age={userPrefs.age} photoPath={userPrefs.photo} uploading={photoUploading} />
+          <ProfileCard firstName={userPrefs.firstName} gender={userPrefs.gender} age={userPrefs.age} photoPath={userPrefs.photo} uploading={photoUploading}>
+            <div className="profile-card-bottom">Your photo will only be shown after your phone call.</div>
+            </ProfileCard>
         </div>
       </div>
 

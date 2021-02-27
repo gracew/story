@@ -64,18 +64,21 @@ function App() {
           <VideoRedirect />
         </Route>
         <div className="App">
-          <Header />
           <Switch>
             <Route path="/profile" exact>
+              <Header showLogout={true} />
               <Profile />
             </Route>
             <Route path="/profile/:userId">
+              <Header showLogout={true} />
               <Profile />
             </Route>
             <Route path="/u/:userId">
+              <Header />
               <PublicProfile />
             </Route>
             <Route path="/login">
+              <Header />
               <Login />
             </Route>
           </Switch>

@@ -20,6 +20,14 @@
   color: #682873;
 }
 
+.profile-card-bottom {
+  font-size: 12px;
+  padding: 10px 20px;
+  background: #F6EFFF;
+  border-radius: 16px;
+  color: #826C86;
+}
+
 .profile-photo-edit input {
   opacity: 0;
   width: 0;

@@ -1,10 +1,10 @@
-import { Spin } from "antd";
 import firebase from "firebase";
 import "firebase/analytics";
 import "firebase/remote-config";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import CenteredSpin from "./CenteredSpin";
 import ProfileCard from "./ProfileCard";
 import "./PublicProfile.css";
 
@@ -22,16 +22,15 @@ function PublicProfile() {
   }, [userId]);
 
   if (!data) {
-    return <Spin size="large" />
+    return <CenteredSpin />
   }
 
   return (
     <div className="public-profile-container">
-      <div className="public-profile-header">
-        <div>
-          <ProfileCard firstName={data.firstName} gender={data.gender} photoPath={data.photo} />
-          <p>{data.funFacts}</p>
-        </div>
+      <div>
+        <ProfileCard firstName={data.firstName} gender={data.gender} photoPath={data.photo}>
+          <p className="public-profile-fun-facts">{data.funFacts}</p>
+        </ProfileCard>
       </div>
     </div>
 

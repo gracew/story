@@ -1,21 +1,17 @@
 import { Button } from "antd";
 import firebase from "firebase";
-import "firebase/analytics";
-import "firebase/remote-config";
-import "firebase/storage";
-import React, { useState } from "react";
+import React from "react";
 import { useHistory } from "react-router-dom";
 import logoutIcon from './assets/logout.svg';
 import logo from './assets/mainlogo.svg';
 import "./Header.css";
 
-function Header() {
-  const history = useHistory();
-  const [showLogout, setShowLogout] = useState(false);
+export interface HeaderProps {
+  showLogout?: boolean;
+}
 
-  firebase.auth().onAuthStateChanged(function (user) {
-    setShowLogout(true);
-  });
+function Header(props: HeaderProps) {
+  const history = useHistory();
 
   async function logout() {
     await firebase.auth().signOut();
@@ -27,7 +23,7 @@ function Header() {
       <a href="/">
         <img src={logo} alt="story-logo" />
       </a>
-      {showLogout &&
+      {props.showLogout &&
         <Button className="logout-button" type="link" onClick={logout}><img src={logoutIcon} alt="logout" /></Button>
       }
     </div>
