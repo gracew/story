@@ -581,5 +581,5 @@ export async function notifyIncomingTextHelper(phone: string, message: string) {
       body: `From: ${fullName}
 Body: ${message}`,
     });
-
+    return user.data() as IUser;
 }

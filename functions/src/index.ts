@@ -7,11 +7,11 @@ import * as path from "path";
 import { getPreferences, getPublicProfile, getUserByUsername, savePreferences } from "./app";
 import { addUserToCall, announce1Min, announce5Min, announceUser, call1MinWarning, call5MinWarning, callOutro, callUser, conferenceStatusWebhook, createSmsChat, handleFlakes, issueCalls, markJoined, notifyIncomingTextHelper, revealRequest, revealRequestVideo, saveReveal, screenCall, sendReminderTexts, sendVideoLink } from "./calls";
 import { createSchedulingRecords, processBulkSmsCsv, processMatchCsv, sendAvailabilityTexts, sendWaitlistTexts } from "./csv";
-import { Firestore } from "./firestore";
+import { Firestore, IUser } from "./firestore";
 import { registerUser } from "./register";
 import { analyzeCollection, cancelMatch, createMatch } from "./retool";
 import { bipartiteMatches, potentialMatches, remainingMatches } from "./scheduling";
-import { client, sendSms } from "./twilio";
+import { client, sendSms, TWILIO_NUMBER } from "./twilio";
 
 admin.initializeApp();
 
@@ -139,10 +139,46 @@ export const notifyIncomingText = functions.https.onRequest(
       // special case grace's phone number...
       response.end();
     }
-    await notifyIncomingTextHelper(phone, request.body.message)
+    const user = await notifyIncomingTextHelper(phone, request.body.message)
+    await recordAvailability(request.body.message.toLowercase(), user);
     response.end();
   }
 );
+
+async function recordAvailability(messageLowercase: string, user?: IUser) {
+  if (!user) {
+    return;
+  }
+
+  const week = moment().startOf("week").format("YYYY-MM-DD");
+  const today = moment().format("YYYY-MM-DD");
+  if (week !== today) {
+    return;
+  }
+
+  const skip = messageLowercase.includes("skip");
+  const tue = messageLowercase.includes("tue");
+  const wed = messageLowercase.includes("wed");
+  const thu = messageLowercase.includes("thu");
+  const any = messageLowercase.includes("any");
+  const all = messageLowercase.includes("all");
+  const update = {
+    tue: tue || any || all,
+    wed: wed || any || all,
+    thu: thu || any || all,
+    skip,
+  }
+  await admin.firestore().collection("scheduling").doc(week).collection("users").doc(user.id).update(update);
+
+  const body = skip ?
+    "Sorry the timing didn't work out this week! We'll follow up next week with a new match for you." :
+    `Thanks ${user.firstName}! We're working on finalizing your match and will send more details tomorrow.`;
+  await client.messages.create({
+    body,
+    from: TWILIO_NUMBER,
+    to: user.phone,
+  });
+}
 
 export const notifyNewRecording = functions.firestore
   .document('vday/{docId}')
