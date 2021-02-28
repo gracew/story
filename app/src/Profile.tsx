@@ -12,6 +12,7 @@ import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPrefe
 import Preference from "./Preference";
 import "./Profile.css";
 import ProfileCard from "./ProfileCard";
+import ReferralCard from "./ReferralCard";
 
 const prefs: Record<string, any> = {
   basic: [
@@ -182,6 +183,10 @@ function Profile() {
     return <div className="profile-container"><EditPreference {...editProps} /></div>
   }
 
+  const betaUserIdsParsed = JSON.parse(firebase.remoteConfig().getString("beta_user_ids"));
+  const betaUserIds = Array.isArray(betaUserIdsParsed) ? betaUserIdsParsed : [];
+  const isBetaUser = betaUserIds.includes(userPrefs.id);
+
   return (
     <div className="profile-container">
       <div className="profile-header">
@@ -196,9 +201,11 @@ function Profile() {
           </div>
           <ProfileCard firstName={userPrefs.firstName} gender={userPrefs.gender} age={userPrefs.age} photoPath={userPrefs.photo} uploading={photoUploading}>
             <div className="profile-card-bottom">Your photo will only be shown to your match after your phone call.</div>
-            </ProfileCard>
+          </ProfileCard>
         </div>
       </div>
+
+      {isBetaUser && <ReferralCard referrerId={userPrefs.id} />}
 
       <h3 className="prefs-header">Basics</h3>
 

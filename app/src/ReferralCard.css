@@ -1,0 +1,49 @@
+.referral-card {
+  margin: 20px 0;
+  background: #682873;
+  padding: 20px;
+  box-shadow: 0px 1px 6px rgba(122, 55, 133, 0.16);
+  border-radius: 20px;
+}
+
+.referral-card h2 {
+  color: white;
+  font-size: 24px;
+  line-height: 24px;;
+}
+
+.referral-card-top {
+  display: flex;
+  align-items: flex-start;
+}
+
+.referral-link {
+  font-size: 12px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 10px 5px 10px;
+  height: 100%;
+}
+
+.referral-link,
+.referral-link:hover {
+  background: white;
+}
+
+.referral-link .anticon-copy {
+  color: #F1AA40
+}
+
+.referral-text {
+  margin: 10px 0 20px 0;
+  font-size: 12px;
+  line-height: 12px;
+  color: #A986D3;
+}
+
+.social-buttons {
+  width: 285px;
+  display: flex;
+  justify-content: space-between;
+}
