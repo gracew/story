@@ -66,11 +66,11 @@ export const sendAvailabilityTexts = functions.pubsub
   .schedule("every sunday 13:00")
   .onRun(async (context) => {
     const week = moment().startOf("week").format("YYYY-MM-DD");
-    const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").where("availability", "==", false).get();
+    const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").where("interactions.requested", "==", false).get();
     const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
     const users = await admin.firestore().getAll(...userRefs);
     const batch = admin.firestore().batch();
-    availability.docs.forEach(doc => batch.update(doc.ref, { availability: true }))
+    availability.docs.forEach(doc => batch.update(doc.ref, { "interactions.requested": true }))
     await batch.commit();
 
     await Promise.all(users.map(async doc => {
