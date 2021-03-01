@@ -147,8 +147,14 @@ async function recordAvailability(messageLowercase: string, user?: IUser) {
   }
 
   const week = moment().startOf("week").format("YYYY-MM-DD");
-  const today = moment().format("YYYY-MM-DD");
+  const today = moment().tz("America/Los_Angeles").format("YYYY-MM-DD");
   if (week !== today) {
+    return;
+  }
+
+  const record = await admin.firestore().collection("scheduling").doc(week).collection("users").doc(user.id).get();
+  if (record.get("interactions.acknowledged")) {
+    // we already acknowledged the user's response once
     return;
   }
 
@@ -163,17 +169,23 @@ async function recordAvailability(messageLowercase: string, user?: IUser) {
     wed: wed || any || all,
     thu: thu || any || all,
     skip,
+    "interactions.acknowledged": true,
   }
   await admin.firestore().collection("scheduling").doc(week).collection("users").doc(user.id).update(update);
 
-  const body = skip ?
-    "Sorry the timing didn't work out this week! We'll follow up next week with a new match for you." :
-    `Thanks ${user.firstName}! We're working on finalizing your match and will send more details tomorrow.`;
-  await client.messages.create({
-    body,
-    from: TWILIO_NUMBER,
-    to: user.phone,
-  });
+  if (skip) {
+    await client.messages.create({
+      body: "Sorry the timing didn't work out this week! We'll follow up next week with a new match for you.",
+      from: TWILIO_NUMBER,
+      to: user.phone,
+    });
+  } else if (update.tue || update.wed || update.thu) {
+    await client.messages.create({
+      body: `Thanks ${user.firstName}! We're working on finalizing your match and will send more details tomorrow.`,
+      from: TWILIO_NUMBER,
+      to: user.phone,
+    });
+  }
 }
 
 export const notifyNewRecording = functions.firestore
