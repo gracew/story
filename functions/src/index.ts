@@ -135,12 +135,8 @@ export const backupFirestore = functions.pubsub
 export const notifyIncomingText = functions.https.onRequest(
   async (request, response) => {
     const phone = request.body.phone;
-    if (phone === functions.config().twilio.notify_phone) {
-      // special case grace's phone number...
-      response.end();
-    }
     const user = await notifyIncomingTextHelper(phone, request.body.message)
-    await recordAvailability(request.body.message.toLowercase(), user);
+    await recordAvailability(request.body.message.toLowerCase(), user);
     response.end();
   }
 );
