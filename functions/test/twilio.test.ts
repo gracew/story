@@ -64,6 +64,8 @@ it("callStudio", async () => {
             firstName: user1.firstName,
             matchName: user2.firstName,
             matchPhone: user2.phone.substring(2),
+            matchUserId: user2.id,
+            photo: "self_no_photo",
             nextDays: nextWeek,
             video: false,
         }
@@ -78,9 +80,11 @@ it("callStudio", async () => {
             firstName: user2.firstName,
             matchName: user1.firstName,
             matchPhone: user1.phone.substring(2),
+            matchUserId: user1.id,
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
             nextDays: nextWeek,
+            photo: "self_no_photo",
             video: false,
         }
     });
@@ -117,6 +121,7 @@ it("saveReveal Y, other Y next match", async () => {
             firstName: user2.firstName,
             matchName: user1.firstName,
             matchPhone: user1.phone.substring(2),
+            matchUserId: user1.id,
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
             nextDays: nextWeek,
@@ -148,6 +153,7 @@ it("saveReveal N, other Y next match", async () => {
             firstName: user2.firstName,
             matchName: user1.firstName,
             matchPhone: user1.phone.substring(2),
+            matchUserId: user1.id,
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
             video: false,
