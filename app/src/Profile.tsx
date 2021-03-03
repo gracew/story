@@ -1,8 +1,6 @@
 import { EditOutlined } from "@ant-design/icons";
 import { Button, Divider } from "antd";
 import firebase from "firebase";
-import "firebase/analytics";
-import "firebase/remote-config";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
@@ -12,6 +10,7 @@ import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPrefe
 import Preference from "./Preference";
 import "./Profile.css";
 import ProfileCard from "./ProfileCard";
+import ReferralCard from "./ReferralCard";
 
 const prefs: Record<string, any> = {
   basic: [
@@ -196,9 +195,11 @@ function Profile() {
           </div>
           <ProfileCard firstName={userPrefs.firstName} gender={userPrefs.gender} age={userPrefs.age} photoPath={userPrefs.photo} uploading={photoUploading}>
             <div className="profile-card-bottom">Your photo will only be shown to your match after your phone call.</div>
-            </ProfileCard>
+          </ProfileCard>
         </div>
       </div>
+
+      {userPrefs.beta && <ReferralCard referrerId={userPrefs.id} />}
 
       <h3 className="prefs-header">Basics</h3>
 

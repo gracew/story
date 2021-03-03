@@ -5,6 +5,18 @@
   force = true
 
 [[redirects]]
+  from = "/referral"
+  to = "https://webflow.storydating.com/referral"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/r"
+  to = "https://webflow.storydating.com/referral"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/weekly"
   to = "https://storydating.typeform.com/to/Squ29w7E"
   status = 301

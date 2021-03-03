@@ -65,6 +65,7 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
   const user = await getUser(data, context);
   const {
     id,
+    beta,
     firstName,
     gender,
     age,
@@ -83,6 +84,7 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
     .get();
   return {
     id,
+    beta,
     firstName,
     photo,
     gender,
