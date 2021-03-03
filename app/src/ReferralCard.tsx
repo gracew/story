@@ -16,13 +16,17 @@ interface ReferralCardProps {
 function ReferralCard(props: ReferralCardProps) {
   const link = "https://story.dating/r?r=" + props.referrerId;
 
+  function copyLink() {
+    return navigator.clipboard.writeText(link);
+  }
+
   return (
     <div className="referral-card">
       <div className="referral-card-top">
         <h2>Share Story with others and help make dating genuine again.</h2>
         <img src={balloons} alt="balloons" />
       </div>
-      <Button type="text" className="referral-link">
+      <Button type="text" className="referral-link" onClick={copyLink}>
         <span>{link}</span>
         <CopyOutlined />
       </Button>
