@@ -1,8 +1,6 @@
 import { EditOutlined } from "@ant-design/icons";
 import { Button, Divider } from "antd";
 import firebase from "firebase";
-import "firebase/analytics";
-import "firebase/remote-config";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
@@ -183,10 +181,6 @@ function Profile() {
     return <div className="profile-container"><EditPreference {...editProps} /></div>
   }
 
-  const betaUserIdsParsed = JSON.parse(firebase.remoteConfig().getString("beta_user_ids"));
-  const betaUserIds = Array.isArray(betaUserIdsParsed) ? betaUserIdsParsed : [];
-  const isBetaUser = betaUserIds.includes(userPrefs.id);
-
   return (
     <div className="profile-container">
       <div className="profile-header">
@@ -205,7 +199,7 @@ function Profile() {
         </div>
       </div>
 
-      {isBetaUser && <ReferralCard referrerId={userPrefs.id} />}
+      {userPrefs.beta && <ReferralCard referrerId={userPrefs.id} />}
 
       <h3 className="prefs-header">Basics</h3>
 
