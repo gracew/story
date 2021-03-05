@@ -1739,6 +1739,11 @@
   resolved "https://registry.yarnpkg.com/@firebase/webchannel-wrapper/-/webchannel-wrapper-0.4.1.tgz#600f2275ff54739ad5ac0102f1467b8963cd5f71"
   integrity sha512-0yPjzuzGMkW1GkrC8yWsiN7vt1OzkMIi9HgxRmKREZl2wnNPOKo/yScTjXf/O57HM8dltqxPF6jlNLFVtc2qdw==
 
+"@fullstory/browser@^1.4.8":
+  version "1.4.8"
+  resolved "https://registry.yarnpkg.com/@fullstory/browser/-/browser-1.4.8.tgz#d3cbdd3e6f30222858ac27b3425c44b78551d912"
+  integrity sha512-bmM9i6+G5Z/iHm2SrHJ3ISjwFIwix9duoVgJX8tnT+KmFqpJMj2byzKmRA5ZZFCds0/lgDpgKZB/p7cm+taHsg==
+
 "@grpc/grpc-js@^1.0.0":
   version "1.2.8"
   resolved "https://registry.yarnpkg.com/@grpc/grpc-js/-/grpc-js-1.2.8.tgz#7e1aab8fd4d576b8ee6e73bba475d94a67ffd07d"
