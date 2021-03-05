@@ -1,8 +1,11 @@
+import * as FullStory from '@fullstory/browser';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
 import App from './App';
+import './index.css';
 import * as serviceWorker from './serviceWorker';
+
+FullStory.init({ orgId: '11AD82' });
 
 ReactDOM.render(
   <React.StrictMode>

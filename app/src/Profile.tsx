@@ -1,4 +1,5 @@
 import { EditOutlined } from "@ant-design/icons";
+import * as FullStory from '@fullstory/browser';
 import { Button, Divider } from "antd";
 import firebase from "firebase";
 import "firebase/storage";
@@ -11,6 +12,7 @@ import Preference from "./Preference";
 import "./Profile.css";
 import ProfileCard from "./ProfileCard";
 import ReferralCard from "./ReferralCard";
+
 
 const prefs: Record<string, any> = {
   basic: [
@@ -134,6 +136,9 @@ function Profile() {
       .httpsCallable("getPreferences")({ userId })
       .then((res) => {
         setUserPrefs(res.data);
+        FullStory.identify(res.data.id, {
+          displayName: res.data.firstName,
+        });
       })
   }, [userLoading, userId]);
 
