@@ -12,12 +12,11 @@ admin
   .collection("scheduling").doc(week).collection("users")
   .get()
   .then(async (res) => {
-    const ids = res.docs.filter(doc => Object.keys(doc.data()).length === 2).map(doc => admin.firestore().collection("users").doc(doc.id));
+    const ids = res.docs.filter(doc => doc.get("interactions").responded === undefined).map(doc => admin.firestore().collection("users").doc(doc.id));
     const users = await admin.firestore().getAll(...ids);
     users.forEach(u => {
       if (u.get("timezone") === "PT") {
-        console.log(u.get("firstName") + " " + u.get("lastName"));
-        console.log(`${u.get("phone")},"Your match will expire soon! If you'd like to connect this week, please reply in the next hour and let us know which days work for you for an 8PM ${u.get("timezone")} call."`);
+        console.log(`${u.get("phone")},"Your match will expire soon! If you'd like to connect this week, please fill out this super short form in the next hour to let us know your availability: https://storydating.com/weekly#u=${u.get("id")}&tz=${u.get("timezone")}"`);
       }
     })
   });

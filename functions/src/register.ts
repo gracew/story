@@ -61,10 +61,9 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     user.phone = user.phone.split(" ").join("");
   } else if (req.body.form_response.hidden.phone) {
     const trimmed = req.body.form_response.hidden.phone.trim();
-    if (trimmed.length === 12 && trimmed.startsWith("+1")) {
+    if (trimmed.startsWith("+")) {
       user.phone = trimmed;
-    }
-    if (trimmed.length === 10) {
+    } else if (trimmed.length === 10) {
       user.phone = "+1" + trimmed;
     } else {
       console.error("unable to handle phone number: " + trimmed);
