@@ -1,7 +1,6 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { IUser } from "./firestore";
-import { sendWelcomeEmail } from "./sendgrid";
 import { welcome } from "./smsCopy";
 import { client, TWILIO_NUMBER } from "./twilio";
 
@@ -66,7 +65,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
       user.phone = trimmed;
     }
     if (trimmed.length === 10) {
-      user.phone = "+1" + user.phone;
+      user.phone = "+1" + trimmed;
     } else {
       console.error("unable to handle phone number: " + trimmed);
     }
@@ -107,7 +106,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
 
   const reff = admin.firestore().collection("users").doc();
   user.id = reff.id;
-  user.registeredAt = admin.firestore.FieldValue.serverTimestamp();
+  user.registeredAt = new Date(req.body.form_response.submitted_at)
   await reff.set(user);
   if (user.phone.length === 12 && user.phone.startsWith("+1")) {
     // US or Canada
@@ -116,8 +115,6 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
       from: TWILIO_NUMBER,
       to: user.phone,
     });
-  } else {
-    await sendWelcomeEmail(user as IUser);
   }
 
   response.end();
