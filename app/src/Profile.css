@@ -1,7 +1,6 @@
 .profile-container {
   margin-top: 30px;
   height: 100%;
-  overflow-x: hidden;
 }
 
 .profile-header {
@@ -30,9 +29,8 @@
   color: #826C86;
 }
 
-.profile-photo-edit input {
-  opacity: 0;
-  width: 0;
+#profile-photo-upload {
+  display: none;
 }
 
 .profile-header h1 {
