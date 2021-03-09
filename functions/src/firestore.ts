@@ -88,7 +88,6 @@ export class Firestore {
         const data = {
             interactions: {
                 requested: false,   // we requested the user's availability
-                acknowledged: false,    //  we acknowledged their response
             },
         }
         userIds.forEach(userId => {
