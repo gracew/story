@@ -26,62 +26,62 @@ export async function processBulkSmsCsv(tempFilePath: string, sendSmsFn: (opts: 
  * header line.
  */
 export const createSchedulingRecords = functions.storage
-    .object()
-    .onFinalize(async (object) => {
-        if (!(object.name && object.name.startsWith("availability"))) {
-            return;
-        }
-        const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
-        await admin
-            .storage()
-            .bucket(object.bucket)
-            .file(object.name)
-            .download({ destination: tempFilePath });
-        const contents = fs.readFileSync(tempFilePath).toString();
-        const rows = await neatCsv(contents, { headers: ["userId", "timezone"] });
-        const userIds = rows.map(data => data.userId);
-        const week = moment().startOf("week").format("YYYY-MM-DD");
-        await new Firestore().createSchedulingRecords(week, userIds);
-    });
+  .object()
+  .onFinalize(async (object) => {
+    if (!(object.name && object.name.startsWith("availability"))) {
+      return;
+    }
+    const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
+    await admin
+      .storage()
+      .bucket(object.bucket)
+      .file(object.name)
+      .download({ destination: tempFilePath });
+    const contents = fs.readFileSync(tempFilePath).toString();
+    const rows = await neatCsv(contents, { headers: ["userId", "timezone"] });
+    const userIds = rows.map(data => data.userId);
+    const week = moment().startOf("week").format("YYYY-MM-DD");
+    await new Firestore().createSchedulingRecords(week, userIds);
+  });
 
 export const sendWaitlistTexts = functions.pubsub
-    .schedule("every saturday 13:00")
-    .onRun(async (context) => {
-        const week = moment().startOf("week").add(1, "weeks").format("YYYY-MM-DD");
-        const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
-        const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
-        const users = await admin.firestore().getAll(...userRefs);
-        const waitlistUsers = users.map(doc => doc.data() as IUser).filter(user => user.status === "waitlist");
+  .schedule("every saturday 13:00")
+  .onRun(async (context) => {
+    const week = moment().startOf("week").add(1, "weeks").format("YYYY-MM-DD");
+    const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
+    const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
+    const users = await admin.firestore().getAll(...userRefs);
+    const waitlistUsers = users.map(doc => doc.data() as IUser).filter(user => user.status === "waitlist");
 
-        await Promise.all(waitlistUsers.map(async user => {
-            return sendSms({
-                body: await waitlist(user),
-                from: TWILIO_NUMBER,
-                to: user.phone,
-            });
-        }));
-    });
+    await Promise.all(waitlistUsers.map(async user => {
+        return sendSms({
+            body: await waitlist(user),
+            from: TWILIO_NUMBER,
+            to: user.phone,
+        });
+    }));
+  });
 
 export const sendAvailabilityTexts = functions.pubsub
-    .schedule("every sunday 13:00")
-    .onRun(async (context) => {
-        const week = moment().startOf("week").format("YYYY-MM-DD");
-        const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").where("interactions.requested", "==", false).get();
-        const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
-        const users = await admin.firestore().getAll(...userRefs);
-        const batch = admin.firestore().batch();
-        availability.docs.forEach(doc => batch.update(doc.ref, { "interactions.requested": true }))
-        await batch.commit();
+  .schedule("every sunday 13:00")
+  .onRun(async (context) => {
+    const week = moment().startOf("week").format("YYYY-MM-DD");
+    const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").where("interactions.requested", "==", false).get();
+    const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
+    const users = await admin.firestore().getAll(...userRefs);
+    const batch = admin.firestore().batch();
+    availability.docs.forEach(doc => batch.update(doc.ref, { "interactions.requested": true }))
+    await batch.commit();
 
-        await Promise.all(users.map(async doc => {
-            const user = doc.data() as IUser;
-            return sendSms({
-                body: await availabilityCopy(user),
-                from: TWILIO_NUMBER,
-                to: user.phone,
-            });
-        }));
-    });
+    await Promise.all(users.map(async doc => {
+        const user = doc.data() as IUser;
+        return sendSms({
+            body: await availabilityCopy(user),
+            from: TWILIO_NUMBER,
+            to: user.phone,
+        });
+    }));
+  });
 
 export async function processMatchCsv(tempFilePath: string, firestore: Firestore, sendSmsFn: (opts: any) => Promise<any>) {
     const contents = fs.readFileSync(tempFilePath).toString();
