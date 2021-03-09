@@ -28,7 +28,7 @@ export const sendReminderTexts = functions.pubsub
           .firestore()
           .collection("matches")
           .where("created_at", "==", createdAt)
-          .where("reminded", "==", false)
+          .where("interactions.reminded", "==", false)
           .where("canceled", "==", false)
       );
       console.log(
@@ -63,7 +63,7 @@ export const sendReminderTexts = functions.pubsub
 
       await Promise.all(allPromises);
       await Promise.all(
-        matches.docs.map((doc) => txn.update(doc.ref, "reminded", true))
+        matches.docs.map((doc) => txn.update(doc.ref, "interactions.reminded", true))
       );
     });
   });
@@ -89,7 +89,7 @@ export const sendVideoLink = functions.pubsub
           .firestore()
           .collection("matches")
           .where("created_at", "==", createdAt)
-          .where("called", "==", false)
+          .where("interactions.called", "==", false)
           .where("canceled", "==", false)
       );
       const videoMatches = matches.docs.filter(
@@ -142,7 +142,7 @@ export const sendVideoLink = functions.pubsub
 
       await Promise.all(allPromises);
       await Promise.all(
-        videoMatches.map((doc) => txn.update(doc.ref, "called", true))
+        videoMatches.map((doc) => txn.update(doc.ref, "interactions.called", true))
       );
     });
   });
@@ -160,7 +160,7 @@ export const issueCalls = functions.pubsub
           .firestore()
           .collection("matches")
           .where("created_at", "==", createdAt)
-          .where("called", "==", false)
+          .where("interactions.called", "==", false)
           .where("canceled", "==", false)
       );
       console.log(
@@ -174,7 +174,7 @@ export const issueCalls = functions.pubsub
 
       await Promise.all(userIds.map((id) => callUserHelper(id)));
       await Promise.all(
-        matches.docs.map((doc) => txn.update(doc.ref, "called", true))
+        matches.docs.map((doc) => txn.update(doc.ref, "interactions.called", true))
       );
     });
   });
@@ -192,7 +192,7 @@ export const handleFlakes = functions.pubsub
           .firestore()
           .collection("matches")
           .where("created_at", "==", createdAt)
-          .where("flakesHandled", "==", false)
+          .where("interactions.flakesHandled", "==", false)
           .where("canceled", "==", false)
       );
       console.log(
@@ -228,7 +228,7 @@ export const handleFlakes = functions.pubsub
       });
       await Promise.all(smsPromises);
       await Promise.all(
-        matches.docs.map((doc) => txn.update(doc.ref, "flakesHandled", true))
+        matches.docs.map((doc) => txn.update(doc.ref, "interactions.flakesHandled", true))
       );
     });
   });
@@ -269,13 +269,13 @@ export const revealRequest = functions.pubsub
           .firestore()
           .collection("matches")
           .where("created_at", "==", createdAt)
-          .where("revealRequested", "==", false)
+          .where("interactions.revealRequested", "==", false)
       );
       const connectedMatches = matches.docs.filter((doc) => doc.get("twilioSid") !== undefined);
       await Promise.all(
         connectedMatches.map(async (doc) => {
           await playCallOutro(doc.data() as IMatch, doc.get("twilioSid"));
-          txn.update(doc.ref, "revealRequested", true);
+          txn.update(doc.ref, "interactions.revealRequested", true);
         })
       );
     });
@@ -293,7 +293,7 @@ export const revealRequestVideo = functions.pubsub
           .firestore()
           .collection("matches")
           .where("created_at", "==", createdAt)
-          .where("revealRequested", "==", false)
+          .where("interactions.revealRequested", "==", false)
       );
       const videoMatches = matches.docs.filter(
         (doc) => doc.get("canceled") === false && doc.get("mode") === "video" && Object.keys(doc.get("joined")).length === 2
@@ -307,7 +307,7 @@ export const revealRequestVideo = functions.pubsub
             true,
             today
           );
-          txn.update(doc.ref, "revealRequested", true);
+          txn.update(doc.ref, "interactions.revealRequested", true);
         })
       );
     });
@@ -487,7 +487,7 @@ export const call5MinWarning = functions.pubsub
           .firestore()
           .collection("matches")
           .where("ongoing", "==", true)
-          .where("warned5Min", "==", false)
+          .where("interactions.warned5Min", "==", false)
       );
       await Promise.all(
         ongoingCalls.docs.map((doc) =>
@@ -497,7 +497,7 @@ export const call5MinWarning = functions.pubsub
         )
       );
       await Promise.all(
-        ongoingCalls.docs.map((doc) => txn.update(doc.ref, "warned5Min", true))
+        ongoingCalls.docs.map((doc) => txn.update(doc.ref, "interactions.warned5Min", true))
       );
     });
   });
@@ -514,7 +514,7 @@ export const call1MinWarning = functions.pubsub
           .firestore()
           .collection("matches")
           .where("ongoing", "==", true)
-          .where("warned1Min", "==", false)
+          .where("interactions.warned1Min", "==", false)
       );
       await Promise.all(
         ongoingCalls.docs.map((doc) =>
@@ -524,7 +524,7 @@ export const call1MinWarning = functions.pubsub
         )
       );
       await Promise.all(
-        ongoingCalls.docs.map((doc) => txn.update(doc.ref, "warned1Min", true))
+        ongoingCalls.docs.map((doc) => txn.update(doc.ref, "interactions.warned1Min", true))
       );
     });
   });
