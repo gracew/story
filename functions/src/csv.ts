@@ -104,7 +104,7 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
     if (!userB) {
         console.error("cannot find user with id " + data.userBId);
         return;
-    } 
+    }
     const timezone = processTimeZone(data.timezone.trim())
     if (!timezone) {
         console.error("invalid timezone, skpping row: " + data)
@@ -118,12 +118,14 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
         joined: {},
         created_at: new admin.firestore.Timestamp(createdAt.unix(), 0),
         canceled: data.canceled || false,
-        reminded: false,
-        called: false, 
-        flakesHandled: false,
-        warned5Min: false,
-        warned1Min: false,
-        revealRequested: false,
+        interactions: {
+            reminded: false,
+            called: false,
+            flakesHandled: false,
+            warned5Min: false,
+            warned1Min: false,
+            revealRequested: false,
+        },
         mode: data.mode || "phone",
     };
     await firestore.createMatch(match);

@@ -21,12 +21,14 @@ export interface IMatch {
     joined?: Record<string, boolean>,
     created_at: admin.firestore.Timestamp;
     canceled?: boolean;
-    reminded?: boolean;
-    called?: boolean;
-    flakesHandled?: boolean;
-    warned5Min?: boolean;
-    warned1Min?: boolean;
-    revealRequested?: boolean;
+    interactions: {
+        reminded?: boolean;
+        called?: boolean;
+        flakesHandled?: boolean;
+        warned5Min?: boolean;
+        warned1Min?: boolean;
+        revealRequested?: boolean;
+    },
     mode?: string;
     twilioSid?: string;
 }

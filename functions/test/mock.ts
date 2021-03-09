@@ -35,12 +35,14 @@ export function match(userIdA: string, userIdB: string, createdAt: string): IMat
         joined: {},
         created_at: new admin.firestore.Timestamp(moment(createdAt).unix(), 0),
         canceled: false,
-        reminded: false,
-        called: false,
-        flakesHandled: false,
-        warned5Min: false,
-        warned1Min: false,
-        revealRequested: false,
+        interactions: {
+            reminded: false,
+            called: false,
+            flakesHandled: false,
+            warned5Min: false,
+            warned1Min: false,
+            revealRequested: false,
+        },
         mode: "phone",
     }
 }
