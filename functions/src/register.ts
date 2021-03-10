@@ -22,7 +22,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     "34932f3b-5120-47c2-8053-1c61c3f5ff6f": "funFacts",
     "ead263db-6980-4ebe-9bc4-2956ce894fd3": "interests",
     "4cef01ee-ed52-48b4-8f2b-902d38dafcf0": "social",
-    "1b6b3940-ba10-46f3-bd8b-17b7f32e93f8": "whereDidYouHearAboutStory",
+    "1b6b3940-ba10-46f3-bd8b-17b7f32e93f8": "whereDidYouHearAboutUs",
   };
 
   const user: { [key: string]: any } = {

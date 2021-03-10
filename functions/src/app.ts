@@ -2,22 +2,6 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { CallableContext } from "firebase-functions/lib/providers/https";
 
-/**
- * Used by the frontend to look up metadata for a user based on username (e.g. when navigating to storydating.com/grace).
- */
-export const getUserByUsername = functions.https.onCall(async (data) => {
-  const user = await admin
-    .firestore()
-    .collection("users")
-    .where("username", "==", data.username)
-    .get();
-  if (user.empty) {
-    throw new functions.https.HttpsError("not-found", "unknown username");
-  }
-  const { firstName, age, bio, prompt, gender } = user.docs[0].data();
-  return { firstName, age, bio, prompt, gender };
-});
-
 export const getPublicProfile = functions.https.onCall(async (data, context) => {
   const user = await admin
     .firestore()
