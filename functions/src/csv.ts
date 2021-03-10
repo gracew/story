@@ -70,15 +70,15 @@ export const sendAvailabilityTexts = functions.pubsub
         }));
     });
 
-export const sendReminderTextsET = functions.pubsub
+export const sendAvailabilityReminderET = functions.pubsub
     .schedule("every sunday 17:00")
     .onRun(async () => reminderHelper("ET"));
 
-export const sendReminderTextsCT = functions.pubsub
+export const sendAvailabilityReminderCT = functions.pubsub
     .schedule("every sunday 18:00")
     .onRun(async () => reminderHelper("CT"));
 
-export const sendReminderTextsPT = functions.pubsub
+export const sendAvailabilityReminderPT = functions.pubsub
     .schedule("every sunday 20:00")
     .onRun(async () => reminderHelper("PT"));
 

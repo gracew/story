@@ -6,7 +6,7 @@ import * as os from "os";
 import * as path from "path";
 import { getPreferences, getPublicProfile, getUserByUsername, savePreferences } from "./app";
 import { addUserToCall, announce1Min, announce5Min, announceUser, call1MinWarning, call5MinWarning, callOutro, callUser, conferenceStatusWebhook, createSmsChat, handleFlakes, issueCalls, markJoined, notifyIncomingTextHelper, revealRequest, revealRequestVideo, saveReveal, screenCall, sendReminderTexts, sendVideoLink } from "./calls";
-import { createSchedulingRecords, processBulkSmsCsv, processMatchCsv, sendAvailabilityTexts, sendWaitlistTexts } from "./csv";
+import { createSchedulingRecords, processBulkSmsCsv, processMatchCsv, sendAvailabilityReminderCT, sendAvailabilityReminderET, sendAvailabilityReminderPT, sendAvailabilityTexts } from "./csv";
 import { Firestore } from "./firestore";
 import { registerUser } from "./register";
 import { analyzeCollection, cancelMatch, createMatch } from "./retool";
@@ -46,8 +46,10 @@ export {
   saveReveal,
   screenCall,
   sendAvailabilityTexts,
+  sendAvailabilityReminderET,
+  sendAvailabilityReminderCT,
+  sendAvailabilityReminderPT,
   sendReminderTexts,
-  sendWaitlistTexts,
   sendVideoLink,
 };
 
