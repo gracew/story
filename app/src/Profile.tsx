@@ -150,6 +150,16 @@ function Profile() {
       })
   }, [userLoading, userId]);
 
+  useEffect(() => {
+    if (userPrefs && userPrefs.photo) {
+      firebase
+        .storage()
+        .ref(userPrefs.photo)
+        .getDownloadURL()
+        .then((url) => setPhotoUrl(url));
+    }
+  }, [userPrefs && userPrefs.photo]);
+
   firebase.auth().onAuthStateChanged(function (user) {
     setUserLoading(false);
     if (!user) {
