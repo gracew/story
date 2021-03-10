@@ -72,21 +72,15 @@ export const sendAvailabilityTexts = functions.pubsub
 
 export const sendReminderTextsET = functions.pubsub
     .schedule("every sunday 17:00")
-    .onRun(async () => {
-        reminderHelper("ET")
-    });
+    .onRun(async () => reminderHelper("ET"));
 
 export const sendReminderTextsCT = functions.pubsub
     .schedule("every sunday 18:00")
-    .onRun(async () => {
-        reminderHelper("CT")
-    });
+    .onRun(async () => reminderHelper("CT"));
 
 export const sendReminderTextsPT = functions.pubsub
     .schedule("every sunday 20:00")
-    .onRun(async () => {
-        reminderHelper("PT")
-    });
+    .onRun(async () => reminderHelper("PT"));
 
 async function reminderHelper(timezone: string) {
     const week = moment().startOf("week").format("YYYY-MM-DD");
@@ -110,13 +104,14 @@ async function reminderHelper(timezone: string) {
 
     await Promise.all(usersTimezone.map(doc => {
         const user = doc.data() as IUser;
-        sendSms({
+        return sendSms({
             body: `Your match will expire soon! If you'd like to connect this week, fill out this super short form in the next hour to let us know your availability: https://storydating.com/weekly#u=${user.id}&tz=${user.timezone}"`,
             from: TWILIO_NUMBER,
             to: user.phone,
         })
     }));
 }
+
 export async function processMatchCsv(tempFilePath: string, firestore: Firestore, sendSmsFn: (opts: any) => Promise<any>) {
     const contents = fs.readFileSync(tempFilePath).toString();
     const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "date", "time", "timezone"] })
