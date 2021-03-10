@@ -1,5 +1,7 @@
+import * as test from "firebase-functions-test";
 import * as moment from "moment-timezone";
 import { parseAvailability } from "../src/typeform";
+test().mockConfig({ twilio: { auth_token: "token" } });
 
 const getTimestamp = () => moment("2021-03-10");
 
