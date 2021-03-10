@@ -94,7 +94,7 @@ async function reminderHelper(timezone: string) {
         .collection("scheduling")
         .doc(week)
         .collection("users")
-        .where("interactions.responded", "==", true)
+        .where("interactions.responded", "==", false)
         .where("interactions.reminded", "==", false)
         .get();
     const userRefs = availability.docs.map(a => admin.firestore().collection("users").doc(a.id));
