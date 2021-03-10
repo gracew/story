@@ -119,7 +119,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
   response.end();
 });
 
-export const recordAvailability = functions.https.onRequest(async (req, response) => {
+export const saveAvailability = functions.https.onRequest(async (req, response) => {
   const week = moment().startOf("week").format("YYYY-MM-DD")
   const userId = req.body.form_response.hidden.u;
   if (!userId) {

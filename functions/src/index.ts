@@ -10,7 +10,7 @@ import { createMatches, createSchedulingRecords, processBulkSmsCsv, sendAvailabi
 import { analyzeCollection, cancelMatch, createMatch } from "./retool";
 import { bipartiteMatches, potentialMatches, remainingMatches } from "./scheduling";
 import { client, sendSms } from "./twilio";
-import { registerUser } from "./typeform";
+import { registerUser, saveAvailability } from "./typeform";
 
 admin.initializeApp();
 
@@ -41,6 +41,7 @@ export {
   registerUser,
   revealRequest,
   revealRequestVideo,
+  saveAvailability,
   savePreferences,
   saveReveal,
   screenCall,
