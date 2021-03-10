@@ -153,7 +153,7 @@ function Profile() {
         .getDownloadURL()
         .then((url) => setPhotoUrl(url));
     }
-  });
+  }, [userPrefsPhoto]);
 
   firebase.auth().onAuthStateChanged(function (user) {
     setUserLoading(false);
