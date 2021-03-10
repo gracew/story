@@ -32,6 +32,7 @@ export async function getConferenceTwimlForPhone(phone: string) {
     const match = await admin.firestore().collection("matches")
         .where("user_ids", "array-contains", userId)
         .where("created_at", "==", createdAt)
+        .where("canceled", "==", false)
         .get();
     if (match.empty) {
         return errorResponse;
