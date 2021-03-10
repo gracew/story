@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
+import * as moment from "moment-timezone";
 import { IUser } from "./firestore";
 import { welcome } from "./smsCopy";
 import { client, TWILIO_NUMBER } from "./twilio";
@@ -117,3 +118,79 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
 
   response.end();
 });
+
+export const saveAvailability = functions.https.onRequest(async (req, response) => {
+  const week = moment().startOf("week").format("YYYY-MM-DD")
+  const userId = req.body.form_response.hidden.u;
+  if (!userId) {
+    console.error("missing userId");
+    response.end();
+    return;
+  }
+
+  const update = parseAvailability(req.body.form_response.answers, moment);
+  await admin.firestore().collection("scheduling").doc(week).collection("users").doc(userId).update(update);
+  response.end();
+});
+
+export function parseAvailability(answers: any[], getTimestamp: () => moment.Moment) {
+  const update: Record<string, any> = { "interactions.responded": true };
+  answers.forEach((a: any) => {
+    if (a.field.ref === "matches") {
+      if (a.choice.label === "Skip this week") {
+        update.skip = true;
+        update.matches = 0;
+        update.available = [];
+      } else {
+        update.skip = false;
+        update.matches = parseInt(a.choice.label);
+      }
+    } else if (a.field.ref === "timesPT") {
+      update.available = a.choices.labels
+        .map((c: string) => parseTime(c, "America/Los_Angeles", getTimestamp)?.toDate())
+        .filter((d: Date) => d);
+    } else if (a.field.ref === "timesCT") {
+      update.available = a.choices.labels
+        .map((c: string) => parseTime(c, "America/Chicago", getTimestamp)?.toDate())
+        .filter((d: Date) => d);
+    } else if (a.field.ref === "timesET") {
+      update.available = a.choices.labels
+        .map((c: string) => parseTime(c, "America/New_York", getTimestamp)?.toDate())
+        .filter((d: Date) => d);
+    }
+  })
+  return update;
+};
+
+function parseTime(time: string, timezone: string, getTimestamp: () => moment.Moment) {
+  const week = getTimestamp().tz(timezone).startOf("week");
+  switch (time) {
+    case "Tue 6pm":
+      return week.add(2, "days").add(18, "hours");
+    case "Tue 7pm":
+      return week.add(2, "days").add(19, "hours")
+    case "Tue 8pm":
+      return week.add(2, "days").add(20, "hours")
+    case "Tue 9pm":
+      return week.add(2, "days").add(21, "hours")
+    case "Wed 6pm":
+      return week.add(3, "days").add(18, "hours");
+    case "Wed 7pm":
+      return week.add(3, "days").add(19, "hours");
+    case "Wed 8pm":
+      return week.add(3, "days").add(20, "hours");
+    case "Wed 9pm":
+      return week.add(3, "days").add(21, "hours");
+    case "Thu 6pm":
+      return week.add(4, "days").add(18, "hours");
+    case "Thu 7pm":
+      return week.add(4, "days").add(19, "hours");
+    case "Thu 8pm":
+      return week.add(4, "days").add(20, "hours");
+    case "Thu 9pm":
+      return week.add(4, "days").add(21, "hours");
+    default:
+      console.error("could not parse time: " + time);
+      return undefined;
+  }
+}
