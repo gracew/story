@@ -27,7 +27,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
 
   const user: { [key: string]: any } = {
     referrer: req.body.form_response.hidden.r,
-    signUpDate: req.body.form_response.submitted_at,
+    registeredAt: new Date(req.body.form_response.submitted_at),
     eligible: true,
     status: "waitlist",
   };
@@ -105,7 +105,6 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
 
   const reff = admin.firestore().collection("users").doc();
   user.id = reff.id;
-  user.registeredAt = new Date(req.body.form_response.submitted_at)
   await reff.set(user);
   if (user.phone.length === 12 && user.phone.startsWith("+1")) {
     // US or Canada
