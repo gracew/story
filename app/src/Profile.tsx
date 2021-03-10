@@ -131,6 +131,8 @@ function Profile() {
   const history = useHistory();
   const { userId } = useParams();
 
+  const userPrefsPhoto = userPrefs?.photo;
+
   useEffect(() => {
     firebase
       .functions()
@@ -140,25 +142,18 @@ function Profile() {
         FullStory.identify(res.data.id, {
           displayName: res.data.firstName,
         });
-        if (res.data.photo) {
-          firebase
-            .storage()
-            .ref(res.data.photo)
-            .getDownloadURL()
-            .then((url) => setPhotoUrl(url));
-        }
       })
   }, [userLoading, userId]);
 
   useEffect(() => {
-    if (userPrefs && userPrefs.photo) {
+    if (userPrefsPhoto) {
       firebase
         .storage()
-        .ref(userPrefs.photo)
+        .ref(userPrefsPhoto)
         .getDownloadURL()
         .then((url) => setPhotoUrl(url));
     }
-  }, [userPrefs && userPrefs.photo]);
+  });
 
   firebase.auth().onAuthStateChanged(function (user) {
     setUserLoading(false);
