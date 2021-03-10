@@ -1,7 +1,6 @@
 import * as test from "firebase-functions-test";
 test().mockConfig({ twilio: { auth_token: "token" } });
-import { processBulkSmsCsv, processMatchCsv } from "../src/csv";
-import { firestore, match } from "./mock";
+import { processBulkSmsCsv } from "../src/csv";
 import { TWILIO_NUMBER } from "../src/twilio";
 
 const mockSendSms = jest.fn();
@@ -16,53 +15,4 @@ another line
 `
     expect(mockSendSms).toHaveBeenCalledWith({ body: body1, from: TWILIO_NUMBER, to: "+1234567890" })
     expect(mockSendSms).toHaveBeenCalledWith({ body: "another message", from: TWILIO_NUMBER, to: "+10123456789" })
-});
-
-it("processMatchCsv", async () => {
-    const { id: id1, ...match1 } = match("UqS4ivx8v9xcUcrAKt3B", "wz931t4yTP2F5xvOW0QI", "2020-09-23T20:00:00-04:00");
-    const { id: id2, ...match2 } = match("oS89cjnV1wRP5kKvHGoP", "zV4nHElSwPWNvFP0aVYs", "2020-09-23T20:00:00-07:00");
-    firestore.getUser.mockResolvedValue({ exists: true });
-    firestore.getUsersForMatches.mockResolvedValue({
-        UqS4ivx8v9xcUcrAKt3B: {},
-        wz931t4yTP2F5xvOW0QI: {},
-        oS89cjnV1wRP5kKvHGoP: {},
-        zV4nHElSwPWNvFP0aVYs: {},
-    })
-    await processMatchCsv("./testdata/matches.csv", firestore, mockSendSms)
-    expect(firestore.createMatch).toHaveBeenCalledTimes(2);
-    expect(firestore.createMatch).toHaveBeenCalledWith(match1)
-    expect(firestore.createMatch).toHaveBeenCalledWith(match2)
-    expect(mockSendSms).toHaveBeenCalledTimes(4);
-});
-
-it("processMatchCsv - multiple dates", async () => {
-    const { id: id1, ...match1 } = match("UqS4ivx8v9xcUcrAKt3B", "wz931t4yTP2F5xvOW0QI", "2020-09-23T20:00:00-04:00");
-    const { id: id2, ...match2 } = match("UqS4ivx8v9xcUcrAKt3B", "zV4nHElSwPWNvFP0aVYs", "2020-09-23T20:00:00-07:00");
-    firestore.getUser.mockResolvedValue({ exists: true });
-    firestore.getUsersForMatches.mockResolvedValue({
-        UqS4ivx8v9xcUcrAKt3B: {},
-        wz931t4yTP2F5xvOW0QI: {},
-        zV4nHElSwPWNvFP0aVYs: {},
-    })
-    await processMatchCsv("./testdata/matchesMultipleDates.csv", firestore, mockSendSms)
-    expect(firestore.createMatch).toHaveBeenCalledTimes(2);
-    expect(firestore.createMatch).toHaveBeenCalledWith(match1)
-    expect(firestore.createMatch).toHaveBeenCalledWith(match2)
-    expect(mockSendSms).toHaveBeenCalledTimes(3);
-});
-
-it("processMatchCsv - multiple texts per user", async () => {
-    const { id: id1, ...match1 } = match("UqS4ivx8v9xcUcrAKt3B", "wz931t4yTP2F5xvOW0QI", "2020-09-23T20:00:00-04:00");
-    const { id: id2, ...match2 } = match("UqS4ivx8v9xcUcrAKt3B", "zV4nHElSwPWNvFP0aVYs", "2020-09-23T20:00:00-07:00");
-    firestore.getUser.mockResolvedValue({ exists: true });
-    firestore.getUsersForMatches.mockResolvedValue({
-        UqS4ivx8v9xcUcrAKt3B: { funFacts: "funFacts" },
-        wz931t4yTP2F5xvOW0QI: { funFacts: "funFacts" },
-        zV4nHElSwPWNvFP0aVYs: { funFacts: "funFacts" },
-    })
-    await processMatchCsv("./testdata/matchesMultipleDates.csv", firestore, mockSendSms)
-    expect(firestore.createMatch).toHaveBeenCalledTimes(2);
-    expect(firestore.createMatch).toHaveBeenCalledWith(match1)
-    expect(firestore.createMatch).toHaveBeenCalledWith(match2)
-    expect(mockSendSms).toHaveBeenCalledTimes(7);
 });

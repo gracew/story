@@ -6,8 +6,7 @@ import * as os from "os";
 import * as path from "path";
 import { getPreferences, getPublicProfile, savePreferences } from "./app";
 import { addUserToCall, announce1Min, announce5Min, announceUser, call1MinWarning, call5MinWarning, callOutro, callUser, conferenceStatusWebhook, createSmsChat, handleFlakes, issueCalls, markJoined, notifyIncomingTextHelper, revealRequest, revealRequestVideo, saveReveal, screenCall, sendReminderTexts, sendVideoLink } from "./calls";
-import { createSchedulingRecords, processBulkSmsCsv, processMatchCsv, sendAvailabilityReminderCT, sendAvailabilityReminderET, sendAvailabilityReminderPT, sendAvailabilityTexts } from "./csv";
-import { Firestore } from "./firestore";
+import { createMatches, createSchedulingRecords, processBulkSmsCsv, sendAvailabilityReminderCT, sendAvailabilityReminderET, sendAvailabilityReminderPT, sendAvailabilityTexts, sendMatchNotificationTexts } from "./csv";
 import { registerUser } from "./register";
 import { analyzeCollection, cancelMatch, createMatch } from "./retool";
 import { bipartiteMatches, potentialMatches, remainingMatches } from "./scheduling";
@@ -29,6 +28,7 @@ export {
   cancelMatch,
   conferenceStatusWebhook,
   createMatch,
+  createMatches,
   createSchedulingRecords,
   createSmsChat,
   potentialMatches,
@@ -48,6 +48,7 @@ export {
   sendAvailabilityReminderET,
   sendAvailabilityReminderCT,
   sendAvailabilityReminderPT,
+  sendMatchNotificationTexts,
   sendReminderTexts,
   sendVideoLink,
 };
@@ -68,28 +69,6 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
     .download({ destination: tempFilePath });
   await processBulkSmsCsv(tempFilePath, sendSms);
 });
-
-/**
- * Creates a match for each row in a CSV. The CSV should be in the format:
- * userAId,userBId,callDate (MM-DD-YYYY),callTime (hh:mm a),timezone. There should not be a header line.
- */
-export const createMatches = functions.storage
-  .object()
-  .onFinalize(async (object) => {
-    if (!(object.name && object.name.startsWith("matchescsv"))) {
-      return;
-    }
-
-    const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
-    await admin
-      .storage()
-      .bucket(object.bucket)
-      .file(object.name)
-      .download({ destination: tempFilePath });
-
-    await processMatchCsv(tempFilePath, new Firestore(), sendSms);
-  });
-
 
 export const markActive = functions.https.onRequest(
   async (request, response) => {

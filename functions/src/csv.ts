@@ -112,15 +112,70 @@ async function reminderHelper(timezone: string) {
     }));
 }
 
-export async function processMatchCsv(tempFilePath: string, firestore: Firestore, sendSmsFn: (opts: any) => Promise<any>) {
-    const contents = fs.readFileSync(tempFilePath).toString();
-    const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "date", "time", "timezone"] })
-    const matches = await Promise.all(rows.map(data => createMatchFirestore(data, firestore)));
-    return sendMatchNotificationTexts(
-        matches.filter(m => m !== undefined) as IMatch[],
-        firestore,
-        sendSmsFn);
-}
+/**
+ * Creates a match for each row in a CSV. The CSV should be in the format:
+ * userAId,userBId,callDate (MM-DD-YYYY),callTime (hh:mm a),timezone. There should not be a header line.
+ */
+export const createMatches = functions.storage
+    .object()
+    .onFinalize(async (object) => {
+        if (!(object.name && object.name.startsWith("matchescsv"))) {
+            return;
+        }
+
+        const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
+        await admin
+            .storage()
+            .bucket(object.bucket)
+            .file(object.name)
+            .download({ destination: tempFilePath });
+
+        const contents = fs.readFileSync(tempFilePath).toString();
+        const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "date", "time", "timezone"] })
+        await Promise.all(rows.map(data => createMatchFirestore(data, new Firestore())));
+    });
+
+
+export const sendMatchNotificationTexts = functions.pubsub
+    .schedule("every monday 15:00")
+    .onRun(async (context) => {
+        const matches = await admin.firestore().collection("matches").where("interactions.notified", "==", false).get();
+
+        const batch = admin.firestore().batch();
+        // create map from userId to matches
+        const userToMatches: Record<string, IMatch[]> = {};
+        matches.forEach(doc => {
+            const m = doc.data() as IMatch;
+            if (!(m.user_a_id in userToMatches)) {
+                userToMatches[m.user_a_id] = [];
+            }
+            userToMatches[m.user_a_id].push(m)
+
+            if (!(m.user_b_id in userToMatches)) {
+                userToMatches[m.user_b_id] = [];
+            }
+            userToMatches[m.user_b_id].push(m)
+
+            batch.update(doc.ref, { "interactions.notified": true });
+        });
+        await batch.commit();
+
+        const usersById = await new Firestore().getUsersForMatches(matches.docs.map(doc => doc.data() as IMatch));
+        // notify each user
+        await Promise.all(
+            Object.keys(userToMatches).map(async userId => {
+                const texts = matchNotification(userId, userToMatches[userId], usersById)
+                // send these linearly
+                for (const t of texts) {
+                    await sendSms({
+                        body: t,
+                        from: TWILIO_NUMBER,
+                        to: usersById[userId].phone,
+                    });
+                }
+            })
+        )
+    });
 
 export async function createMatchFirestore(data: any, firestore: Firestore) {
     const userA = await firestore.getUser(data.userAId);
@@ -148,6 +203,7 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
         created_at: new admin.firestore.Timestamp(createdAt.unix(), 0),
         canceled: data.canceled || false,
         interactions: {
+            notified: false,
             reminded: false,
             called: false,
             flakesHandled: false,
@@ -170,36 +226,4 @@ function processTimeZone(tz: string) {
         return "America/New_York"
     }
     return undefined;
-}
-
-async function sendMatchNotificationTexts(matches: IMatch[], firestore: Firestore, sendSmsFn: (opts: any) => Promise<any>) {
-    // create map from userId to matches
-    const userToMatches: Record<string, IMatch[]> = {};
-    matches.forEach(m => {
-        if (!(m.user_a_id in userToMatches)) {
-            userToMatches[m.user_a_id] = [];
-        }
-        userToMatches[m.user_a_id].push(m)
-
-        if (!(m.user_b_id in userToMatches)) {
-            userToMatches[m.user_b_id] = [];
-        }
-        userToMatches[m.user_b_id].push(m)
-    });
-
-    const usersById = await firestore.getUsersForMatches(matches);
-    // notify each user
-    await Promise.all(
-        Object.keys(userToMatches).map(async userId => {
-            const texts = matchNotification(userId, userToMatches[userId], usersById)
-            // send these linearly
-            for (const t of texts) {
-                await sendSmsFn({
-                    body: t,
-                    from: TWILIO_NUMBER,
-                    to: usersById[userId].phone,
-                });
-            }
-        })
-    )
 }

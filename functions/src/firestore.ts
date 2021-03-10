@@ -22,6 +22,7 @@ export interface IMatch {
     created_at: admin.firestore.Timestamp;
     canceled?: boolean;
     interactions: {
+        notified?: boolean;
         reminded?: boolean;
         called?: boolean;
         flakesHandled?: boolean;
