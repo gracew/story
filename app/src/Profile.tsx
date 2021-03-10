@@ -126,6 +126,7 @@ function Profile() {
   const [userLoading, setUserLoading] = useState(true);
   const [selectedPref, setSelectedPref] = useState<string>();
   const [userPrefs, setUserPrefs] = useState<Record<string, any>>();
+  const [photoUrl, setPhotoUrl] = useState<string>();
   const [photoUploading, setPhotoUploading] = useState(false);
   const history = useHistory();
   const { userId } = useParams();
@@ -139,6 +140,13 @@ function Profile() {
         FullStory.identify(res.data.id, {
           displayName: res.data.firstName,
         });
+        if (res.data.photo) {
+          firebase
+            .storage()
+            .ref(res.data.photo)
+            .getDownloadURL()
+            .then((url) => setPhotoUrl(url));
+        }
       })
   }, [userLoading, userId]);
 
@@ -198,7 +206,7 @@ function Profile() {
             </Button>
             <input id="profile-photo-upload" type="file" accept="image/*" onChange={e => uploadProfilePhoto(e.target.files)} />
           </div>
-          <ProfileCard firstName={userPrefs.firstName} gender={userPrefs.gender} age={userPrefs.age} photoPath={userPrefs.photo} uploading={photoUploading}>
+          <ProfileCard firstName={userPrefs.firstName} gender={userPrefs.gender} age={userPrefs.age} photoUrl={photoUrl} uploading={photoUploading}>
             <div className="profile-card-bottom">Your photo will only be shown to your match after your phone call.</div>
           </ProfileCard>
         </div>
