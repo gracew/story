@@ -20,10 +20,10 @@ export const getUserByUsername = functions.https.onCall(async (data) => {
 
 export const getPublicProfile = functions.https.onCall(async (data, context) => {
   const user = await admin
-      .firestore()
-      .collection("users")
-      .doc(data.userId)
-      .get();
+    .firestore()
+    .collection("users")
+    .doc(data.userId)
+    .get();
   const {
     firstName,
     photo,
@@ -134,6 +134,10 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
   }
   if (location !== undefined) {
     mainPrefs.location = location.value;
+    const tz = timezone(location.value);
+    if (tz) {
+      mainPrefs.timezone = tz;
+    } 
   }
   if (locationFlexibility !== undefined) {
     mainPrefs.locationFlexibility = locationFlexibility.value === "Yes";
@@ -168,3 +172,19 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
       .set(otherPrefs, { merge: true });
   }
 });
+
+function timezone(location: string) {
+  const map: Record<string, string> = {
+    "Boston": "ET",
+    "Chicago": "CT",
+    "Los Angeles": "PT",
+    "New York City": "ET",
+    "Philadelphia": "ET",
+    "San Diego": "PT",
+    "San Francisco Bay Area": "PT",
+    "Seattle": "PT",
+    "Toronto": "ET",
+    "Washington, DC": "ET",
+  }
+  return map[location];
+}
