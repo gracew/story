@@ -126,9 +126,12 @@ function Profile() {
   const [userLoading, setUserLoading] = useState(true);
   const [selectedPref, setSelectedPref] = useState<string>();
   const [userPrefs, setUserPrefs] = useState<Record<string, any>>();
+  const [photoUrl, setPhotoUrl] = useState<string>();
   const [photoUploading, setPhotoUploading] = useState(false);
   const history = useHistory();
   const { userId } = useParams();
+
+  const userPrefsPhoto = userPrefs?.photo;
 
   useEffect(() => {
     firebase
@@ -141,6 +144,16 @@ function Profile() {
         });
       })
   }, [userLoading, userId]);
+
+  useEffect(() => {
+    if (userPrefsPhoto) {
+      firebase
+        .storage()
+        .ref(userPrefsPhoto)
+        .getDownloadURL()
+        .then((url) => setPhotoUrl(url));
+    }
+  }, [userPrefsPhoto]);
 
   firebase.auth().onAuthStateChanged(function (user) {
     setUserLoading(false);
@@ -198,7 +211,7 @@ function Profile() {
             </Button>
             <input id="profile-photo-upload" type="file" accept="image/*" onChange={e => uploadProfilePhoto(e.target.files)} />
           </div>
-          <ProfileCard firstName={userPrefs.firstName} gender={userPrefs.gender} age={userPrefs.age} photoPath={userPrefs.photo} uploading={photoUploading}>
+          <ProfileCard firstName={userPrefs.firstName} gender={userPrefs.gender} age={userPrefs.age} photoUrl={photoUrl} uploading={photoUploading}>
             <div className="profile-card-bottom">Your photo will only be shown to your match after your phone call.</div>
           </ProfileCard>
         </div>

@@ -7,6 +7,7 @@ import "./PublicProfile.css";
 
 function PublicProfile() {
   const [data, setData] = useState<Record<string, any>>();
+  const [photoUrl, setPhotoUrl] = useState<string>();
   const { userId } = useParams();
 
   useEffect(() => {
@@ -15,6 +16,13 @@ function PublicProfile() {
       .httpsCallable("getPublicProfile")({ userId })
       .then((res) => {
         setData(res.data);
+        if (res.data.photo) {
+          firebase
+            .storage()
+            .ref(res.data.photo)
+            .getDownloadURL()
+            .then((url) => setPhotoUrl(url));
+        }
       })
   }, [userId]);
 
@@ -24,7 +32,7 @@ function PublicProfile() {
 
   return (
     <div className="public-profile-container">
-      <ProfileCard firstName={data.firstName} gender={data.gender} photoPath={data.photo}>
+      <ProfileCard firstName={data.firstName} gender={data.gender} photoUrl={photoUrl}>
         <p className="public-profile-fun-facts">{data.funFacts}</p>
       </ProfileCard>
     </div>
