@@ -90,6 +90,8 @@ export class Firestore {
         const data = {
             interactions: {
                 requested: false,   // we requested the user's availability
+                responded: false,   // the user provided their availability
+                reminded: false,
             },
         }
         userIds.forEach(userId => {
