@@ -561,6 +561,21 @@ export const createSmsChat = functions.https.onRequest(async (request, response)
   response.end();
 });
 
+export const warnSmsChatExpiration = functions.https.onRequest(async (request, response) => {
+  const participants = await client.proxy
+      .services("KS58cecadd35af39c56a4cae81837a89f3")
+      .sessions(request.body.sessionSid)
+      .participants
+      .list();
+  await Promise.all(participants.map(p => 
+    client.proxy
+      .services("KS58cecadd35af39c56a4cae81837a89f3")
+      .sessions(request.body.sessionSid)
+      .participants(p.sid)
+      .messageInteractions.create({ body: "This chat will expire at midnight! If you would like to keep chatting, we suggest swapping numbers :)" })
+  ));
+  response.end();
+});
 
 export async function notifyIncomingTextHelper(phone: string, message: string) {
   const userQuery = await admin
