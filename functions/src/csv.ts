@@ -6,7 +6,7 @@ import * as neatCsv from 'neat-csv';
 import * as os from "os";
 import * as path from "path";
 import { Firestore, IMatch, IUser } from "./firestore";
-import { availability as availabilityCopy, matchNotification, waitlist } from "./smsCopy";
+import { availability as availabilityCopy, matchNotification } from "./smsCopy";
 import { sendSms, TWILIO_NUMBER } from './twilio';
 
 export async function processBulkSmsCsv(tempFilePath: string, sendSmsFn: (opts: any) => Promise<any>) {
@@ -26,62 +26,91 @@ export async function processBulkSmsCsv(tempFilePath: string, sendSmsFn: (opts: 
  * header line.
  */
 export const createSchedulingRecords = functions.storage
-  .object()
-  .onFinalize(async (object) => {
-    if (!(object.name && object.name.startsWith("availability"))) {
-      return;
-    }
-    const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
-    await admin
-      .storage()
-      .bucket(object.bucket)
-      .file(object.name)
-      .download({ destination: tempFilePath });
-    const contents = fs.readFileSync(tempFilePath).toString();
-    const rows = await neatCsv(contents, { headers: ["userId", "timezone"] });
-    const userIds = rows.map(data => data.userId);
-    const week = moment().startOf("week").format("YYYY-MM-DD");
-    await new Firestore().createSchedulingRecords(week, userIds);
-  });
-
-export const sendWaitlistTexts = functions.pubsub
-  .schedule("every saturday 13:00")
-  .onRun(async (context) => {
-    const week = moment().startOf("week").add(1, "weeks").format("YYYY-MM-DD");
-    const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").get();
-    const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
-    const users = await admin.firestore().getAll(...userRefs);
-    const waitlistUsers = users.map(doc => doc.data() as IUser).filter(user => user.status === "waitlist");
-
-    await Promise.all(waitlistUsers.map(async user => {
-        return sendSms({
-            body: await waitlist(user),
-            from: TWILIO_NUMBER,
-            to: user.phone,
-        });
-    }));
-  });
+    .object()
+    .onFinalize(async (object) => {
+        if (!(object.name && object.name.startsWith("availability"))) {
+            return;
+        }
+        const tempFilePath = path.join(os.tmpdir(), path.basename(object.name));
+        await admin
+            .storage()
+            .bucket(object.bucket)
+            .file(object.name)
+            .download({ destination: tempFilePath });
+        const contents = fs.readFileSync(tempFilePath).toString();
+        const rows = await neatCsv(contents, { headers: ["userId", "timezone"] });
+        const userIds = rows.map(data => data.userId);
+        const week = moment().startOf("week").format("YYYY-MM-DD");
+        await new Firestore().createSchedulingRecords(week, userIds);
+    });
 
 export const sendAvailabilityTexts = functions.pubsub
-  .schedule("every sunday 13:00")
-  .onRun(async (context) => {
+    .schedule("every sunday 13:00")
+    .onRun(async (context) => {
+        const week = moment().startOf("week").format("YYYY-MM-DD");
+        const availability = await admin.firestore()
+            .collection("scheduling")
+            .doc(week)
+            .collection("users")
+            .where("interactions.requested", "==", false)
+            .get();
+        const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
+        const users = await admin.firestore().getAll(...userRefs);
+        const batch = admin.firestore().batch();
+        availability.docs.forEach(doc => batch.update(doc.ref, { "interactions.requested": true }))
+        await batch.commit();
+
+        await Promise.all(users.map(async doc => {
+            const user = doc.data() as IUser;
+            return sendSms({
+                body: await availabilityCopy(user),
+                from: TWILIO_NUMBER,
+                to: user.phone,
+            });
+        }));
+    });
+
+export const sendAvailabilityReminderET = functions.pubsub
+    .schedule("every sunday 17:00")
+    .onRun(async () => reminderHelper("ET"));
+
+export const sendAvailabilityReminderCT = functions.pubsub
+    .schedule("every sunday 18:00")
+    .onRun(async () => reminderHelper("CT"));
+
+export const sendAvailabilityReminderPT = functions.pubsub
+    .schedule("every sunday 20:00")
+    .onRun(async () => reminderHelper("PT"));
+
+async function reminderHelper(timezone: string) {
     const week = moment().startOf("week").format("YYYY-MM-DD");
-    const availability = await admin.firestore().collection("scheduling").doc(week).collection("users").where("interactions.requested", "==", false).get();
-    const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
+    const availability = await admin.firestore()
+        .collection("scheduling")
+        .doc(week)
+        .collection("users")
+        .where("interactions.responded", "==", false)
+        .where("interactions.reminded", "==", false)
+        .get();
+    const userRefs = availability.docs.map(a => admin.firestore().collection("users").doc(a.id));
     const users = await admin.firestore().getAll(...userRefs);
+    const usersTimezone = users.filter(u => u.get("timezone") === timezone);
+
     const batch = admin.firestore().batch();
-    availability.docs.forEach(doc => batch.update(doc.ref, { "interactions.requested": true }))
+    usersTimezone.forEach(u => {
+        const availabilityRef = admin.firestore().collection("scheduling").doc(week).collection("users").doc(u.id);
+        batch.update(availabilityRef, { "interactions.reminded": true });
+    });
     await batch.commit();
 
-    await Promise.all(users.map(async doc => {
+    await Promise.all(usersTimezone.map(doc => {
         const user = doc.data() as IUser;
         return sendSms({
-            body: await availabilityCopy(user),
+            body: `Your match will expire soon! If you'd like to connect this week, fill out this super short form in the next hour to let us know your availability: https://storydating.com/weekly#u=${user.id}&tz=${user.timezone}"`,
             from: TWILIO_NUMBER,
             to: user.phone,
-        });
+        })
     }));
-  });
+}
 
 export async function processMatchCsv(tempFilePath: string, firestore: Firestore, sendSmsFn: (opts: any) => Promise<any>) {
     const contents = fs.readFileSync(tempFilePath).toString();
