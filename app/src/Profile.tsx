@@ -222,7 +222,7 @@ function Profile() {
       <h3 className="prefs-header">Basics</h3>
 
       {prefs.basic.map((pref: any, i: number) => (
-        <div>
+        <div key={pref.id}>
           { i !== 0 && <Divider />}
           {pref.id !== "age" && <Preference id={pref.id} label={pref.label} value={userPrefs[pref.id].value} onSelect={setSelectedPref} />}
           {pref.id === "age" && <Preference id={pref.id} label={pref.label} value={`${userPrefs.matchMin} - ${userPrefs.matchMax}`} onSelect={setSelectedPref} />}
@@ -231,7 +231,7 @@ function Profile() {
 
       <h3 className="prefs-header">The Details</h3>
       {prefs.details.map((pref: any, i: number) => (
-        <div className="detailed-pref">
+        <div className="detailed-pref" key={pref.id}>
           {i !== 0 && <Divider />}
           <Preference id={pref.id} label={pref.label} value={userPrefs[pref.id]?.value} dealbreakers={userPrefs[pref.id]?.dealbreakers} onSelect={setSelectedPref} />
         </div>

@@ -163,6 +163,7 @@ function EditPreference(props: EditPreferenceProps) {
                 <Checkbox.Group value={valueHandleOther() as string[] | undefined}>
                   {props.metadata.options.map(o => (
                     <Checkbox
+                      key={o}
                       value={o}
                       className="pref-option"
                       onClick={() => onMultipleChoiceSelect(o)}
@@ -183,6 +184,7 @@ function EditPreference(props: EditPreferenceProps) {
               <Radio.Group value={valueHandleOther()}>
                 {props.metadata.options.map(o => (
                   <Radio
+                    key={o}
                     value={o}
                     className="pref-option"
                     onClick={() => onMultipleChoiceSelect(o)}
@@ -208,6 +210,7 @@ function EditPreference(props: EditPreferenceProps) {
                 <Checkbox.Group value={dealbreakers}>
                   {(props.metadata.dealbreakerOptions || props.metadata.options).map(o => (
                     <Checkbox
+                      key={o}
                       value={o}
                       className="pref-option"
                       onChange={() => onDealbreakerSelect(o)}

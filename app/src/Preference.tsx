@@ -43,7 +43,7 @@ function Preference(props: PreferenceProps) {
           <div className="pref dealbreaker">
             <div>Dealbreakers</div>
             <div className="pref-value">
-              {props.dealbreakers.map(t => <div><Typography.Text className="dealbreaker-value" ellipsis={true}>{t}</Typography.Text></div>)}
+              {props.dealbreakers.map(t => <div key={t}><Typography.Text className="dealbreaker-value" ellipsis={true}>{t}</Typography.Text></div>)}
             </div>
           </div>
         )}
