@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "./App.less";
 import Header from "./Header";
 import Login from "./Login";
+import Logout from "./Logout";
 import Privacy from "./Privacy";
 import Profile from "./Profile";
 import PublicProfile from "./PublicProfile";
@@ -80,6 +81,9 @@ function App() {
             <Route path="/login">
               <Header />
               <Login />
+            </Route>
+            <Route path="/logout">
+              <Logout />
             </Route>
           </Switch>
         </div>
