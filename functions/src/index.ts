@@ -117,7 +117,8 @@ export const backupFirestore = functions.pubsub
 export const notifyIncomingText = functions.https.onRequest(
   async (request, response) => {
     const phone = request.body.phone;
-    await notifyIncomingTextHelper(phone, request.body.message)
+    const message = await client.messages(request.body.message).fetch();
+    await notifyIncomingTextHelper(phone, message.body);
     response.end();
   }
 );
