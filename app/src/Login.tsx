@@ -1,8 +1,5 @@
 import { Input } from "antd";
-import "firebase/analytics";
 import firebase from "firebase/app";
-import "firebase/remote-config";
-import "firebase/storage";
 import React, { useEffect, useState } from "react";
 import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
@@ -27,7 +24,7 @@ function Login() {
 
   firebase.auth().onAuthStateChanged(function (user) {
     if (user) {
-      // history.push("/profile")
+      history.push("/profile")
     }
   });
 
@@ -46,9 +43,8 @@ function Login() {
       setConfirmationResult(confirmationResult);
       setStep("verification-code");
     } catch (error) {
-      console.error(error)
       // Error; SMS not sent
-      // ...
+      console.error(error)
     } finally {
       setRequestingCode(false);
     }
@@ -56,6 +52,7 @@ function Login() {
 
   function onCancel() {
     setCode("");
+    setValidCode(true);
     setStep("");
   }
 
