@@ -1,9 +1,91 @@
-.story-login-container {
-  height: 100%;
+.st-login-container {
+  height: calc(100% - 44px);
+  display: flex;
+  flex-direction: column;
+}
+
+.st-phone-input-container {
+  flex: 1;
   display: flex;
   align-items: center;
 }
 
-.firebaseui-tos {
-  display: none;
+.st-phone-input {
+  width: 100%;
+}
+
+.st-phone-input-title {
+  font-size: 24px;
+  color: black;
+  margin: 10px 0;
+}
+
+.st-phone-input-desc {
+  font-size: 21px;
+  margin: 10px 0;
+}
+
+.st-phone-no {
+  color: #DE3636;
+}
+
+.st-phone-input .PhoneInputCountry,
+.st-phone-input .PhoneInputInput,
+.st-code-input {
+  border: 1px solid #D8AAE0;
+  font-size: 16px;
+  color: #682873;
+  height: 48px;
+}
+
+.st-phone-input .PhoneInputCountry {
+  margin: 0;
+  padding: 10px 15px 10px 20px;
+  background: #ECCFEE;
+  border-bottom-left-radius: 4px;
+  border-top-left-radius: 4px;
+  border-right: 0;
+}
+
+.st-phone-input .PhoneInputCountrySelectArrow {
+  margin-left: 15px;
+}
+
+.st-phone-input .PhoneInputInput,
+.st-code-input {
+  background: #F4EEFC;
+  padding: 15px;
+}
+
+.st-code-input {
+  border-radius: 4px;
+  margin: 5px 0;
+}
+
+.st-code-error {
+  color: #DE3636;
+}
+
+.st-phone-input .PhoneInputInput {
+  border-bottom-right-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+.st-button-container {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.st-cancel {
+  width: 37%;
+  background-color: #E0E0E0;
+}
+
+.st-verify-code {
+  width: 60%;
+}
+
+#st-request-code {
+  width: 100%;
 }
