@@ -412,6 +412,7 @@ export const conferenceStatusWebhook = functions.https.onRequest(
         .conferences(conferenceSid)
         .participants.list();
       if (participants.length === 1) {
+        response.end();
         return;
       }
       await admin
