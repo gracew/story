@@ -87,11 +87,11 @@
   border: 1px solid #D8AAE0;
 }
 
-.edit-cancel {
+.edit-preference-cancel {
   width: 30%;
   background-color: #E0E0E0;
 }
 
-.edit-save {
+.edit-preference-save {
   width: 66%;
 }

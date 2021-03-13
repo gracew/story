@@ -232,11 +232,11 @@ function EditPreference(props: EditPreferenceProps) {
 
       <StoryButtonContainer>
         <StoryButton
-          className="edit-cancel"
+          className="edit-preference-cancel"
           onClick={props.back}
         >Cancel</StoryButton>
         <StoryButton
-          className="edit-save"
+          className="edit-preference-save"
           type="primary"
           onClick={onSave}
           disabled={emptyState()}
