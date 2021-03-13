@@ -5,6 +5,7 @@ import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useHistory } from "react-router-dom";
 import StoryButton from "./components/StoryButton";
+import StoryButtonContainer from "./components/StoryButtonContainer";
 import "./Login.css";
 
 function Login() {
@@ -29,7 +30,7 @@ function Login() {
   });
 
   useEffect(() => {
-    setRecaptchaVerifier(new firebase.auth.RecaptchaVerifier('st-request-code', {
+    setRecaptchaVerifier(new firebase.auth.RecaptchaVerifier('request-code', {
       size: 'invisible',
     }));
   }, []);
@@ -70,27 +71,27 @@ function Login() {
 
   if (step === "verification-code") {
     return (
-      <div className="st-login-container">
-        <div className="st-phone-input-container">
-          <div className="st-phone-input">
-            <div className="st-phone-input-title">Verify your phone number</div>
-            <div className="st-phone-input-desc">Enter the 6-digit code we sent to <span className="st-phone-no">{phone}</span></div>
+      <div className="login">
+        <div className="login-input-container">
+          <div className="login-input">
+            <div className="login-input-title">Verify your phone number</div>
+            <div className="login-input-desc">Enter the 6-digit code we sent to <span className="phone-number">{phone}</span></div>
             <Input
-              className="st-code-input"
+              className="code-input"
               placeholder="6-digit code"
               value={code}
               onChange={e => setCode(e.target.value)}
             />
-            {!validCode && <div className="st-code-error">Wrong code. Try again.</div>}
+            {!validCode && <div className="code-error">Wrong code. Try again.</div>}
           </div>
         </div>
-        <div className="st-button-container">
+        <div className="button-container">
           <StoryButton
-            className="st-cancel"
+            className="login-cancel"
             onClick={onCancel}
           >Cancel</StoryButton>
           <StoryButton
-            className="st-verify-code"
+            className="verify-code"
             type="primary"
             onClick={onVerify}
             disabled={code.length !== 6}
@@ -102,10 +103,10 @@ function Login() {
   }
 
   return (
-    <div className="st-login-container">
-      <div className="st-phone-input-container">
-        <div className="st-phone-input">
-          <div className="st-phone-input-title">Enter your phone number</div>
+    <div className="login">
+      <div className="login-input-container">
+        <div className="login-input">
+          <div className="login-input-title">Enter your phone number</div>
           <PhoneInput
             placeholder="Enter phone number"
             defaultCountry="US"
@@ -114,9 +115,9 @@ function Login() {
           />
         </div>
       </div>
-      <div className="st-button-container">
+      <StoryButtonContainer>
         <StoryButton
-          id="st-request-code"
+          id="request-code"
           type="primary"
           onClick={onRequestCode}
           disabled={!isPossiblePhoneNumber(phone || "")}
@@ -124,7 +125,7 @@ function Login() {
         >
           Request Verification Code
         </StoryButton>
-      </div>
+      </StoryButtonContainer>
     </div>
   );
 }
