@@ -1,19 +1,22 @@
-.edit-preference-container {
+.edit-preference {
   display: flex;
-  height: 100%;
+  flex: 1;
   flex-direction: column;
-  justify-content: space-between;
 }
 
-.edit-preference {
+.edit-preference-input-container {
+  flex: 1;
+}
+
+.edit-preference-input {
   margin: 40px 0;
 }
 
-.edit-preference h3 {
+.edit-preference-input h3 {
   font-size: 17px;
 }
 
-.edit-preference .ant-input {
+.edit-preference-input .ant-input {
   padding: 20px;
   background: #F4EEFC;
   border: 1px solid #D8AAE0;
@@ -84,23 +87,11 @@
   border: 1px solid #D8AAE0;
 }
 
-.edit-actions {
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 25px solid transparent;
-}
-
-.edit-actions button {
-  padding: 8px;
-  height: 100%;
-  font-size: 19px;
-}
-
-.edit-cancel {
+.edit-preference-cancel {
   width: 30%;
   background-color: #E0E0E0;
 }
 
-.edit-save {
+.edit-preference-save {
   width: 66%;
 }

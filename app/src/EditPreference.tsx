@@ -1,4 +1,4 @@
-import { Button, Checkbox, Radio, Slider, Spin } from "antd";
+import { Checkbox, Radio, Slider } from "antd";
 import TextArea from "antd/lib/input/TextArea";
 import firebase from "firebase";
 import "firebase/analytics";
@@ -6,6 +6,8 @@ import "firebase/remote-config";
 import "firebase/storage";
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
+import StoryButton from "./components/StoryButton";
+import StoryButtonContainer from "./components/StoryButtonContainer";
 import "./EditPreference.css";
 
 export enum PreferenceType {
@@ -138,9 +140,9 @@ function EditPreference(props: EditPreferenceProps) {
   }
 
   return (
-    <div className="edit-preference-container">
-      <div>
-        <div className="edit-preference">
+    <div className="edit-preference">
+      <div className="edit-preference-input-container">
+        <div className="edit-preference-input">
           <h3>{props.metadata.label}</h3>
           {props.metadata.dealbreakers && <div className="edit-prefs-header">About me</div>}
           {props.metadata.description && <div className="edit-pref-description" dangerouslySetInnerHTML={{ __html: props.metadata.description }}></div>}
@@ -228,13 +230,19 @@ function EditPreference(props: EditPreferenceProps) {
         </div>
       </div>
 
-      <div className="edit-actions">
-        <Button className="edit-cancel" onClick={props.back}>Cancel</Button>
-        <Button className="edit-save" type="primary" onClick={onSave} disabled={emptyState() || saving}>
-          {!saving && <div>Save</div>}
-          {saving && <div>Saving... <Spin size="small" ></Spin></div>}
-        </Button>
-      </div>
+      <StoryButtonContainer>
+        <StoryButton
+          className="edit-preference-cancel"
+          onClick={props.back}
+        >Cancel</StoryButton>
+        <StoryButton
+          className="edit-preference-save"
+          type="primary"
+          onClick={onSave}
+          disabled={emptyState()}
+          loading={saving}
+        >Save</StoryButton>
+      </StoryButtonContainer>
     </div>
   );
 }
