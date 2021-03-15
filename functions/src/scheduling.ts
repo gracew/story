@@ -140,7 +140,7 @@ async function potentialMatchesHelper(week: string) {
         if (!areUsersCompatible(userA, userB, prevMatches, blocklist)) {
             continue;
         }
-        const sharedAvailability = findCommonAvailability(availabilityByUserId[userA.id], availabilityByUserId[userB.id]);
+        const sharedAvailability = findCommonAvailability(availabilityByUserId[userA.id].available, availabilityByUserId[userB.id].available);
         if (sharedAvailability.length > 0) {
             pairs.push({
                 userA: userA.firstName + " " + userA.lastName,
@@ -159,24 +159,12 @@ async function potentialMatchesHelper(week: string) {
     return pairs;
 }
 
-function findCommonAvailability(a1: Record<string, boolean>, a2: Record<string, boolean>) {
-    const ret = [];
-    if (a1["mon"] && a2["mon"]) {
-        ret.push("mon");
+function findCommonAvailability(a1?: admin.firestore.Timestamp[], a2?: admin.firestore.Timestamp[]) {
+    if (!a1 || !a2) {
+        return [];
     }
-    if (a1["tue"] && a2["tue"]) {
-        ret.push("tue");
-    }
-    if (a1["wed"] && a2["wed"]) {
-        ret.push("wed");
-    }
-    if (a1["thu"] && a2["thu"]) {
-        ret.push("thu");
-    }
-    if (a1["fri"] && a2["fri"]) {
-        ret.push("fri");
-    }
-    return ret;
+    const set = new Set(a1.map(t => t.toDate().toISOString()));
+    return a2.map(t => t.toDate()).filter(d => set.has(d.toISOString()));
 }
 
 // returns all possible pairings of an array
