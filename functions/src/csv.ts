@@ -200,6 +200,7 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
             notified: false,
             reminded: false,
             called: false,
+            recalled: false,
             flakesHandled: false,
             warned5Min: false,
             warned1Min: false,
