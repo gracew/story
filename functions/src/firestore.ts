@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import moment = require("moment-timezone");
 
 export interface IUser {
     id: string;
@@ -32,6 +33,7 @@ export interface IMatch {
     },
     mode?: string;
     twilioSid?: string;
+    recordingOverride?: boolean;
 }
 
 export class Firestore {
@@ -61,6 +63,19 @@ export class Firestore {
 
     public updateMatch(id: string, update: Partial<IMatch>) {
         return admin.firestore().collection("matches").doc(id).update(update);
+    }
+
+    public async currentMatchForUser(id: string): Promise<IMatch | undefined> {
+        const createdAt = moment().utc().startOf("hour");
+        if (moment().minutes() >= 30) {
+            createdAt.add(30, "minutes");
+        }
+        const match = await admin.firestore().collection("matches")
+            .where("user_ids", "array-contains", id)
+            .where("created_at", "==", createdAt)
+            .where("canceled", "==", false)
+            .get();
+        return match.empty ? undefined : match.docs[0].data() as IMatch;
     }
 
     public async nextMatchForUser(id: string): Promise<IMatch | undefined> {

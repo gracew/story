@@ -25,19 +25,12 @@ export async function getConferenceTwimlForPhone(phone: string) {
     console.log("Finding conference for user with phone number " + phone);
     const userId = result.docs[0].id;
 
-    const createdAt = moment().utc().startOf("hour");
-    if (moment().minutes() >= 30) {
-        createdAt.add(30, "minutes");
-    }
-    const match = await admin.firestore().collection("matches")
-        .where("user_ids", "array-contains", userId)
-        .where("created_at", "==", createdAt)
-        .where("canceled", "==", false)
-        .get();
-    if (match.empty) {
+    const firestore = new Firestore();
+    const match = await firestore.currentMatchForUser(userId);
+    if (!match) {
         return errorResponse;
     }
-    await match.docs[0].ref.update("joined." + userId, true)
+    await firestore.updateMatch(match.id, { ["joined." + userId]: true })
 
     const twiml = new twilio.twiml.VoiceResponse();
     const dial = twiml.dial();
@@ -49,7 +42,7 @@ export async function getConferenceTwimlForPhone(phone: string) {
         statusCallbackEvent: ["join", "end"],
         statusCallback: BASE_URL + "conferenceStatusWebhook",
         muted: true,
-    }, match.docs[0].id);
+    }, match.id);
 
     return twiml;
 }
@@ -72,7 +65,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
         from: TWILIO_NUMBER,
         parameters: {
             mode,
-            photo: userA.photo && userB.photo ? "both_photo" : (!userA.photo ? "self_no_photo" : "other_no_photo" ),
+            photo: userA.photo && userB.photo ? "both_photo" : (!userA.photo ? "self_no_photo" : "other_no_photo"),
             userId: userAId,
             matchId: match.id,
             firstName: userA.firstName,
@@ -91,7 +84,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
         from: TWILIO_NUMBER,
         parameters: {
             mode,
-            photo: userA.photo && userB.photo ? "both_photo" : (!userB.photo ? "self_no_photo" : "other_no_photo" ),
+            photo: userA.photo && userB.photo ? "both_photo" : (!userB.photo ? "self_no_photo" : "other_no_photo"),
             userId: userBId,
             matchId: match.id,
             firstName: userB.firstName,
@@ -202,7 +195,7 @@ export function getNextDays(today: string, nextMatchRevealing?: IMatch, nextMatc
     if (nextMatchOther) {
         nextMatchDays.add(moment(nextMatchOther.created_at.toDate()).tz("America/Los_Angeles").format("dddd"));
     }
-    
+
     const potentialNextDays = ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
     let availableNextDays: string[];
     if (today === "Tuesday") {
