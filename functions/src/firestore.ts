@@ -33,7 +33,7 @@ export interface IMatch {
     },
     mode?: string;
     twilioSid?: string;
-    recordingVersion?: any;
+    recordingOverride?: boolean;
 }
 
 export class Firestore {

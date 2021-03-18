@@ -473,15 +473,15 @@ export const conferenceStatusWebhook = functions.https.onRequest(
 );
 
 function getScreenUrl(match: IMatch) {
-  return match.recordingVersion ? "screenCall2" : "screenCall";
+  return match.recordingOverride ? "screenCall2" : "screenCall";
 }
 
 function getIntroUrl(match: IMatch) {
-  return match.recordingVersion ? "announceUser2" : "announceUser";
+  return match.recordingOverride ? "announceUser2" : "announceUser";
 }
 
 function getOutroUrl(match: IMatch) {
-  return match.recordingVersion ? "callOutro2" : "callOutro";
+  return match.recordingOverride ? "callOutro2" : "callOutro";
 }
 
 export const announceUser = functions.https.onRequest((request, response) => {
