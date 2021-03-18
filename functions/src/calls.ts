@@ -451,7 +451,7 @@ export const conferenceStatusWebhook = functions.https.onRequest(
       await match.ref.update({ ongoing: true, twilioSid: conferenceSid });
       await client
         .conferences(conferenceSid)
-        .update({ announceUrl: BASE_URL + getIntroUrl(match.data() as IMatch) });
+        .update({ announceUrl: getIntroUrl(match.data() as IMatch), announceMethod: "GET" });
       await util.promisify(setTimeout)(26_000);
       await Promise.all(
         participants.map((participant) =>
@@ -477,30 +477,14 @@ function getScreenUrl(match: IMatch) {
 }
 
 function getIntroUrl(match: IMatch) {
-  return match.recordingOverride ? "announceUser2" : "announceUser";
+  return match.recordingOverride
+    ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_beep.mp3?alt=media"
+    : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_text_beep_grace.mp3?alt=media";
 }
 
 function getOutroUrl(match: IMatch) {
   return match.recordingOverride ? "callOutro2" : "callOutro";
 }
-
-export const announceUser = functions.https.onRequest((request, response) => {
-  const twiml = new twilio.twiml.VoiceResponse();
-  twiml.play(
-    "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_text_beep_grace.mp3?alt=media"
-  );
-  response.set("Content-Type", "text/xml");
-  response.send(twiml.toString());
-});
-
-export const announceUser2 = functions.https.onRequest((request, response) => {
-  const twiml = new twilio.twiml.VoiceResponse();
-  twiml.play(
-    "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_beep.mp3?alt=media"
-  );
-  response.set("Content-Type", "text/xml");
-  response.send(twiml.toString());
-});
 
 export const announce5Min = functions.https.onRequest((request, response) => {
   const twiml = new twilio.twiml.VoiceResponse();
@@ -611,8 +595,8 @@ export const createSmsChat = functions.https.onRequest(async (request, response)
       .sessions(session.sid)
       .participants;
   const [participantA, participantB] = await Promise.all([
-      participants.create({ friendlyName: match.user_a_id, identifier: userA.phone }),
-      participants.create({ friendlyName: match.user_b_id, identifier: userB.phone }),
+    participants.create({ friendlyName: match.user_a_id, identifier: userA.phone }),
+    participants.create({ friendlyName: match.user_b_id, identifier: userB.phone }),
   ]);
   await Promise.all([
     participants(participantA.sid).messageInteractions.create({ body: `Hi ${userA.firstName}! Just reply here to text with ${userB.firstName}. This chat will expire in 7 days.` }),
@@ -623,11 +607,11 @@ export const createSmsChat = functions.https.onRequest(async (request, response)
 
 export const warnSmsChatExpiration = functions.https.onRequest(async (request, response) => {
   const participants = await client.proxy
-      .services("KS58cecadd35af39c56a4cae81837a89f3")
-      .sessions(request.body.sessionSid)
-      .participants
-      .list();
-  await Promise.all(participants.map(p => 
+    .services("KS58cecadd35af39c56a4cae81837a89f3")
+    .sessions(request.body.sessionSid)
+    .participants
+    .list();
+  await Promise.all(participants.map(p =>
     client.proxy
       .services("KS58cecadd35af39c56a4cae81837a89f3")
       .sessions(request.body.sessionSid)
@@ -656,5 +640,5 @@ export async function notifyIncomingTextHelper(phone: string, message: string) {
       body: `From: ${fullName}
 Body: ${message}`,
     });
-    return user.data() as IUser;
+  return user.data() as IUser;
 }
