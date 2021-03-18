@@ -329,7 +329,7 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
     );
     await client
       .conferences(conferenceSid)
-      .update({ announceUrl: BASE_URL + "callOutro" });
+      .update({ announceUrl: BASE_URL + getOutroUrl(match) });
     await util.promisify(setTimeout)(28_000);
     await client.conferences(conferenceSid).update({ status: "completed" });
   } catch (err) {
@@ -358,10 +358,19 @@ async function callUserHelper(userId: string) {
     console.error(
       "Could not make call for user that does not exist: " + userId
     );
+    return;
+  }
+
+  const match = await new Firestore().currentMatchForUser(userId);
+  if (!match) {
+    console.error(
+      "No scheduled match for user: " + userId
+    );
+    return;
   }
 
   await client.calls.create({
-    url: BASE_URL + "screenCall",
+    url: BASE_URL + getScreenUrl(match),
     to: user.get("phone"),
     from: "+12036338466",
   });
@@ -385,6 +394,25 @@ export const screenCall = functions.https.onRequest(
 
     // If the user doesn't enter input, loop
     twiml.redirect("/screenCall");
+
+    response.set("Content-Type", "text/xml");
+    response.send(twiml.toString());
+  }
+);
+
+export const screenCall2 = functions.https.onRequest(
+  async (request, response) => {
+    const twiml = new twilio.twiml.VoiceResponse();
+    const gather = twiml.gather({
+      numDigits: 1,
+      action: BASE_URL + "addUserToCall",
+    });
+    gather.play(
+      "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_screen.mp3?alt=media"
+    );
+
+    // If the user doesn't enter input, loop
+    twiml.redirect("/screenCall2");
 
     response.set("Content-Type", "text/xml");
     response.send(twiml.toString());
@@ -415,14 +443,15 @@ export const conferenceStatusWebhook = functions.https.onRequest(
         response.end();
         return;
       }
-      await admin
+      const match = await admin
         .firestore()
         .collection("matches")
         .doc(request.body.FriendlyName)
-        .update({ ongoing: true, twilioSid: conferenceSid });
+        .get();
+      await match.ref.update({ ongoing: true, twilioSid: conferenceSid });
       await client
         .conferences(conferenceSid)
-        .update({ announceUrl: BASE_URL + "announceUser" });
+        .update({ announceUrl: BASE_URL + getIntroUrl(match.data() as IMatch) });
       await util.promisify(setTimeout)(26_000);
       await Promise.all(
         participants.map((participant) =>
@@ -443,10 +472,31 @@ export const conferenceStatusWebhook = functions.https.onRequest(
   }
 );
 
+function getScreenUrl(match: IMatch) {
+  return match.recordingVersion ? "screenCall2" : "screenCall";
+}
+
+function getIntroUrl(match: IMatch) {
+  return match.recordingVersion ? "announceUser2" : "announceUser";
+}
+
+function getOutroUrl(match: IMatch) {
+  return match.recordingVersion ? "callOutro2" : "callOutro";
+}
+
 export const announceUser = functions.https.onRequest((request, response) => {
   const twiml = new twilio.twiml.VoiceResponse();
   twiml.play(
     "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_text_beep_grace.mp3?alt=media"
+  );
+  response.set("Content-Type", "text/xml");
+  response.send(twiml.toString());
+});
+
+export const announceUser2 = functions.https.onRequest((request, response) => {
+  const twiml = new twilio.twiml.VoiceResponse();
+  twiml.play(
+    "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_beep.mp3?alt=media"
   );
   response.set("Content-Type", "text/xml");
   response.send(twiml.toString());
@@ -474,6 +524,15 @@ export const callOutro = functions.https.onRequest((request, response) => {
   const twiml = new twilio.twiml.VoiceResponse();
   twiml.play(
     "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_text_grace.mp3?alt=media"
+  );
+  response.set("Content-Type", "text/xml");
+  response.send(twiml.toString());
+});
+
+export const callOutro2 = functions.https.onRequest((request, response) => {
+  const twiml = new twilio.twiml.VoiceResponse();
+  twiml.play(
+    "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro.mp3?alt=media"
   );
   response.set("Content-Type", "text/xml");
   response.send(twiml.toString());
