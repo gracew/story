@@ -330,7 +330,7 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
     await client
       .conferences(conferenceSid)
       .update({ announceUrl: BASE_URL + getOutroUrl(match) });
-    await util.promisify(setTimeout)(28_000);
+    await util.promisify(setTimeout)(30_000);
     await client.conferences(conferenceSid).update({ status: "completed" });
   } catch (err) {
     console.log(err);
