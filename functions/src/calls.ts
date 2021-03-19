@@ -1,12 +1,10 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
-import * as twilio from "twilio";
 import * as util from "util";
 import { Firestore, IMatch, IUser } from "./firestore";
 import { flakeApology, flakeWarning, reminder, videoReminder } from "./smsCopy";
 import {
-  BASE_URL,
   callStudio,
   client,
   getConferenceTwimlForPhone,
@@ -453,24 +451,6 @@ function getOutroUrl(match: IMatch) {
     : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_text_grace.mp3?alt=media";
 }
 
-export const announce5Min = functions.https.onRequest((request, response) => {
-  const twiml = new twilio.twiml.VoiceResponse();
-  twiml.play(
-    "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media"
-  );
-  response.set("Content-Type", "text/xml");
-  response.send(twiml.toString());
-});
-
-export const announce1Min = functions.https.onRequest((request, response) => {
-  const twiml = new twilio.twiml.VoiceResponse();
-  twiml.play(
-    "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media"
-  );
-  response.set("Content-Type", "text/xml");
-  response.send(twiml.toString());
-});
-
 export const call5MinWarning = functions.pubsub
   .schedule("15,45 * * * *")
   .onRun(async (context) => {
@@ -486,7 +466,10 @@ export const call5MinWarning = functions.pubsub
         ongoingCalls.docs.map((doc) =>
           client
             .conferences(doc.get("twilioSid"))
-            .update({ announceUrl: BASE_URL + "announce5Min" })
+            .update({ 
+              announceUrl: "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media",
+              announceMethod: "GET",
+             })
         )
       );
       await Promise.all(
@@ -513,7 +496,10 @@ export const call1MinWarning = functions.pubsub
         ongoingCalls.docs.map((doc) =>
           client
             .conferences(doc.get("twilioSid"))
-            .update({ announceUrl: BASE_URL + "announce1Min" })
+            .update({ 
+              announceUrl: "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media",
+              announceMethod: "GET",
+             })
         )
       );
       await Promise.all(

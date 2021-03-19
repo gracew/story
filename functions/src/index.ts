@@ -5,7 +5,7 @@ import * as moment from "moment-timezone";
 import * as os from "os";
 import * as path from "path";
 import { getPreferences, getPublicProfile, savePreferences } from "./app";
-import { addUserToCall, announce1Min, announce5Min, call1MinWarning, call5MinWarning, callUser, conferenceStatusWebhook, createSmsChat, handleFlakes, issueCalls, markJoined, notifyIncomingTextHelper, revealRequest, revealRequestVideo, saveReveal, sendReminderTexts, sendVideoLink, warnSmsChatExpiration } from "./calls";
+import { addUserToCall, call1MinWarning, call5MinWarning, callUser, conferenceStatusWebhook, createSmsChat, handleFlakes, issueCalls, markJoined, notifyIncomingTextHelper, revealRequest, revealRequestVideo, saveReveal, sendReminderTexts, sendVideoLink, warnSmsChatExpiration } from "./calls";
 import { createMatches, createSchedulingRecords, processBulkSmsCsv, sendAvailabilityReminderCT, sendAvailabilityReminderET, sendAvailabilityReminderPT, sendAvailabilityTexts, sendMatchNotificationTexts } from "./csv";
 import { analyzeCollection, cancelMatch, createMatch } from "./retool";
 import { bipartiteMatches, potentialMatches, remainingMatches } from "./scheduling";
@@ -17,8 +17,6 @@ admin.initializeApp();
 export {
   addUserToCall,
   analyzeCollection,
-  announce1Min,
-  announce5Min,
   bipartiteMatches,
   call1MinWarning,
   call5MinWarning,
