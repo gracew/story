@@ -329,7 +329,7 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
     );
     await client
       .conferences(conferenceSid)
-      .update({ announceUrl: BASE_URL + getOutroUrl(match) });
+      .update({ announceUrl: getOutroUrl(match), announceMethod: "GET" });
     await util.promisify(setTimeout)(30_000);
     await client.conferences(conferenceSid).update({ status: "completed" });
   } catch (err) {
@@ -370,7 +370,8 @@ async function callUserHelper(userId: string) {
   }
 
   await client.calls.create({
-    url: BASE_URL + getScreenUrl(match),
+    url: getScreenUrl(match),
+    method: "GET",
     to: user.get("phone"),
     from: "+12036338466",
   });
@@ -380,44 +381,6 @@ export const callUser = functions.https.onRequest(async (request, response) => {
   await callUserHelper(request.body.userId);
   response.end();
 });
-
-export const screenCall = functions.https.onRequest(
-  async (request, response) => {
-    const twiml = new twilio.twiml.VoiceResponse();
-    const gather = twiml.gather({
-      numDigits: 1,
-      action: BASE_URL + "addUserToCall",
-    });
-    gather.play(
-      "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_screen_grace.mp3?alt=media"
-    );
-
-    // If the user doesn't enter input, loop
-    twiml.redirect("/screenCall");
-
-    response.set("Content-Type", "text/xml");
-    response.send(twiml.toString());
-  }
-);
-
-export const screenCall2 = functions.https.onRequest(
-  async (request, response) => {
-    const twiml = new twilio.twiml.VoiceResponse();
-    const gather = twiml.gather({
-      numDigits: 1,
-      action: BASE_URL + "addUserToCall",
-    });
-    gather.play(
-      "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_screen.mp3?alt=media"
-    );
-
-    // If the user doesn't enter input, loop
-    twiml.redirect("/screenCall2");
-
-    response.set("Content-Type", "text/xml");
-    response.send(twiml.toString());
-  }
-);
 
 /** Called directly for incoming calls. Also called for outbound calls after the user has passed the call screen. */
 export const addUserToCall = functions.https.onRequest(
@@ -473,7 +436,9 @@ export const conferenceStatusWebhook = functions.https.onRequest(
 );
 
 function getScreenUrl(match: IMatch) {
-  return match.recordingOverride ? "screenCall2" : "screenCall";
+  return match.recordingOverride 
+    ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2FscreenCall2.xml?alt=media"
+    : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2FscreenCall.xml?alt=media";
 }
 
 function getIntroUrl(match: IMatch) {
@@ -483,7 +448,9 @@ function getIntroUrl(match: IMatch) {
 }
 
 function getOutroUrl(match: IMatch) {
-  return match.recordingOverride ? "callOutro2" : "callOutro";
+  return match.recordingOverride
+    ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro.mp3?alt=media"
+    : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_text_grace.mp3?alt=media";
 }
 
 export const announce5Min = functions.https.onRequest((request, response) => {
@@ -499,24 +466,6 @@ export const announce1Min = functions.https.onRequest((request, response) => {
   const twiml = new twilio.twiml.VoiceResponse();
   twiml.play(
     "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media"
-  );
-  response.set("Content-Type", "text/xml");
-  response.send(twiml.toString());
-});
-
-export const callOutro = functions.https.onRequest((request, response) => {
-  const twiml = new twilio.twiml.VoiceResponse();
-  twiml.play(
-    "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_text_grace.mp3?alt=media"
-  );
-  response.set("Content-Type", "text/xml");
-  response.send(twiml.toString());
-});
-
-export const callOutro2 = functions.https.onRequest((request, response) => {
-  const twiml = new twilio.twiml.VoiceResponse();
-  twiml.play(
-    "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro.mp3?alt=media"
   );
   response.set("Content-Type", "text/xml");
   response.send(twiml.toString());

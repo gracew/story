@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+     <Gather numDigits="1" action="https://us-central1-speakeasy-prod.cloudfunctions.net/addUserToCall">
+          <Play>https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_screen.mp3?alt=media</Play>
+     </Gather>
+     <Redirect method="GET">https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2FscreenCall2.xml?alt=media</Redirect>
+</Response>
