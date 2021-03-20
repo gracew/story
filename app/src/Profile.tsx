@@ -124,6 +124,7 @@ const prefs: Record<string, any> = {
 
 function Profile() {
   const [userLoading, setUserLoading] = useState(true);
+  const [userPhone, setUserPhone] = useState<string | null>();
   const [selectedPref, setSelectedPref] = useState<string>();
   const [userPrefs, setUserPrefs] = useState<Record<string, any>>();
   const [photoUrl, setPhotoUrl] = useState<string>();
@@ -143,7 +144,15 @@ function Profile() {
           displayName: res.data.firstName,
         });
       })
-  }, [userLoading, userId]);
+      .catch((err) => {
+        if (err.code === "not-found" && userPhone) {
+          // the user logged in, but we don't have an entry for them, so redirect to login
+          window.location.href = "https://storydating.com/join#phone=" + encodeURIComponent(userPhone);
+        } else {
+          throw err;
+        }
+      })
+  }, [userLoading, userPhone, userId]);
 
   useEffect(() => {
     if (userPrefsPhoto) {
@@ -158,7 +167,10 @@ function Profile() {
   firebase.auth().onAuthStateChanged(function (user) {
     setUserLoading(false);
     if (!user) {
+      // the user navigated directly to this page without logging in or having a previous session
       history.push("/login")
+    } else {
+      setUserPhone(user.phoneNumber);
     }
   });
 
