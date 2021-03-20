@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
+import fetch from "node-fetch";
 import * as util from "util";
 import { Firestore, IMatch, IUser } from "./firestore";
 import { flakeApology, flakeWarning, reminder, videoReminder } from "./smsCopy";
@@ -563,11 +564,12 @@ export async function notifyIncomingTextHelper(phone: string, message: string) {
     .where("phone", "==", phone)
     .get();
   const fullName = userQuery.empty ? "Unknown user" : userQuery.docs[0].get("firstName") + " " + userQuery.docs[0].get("lastName");
-  await client.conversations.conversations
-    .get("CH3b12dac2b9484e5fb719bd2a32f16272")
-    .messages.create({
-      author: "+12036338466",
-      body: `From: ${fullName}
-Body: ${message}`,
-    });
+  return fetch(functions.config().slack.webhook_url, {
+    method: "post",
+    body: JSON.stringify({
+      text: `From: ${fullName}
+Body: ${message}`
+    }),
+    headers: { "Content-Type": "application/json" },
+  });
 }

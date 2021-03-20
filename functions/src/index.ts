@@ -117,14 +117,3 @@ export const notifyIncomingText = functions.https.onRequest(
     response.end();
   }
 );
-
-export const notifyNewRecording = functions.firestore
-  .document('vday/{docId}')
-  .onCreate((snap, context) =>
-    client.conversations.conversations
-      .get("CH3b12dac2b9484e5fb719bd2a32f16272")
-      .messages.create({
-        author: "+12036338466",
-        body: "new recording submitted"
-      })
-  );
