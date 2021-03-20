@@ -67,7 +67,7 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
     } else if (trimmed.length === 10) {
       user.phone = "+1" + trimmed;
     } else {
-      console.error("unable to handle phone number: " + trimmed);
+      console.error(new Error("unable to handle phone number: " + trimmed));
     }
   }
   if (user.location === "San Francisco Bay Area") {
@@ -123,7 +123,7 @@ export const saveAvailability = functions.https.onRequest(async (req, response) 
   const week = moment().startOf("week").format("YYYY-MM-DD")
   const userId = req.body.form_response.hidden.u;
   if (!userId) {
-    console.error("missing userId");
+    console.error(new Error("missing userId"));
     response.end();
     return;
   }
@@ -190,7 +190,7 @@ function parseTime(time: string, timezone: string, getTimestamp: () => moment.Mo
     case "Thu 9pm":
       return week.add(4, "days").add(21, "hours");
     default:
-      console.error("could not parse time: " + time);
+      console.error(new Error("could not parse time: " + time));
       return undefined;
   }
 }

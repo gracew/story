@@ -182,16 +182,16 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
     const userB = await firestore.getUser(data.userBId);
 
     if (!userA) {
-        console.error("cannot find user with id " + data.userAId);
+        console.error(new Error("unknown user id " + data.userAId));
         return;
     }
     if (!userB) {
-        console.error("cannot find user with id " + data.userBId);
+        console.error(new Error("cannot find user with id " + data.userBId));
         return;
     }
     const timezone = processTimeZone(data.timezone.trim())
     if (!timezone) {
-        console.error("invalid timezone, skpping row: " + data)
+        console.error(new Error("invalid timezone, skipping row: " + data))
         return;
     }
     const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
