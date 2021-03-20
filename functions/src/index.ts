@@ -76,7 +76,7 @@ export const markActive = functions.https.onRequest(
       .where("phone", "==", phone)
       .get();
     if (userQuery.empty) {
-      console.error("No user with phone " + phone);
+      console.error(new Error("No user with phone " + phone));
       response.end();
       return;
     }

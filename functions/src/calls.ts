@@ -354,7 +354,7 @@ async function callUserHelper(userId: string) {
   const user = await admin.firestore().collection("users").doc(userId).get();
   if (!user.exists) {
     console.error(
-      "Could not make call for user that does not exist: " + userId
+      new Error("Could not make call for user that does not exist: " + userId)
     );
     return;
   }
@@ -362,7 +362,7 @@ async function callUserHelper(userId: string) {
   const match = await new Firestore().currentMatchForUser(userId);
   if (!match) {
     console.error(
-      "No scheduled match for user: " + userId
+      new Error("No scheduled match for user: " + userId)
     );
     return;
   }
@@ -434,7 +434,7 @@ export const conferenceStatusWebhook = functions.https.onRequest(
 );
 
 function getScreenUrl(match: IMatch) {
-  return match.recordingOverride 
+  return match.recordingOverride
     ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2FscreenCall2.xml?alt=media"
     : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2FscreenCall.xml?alt=media";
 }
@@ -466,10 +466,10 @@ export const call5MinWarning = functions.pubsub
         ongoingCalls.docs.map((doc) =>
           client
             .conferences(doc.get("twilioSid"))
-            .update({ 
+            .update({
               announceUrl: "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media",
               announceMethod: "GET",
-             })
+            })
         )
       );
       await Promise.all(
@@ -496,10 +496,10 @@ export const call1MinWarning = functions.pubsub
         ongoingCalls.docs.map((doc) =>
           client
             .conferences(doc.get("twilioSid"))
-            .update({ 
+            .update({
               announceUrl: "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media",
               announceMethod: "GET",
-             })
+            })
         )
       );
       await Promise.all(
@@ -562,12 +562,7 @@ export async function notifyIncomingTextHelper(phone: string, message: string) {
     .collection("users")
     .where("phone", "==", phone)
     .get();
-  if (userQuery.empty) {
-    console.error("No user with phone " + phone);
-    return;
-  }
-  const user = userQuery.docs[0];
-  const fullName = user.get("firstName") + " " + user.get("lastName");
+  const fullName = userQuery.empty ? "Unknown user" : userQuery.docs[0].get("firstName") + " " + userQuery.docs[0].get("lastName");
   await client.conversations.conversations
     .get("CH3b12dac2b9484e5fb719bd2a32f16272")
     .messages.create({
@@ -575,5 +570,4 @@ export async function notifyIncomingTextHelper(phone: string, message: string) {
       body: `From: ${fullName}
 Body: ${message}`,
     });
-  return user.data() as IUser;
 }

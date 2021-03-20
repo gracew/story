@@ -19,7 +19,7 @@ export async function getConferenceTwimlForPhone(phone: string) {
     errorResponse.say({ 'voice': 'alice' }, "We don't have a match for you!  Please try again later.");
 
     if (result.empty) {
-        console.error(`No user with phone number '${phone}'`);
+        console.error(new Error(`No user with phone number '${phone}'`));
         return errorResponse;
     }
     console.log("Finding conference for user with phone number " + phone);
@@ -109,15 +109,14 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
     }
 
     const revealingUser = await firestore.getUserByPhone(phone);
-    // check if user exists in table
     if (!revealingUser) {
-        console.error("No user with phone " + phone);
+        console.error(new Error("No user with phone " + phone));
         return;
     }
 
     const match = await firestore.getMatch(body.matchId);
     if (!match) {
-        console.error("Could not find match with id " + body.matchId)
+        console.error(new Error("Could not find match with id " + body.matchId))
         return;
     }
 
@@ -134,7 +133,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
     }
 
     if (!otherUser) {
-        console.error("Requested match doesnt have the requested users");
+        console.error(new Error("Requested match doesn't have the requested users"));
         return;
     }
     const nextMatchRevealing = await firestore.nextMatchForUser(revealingUser.id);
@@ -183,7 +182,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
         }
         return { next: "no_reveal" };
     }
-    console.error(`unexpected combination for match ${match.id}, phone ${phone}, reveal ${reveal}, otherReveal ${otherReveal}`)
+    console.error(new Error(`unexpected combination for match ${match.id}, phone ${phone}, reveal ${reveal}, otherReveal ${otherReveal}`))
     return;
 }
 
