@@ -229,7 +229,7 @@ function Profile() {
         </div>
       </div>
 
-      {userPrefs.beta && <ReferralCard referrerId={userPrefs.id} />}
+      <ReferralCard referrerId={userPrefs.id} />
 
       <h3 className="prefs-header">Basics</h3>
 

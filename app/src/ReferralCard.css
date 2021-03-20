@@ -22,8 +22,7 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
-  padding: 10px 8px 5px 8px;
-  height: 100%;
+  padding: 8px;
 }
 
 .referral-link,
@@ -38,7 +37,7 @@
 }
 
 .referral-text {
-  margin: 10px 0 20px 0;
+  margin: 10px 0 5px 0;
   font-size: 12px;
   line-height: 12px;
   color: #A986D3;
