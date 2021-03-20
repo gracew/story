@@ -353,16 +353,16 @@ export const saveReveal = functions.https.onRequest(
 async function callUserHelper(userId: string) {
   const user = await admin.firestore().collection("users").doc(userId).get();
   if (!user.exists) {
-    console.warn(
-      "Could not make call for user that does not exist: " + userId
+    console.error(
+      new Error("Could not make call for user that does not exist: " + userId)
     );
     return;
   }
 
   const match = await new Firestore().currentMatchForUser(userId);
   if (!match) {
-    console.warn(
-      "No scheduled match for user: " + userId
+    console.error(
+      new Error("No scheduled match for user: " + userId)
     );
     return;
   }
