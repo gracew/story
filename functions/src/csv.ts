@@ -186,7 +186,7 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
         return;
     }
     if (!userB) {
-        console.error(new Error("cannot find user with id " + data.userBId));
+        console.error(new Error("unknown user id " + data.userBId));
         return;
     }
     const timezone = processTimeZone(data.timezone.trim())
