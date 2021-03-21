@@ -143,15 +143,11 @@ async function potentialMatchesHelper(week: string) {
         const sharedAvailability = findCommonAvailability(availabilityByUserId[userA.id].available, availabilityByUserId[userB.id].available);
         if (sharedAvailability.length > 0) {
             pairs.push({
-                userA: userA.firstName + " " + userA.lastName,
-                userB: userB.firstName + " " + userB.lastName,
+                userA,
+                userB,
                 sameLocation: userA.location === userB.location,
-                userAFlexible: userA.locationFlexibility,
-                userBFlexible: userB.locationFlexibility,
                 userAPrevMatches: (prevMatches[userA.id] || []).length,
                 userBPrevMatches: (prevMatches[userB.id] || []).length,
-                userAId: userA.id,
-                userBId: userB.id,
                 days: sharedAvailability
             });
         }
@@ -189,12 +185,12 @@ function areUsersCompatible(user: any, match: any, prevMatches: Record<string, s
     }
 
     // check if match meets user's age criteria
-    if (match.age > user.matchMax || match.age < user.matchMin) {
+    if (match.age > (parseInt(user.matchMax + 1)) || match.age < (parseInt(user.matchMin) - 1)) {
         return false;
     }
 
     // check if user meets match's age criteria
-    if (user.age > match.matchMax || user.age < match.matchMin) {
+    if (user.age > (parseInt(match.matchMax + 1)) || user.age < (parseInt(match.matchMin) - 1)) {
         return false;
     }
 
