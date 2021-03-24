@@ -329,7 +329,7 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
     await client
       .conferences(conferenceSid)
       .update({ announceUrl: getOutroUrl(match), announceMethod: "GET" });
-    await util.promisify(setTimeout)(30_000);
+    await util.promisify(setTimeout)(31_000);
     await client.conferences(conferenceSid).update({ status: "completed" });
   } catch (err) {
     console.log(err);
@@ -442,14 +442,14 @@ function getScreenUrl(match: IMatch) {
 
 function getIntroUrl(match: IMatch) {
   return match.recordingOverride
-    ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_beep.mp3?alt=media"
+    ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_video_beep.mp3?alt=media"
     : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_text_beep_grace.mp3?alt=media";
 }
 
 function getOutroUrl(match: IMatch) {
   return match.recordingOverride
-    ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro.mp3?alt=media"
-    : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_text_grace.mp3?alt=media";
+    ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_video.mp3?alt=media"
+    : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_video_grace.mp3?alt=media";
 }
 
 export const call5MinWarning = functions.pubsub
