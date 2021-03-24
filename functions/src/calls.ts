@@ -4,7 +4,7 @@ import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import * as util from "util";
 import { Firestore, IMatch, IUser } from "./firestore";
-import { flakeApology, flakeWarning, reminder, videoReminder } from "./smsCopy";
+import { chatExpiration, chatIntro, flakeApology, flakeWarning, reminder, videoLink, videoReminder } from "./smsCopy";
 import {
   callStudio,
   client,
@@ -119,18 +119,8 @@ export const sendVideoLink = functions.pubsub
       videoMatches.forEach((doc) => {
         const userA = usersById[doc.get("user_a_id")];
         const userB = usersById[doc.get("user_b_id")];
-        const bodyA = `Hi ${userA.firstName
-          }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
-            "videoId"
-          )}/a. In case you need it, the passcode is ${doc.get(
-            "videoPasscode"
-          )}. Happy chatting!`;
-        const bodyB = `Hi ${userB.firstName
-          }! You can join the video call in a few minutes at https://storydating.com/v/${doc.get(
-            "videoId"
-          )}/b. In case you need it, the passcode is ${doc.get(
-            "videoPasscode"
-          )}. Happy chatting!`;
+        const bodyA = videoLink(userA, doc);
+        const bodyB = videoLink(userB, doc);
         allPromises.push(
           sendSms({ body: bodyA, from: TWILIO_NUMBER, to: userA.phone })
         );
@@ -535,8 +525,8 @@ export const createSmsChat = functions.https.onRequest(async (request, response)
     participants.create({ friendlyName: match.user_b_id, identifier: userB.phone }),
   ]);
   await Promise.all([
-    participants(participantA.sid).messageInteractions.create({ body: `Hi ${userA.firstName}! Just reply here to text with ${userB.firstName}. This chat will expire in 7 days.` }),
-    participants(participantB.sid).messageInteractions.create({ body: `Hi ${userB.firstName}! Just reply here to text with ${userA.firstName}. This chat will expire in 7 days.` })
+    participants(participantA.sid).messageInteractions.create({ body: chatIntro(userA, userB) }),
+    participants(participantB.sid).messageInteractions.create({ body: chatIntro(userB, userA) })
   ])
   response.end();
 });
@@ -552,7 +542,7 @@ export const warnSmsChatExpiration = functions.https.onRequest(async (request, r
       .services("KS58cecadd35af39c56a4cae81837a89f3")
       .sessions(request.body.sessionSid)
       .participants(p.sid)
-      .messageInteractions.create({ body: "This chat will expire at midnight! If you would like to keep chatting, we suggest swapping numbers :)" })
+      .messageInteractions.create({ body: chatExpiration })
   ));
   response.end();
 });

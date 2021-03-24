@@ -117,6 +117,10 @@ export function videoReminder(userA: IUser, userB: IUser) {
     return `Hi ${userA.firstName}! Just a reminder that you'll be speaking with ${userB.firstName} in an hour. We'll send you the video link then! There's no time limit so you can chat for as short or as long as you like.`
 }
 
+export function videoLink(user: IUser, match: any) {
+    return `Hi ${user.firstName}! You can join the video call in a few minutes at https://storydating.com/v/${match.get("videoId")}/a. In case you need it, the passcode is ${match.get("videoPasscode")}. Happy chatting!`;
+}
+
 export async function reminder(userA: IUser, userB: IUser) {
     const week = moment().startOf("week").format("YYYY-MM-DD");
     const smsCopy = await admin.firestore().collection("smsCopy").doc(week).get();
@@ -132,3 +136,8 @@ export function flakeApology(userA: IUser, userB: IUser) {
     return `Hi ${userA.firstName}, we're really sorry your match wasn't able to connect tonight. We're reaching out to understand why ${userB.firstName} wasn't able to join the call and are working to ensure this doesn't happen again. In the meantime, feel free to text us if you have any feedback on the experience.`;
 }
 
+export function chatIntro(userA: IUser, userB: IUser) {
+    return `Hi ${userA.firstName}! Just reply here to text with ${userB.firstName}. This chat will expire in 7 days.`;
+}
+
+export const chatExpiration = "This chat will expire at midnight! If you would like to keep chatting, we suggest swapping numbers :)";
