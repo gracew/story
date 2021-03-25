@@ -60,33 +60,6 @@
   margin-bottom: 30px;
 }
 
-.pref-options .ant-radio-group {
-  width: 100%;
-}
-
-.pref-option {
-  width: 100%;
-  padding: 14px;
-  color: #682873;
-  font-size: 16px;
-  line-height: 16px;
-}
-
-.pref-option.ant-radio-wrapper .ant-radio {
-  top: -3px;
-}
-
-.pref-option.ant-checkbox-wrapper {
-  margin: 0;
-}
-
-.pref-option.ant-radio-wrapper-checked,
-.pref-option.ant-checkbox-wrapper-checked {
-  background: #EAE1F6 40%;
-  border-radius: 4px;
-  border: 1px solid #D8AAE0;
-}
-
 .edit-preference-cancel {
   width: 30%;
   background-color: #E0E0E0;

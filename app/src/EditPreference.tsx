@@ -8,6 +8,8 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import StoryButton from "./components/StoryButton";
 import StoryButtonContainer from "./components/StoryButtonContainer";
+import StoryCheckboxGroup from "./components/StoryCheckboxGroup";
+import StoryRadioGroup from "./components/StoryRadioGroup";
 import "./EditPreference.css";
 
 export enum PreferenceType {
@@ -162,7 +164,7 @@ function EditPreference(props: EditPreferenceProps) {
             {props.metadata.type === PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE &&
               <div>
                 <p className="multiple-selection-desc">Choose as many as you like</p>
-                <Checkbox.Group value={valueHandleOther() as string[] | undefined}>
+                <StoryCheckboxGroup value={valueHandleOther() as string[] | undefined}>
                   {props.metadata.options.map(o => (
                     <Checkbox
                       key={o}
@@ -179,11 +181,11 @@ function EditPreference(props: EditPreferenceProps) {
                     >Other</Checkbox>
                   </div>
                   }
-                </Checkbox.Group>
+                </StoryCheckboxGroup>
               </div>
             }
             {props.metadata.type === PreferenceType.MULTIPLE_CHOICE &&
-              <Radio.Group value={valueHandleOther()}>
+              <StoryRadioGroup value={valueHandleOther()}>
                 {props.metadata.options.map(o => (
                   <Radio
                     key={o}
@@ -200,7 +202,7 @@ function EditPreference(props: EditPreferenceProps) {
                   >Other</Radio>
                 </div>
                 }
-              </Radio.Group>
+              </StoryRadioGroup>
             }
           </div>
 
@@ -209,7 +211,7 @@ function EditPreference(props: EditPreferenceProps) {
               <div className="edit-prefs-header-dealbreakers">Match dealbreakers</div>
               <p className="multiple-selection-desc">Choose as many as you like</p>
               <div className="pref-options">
-                <Checkbox.Group value={dealbreakers}>
+                <StoryCheckboxGroup value={dealbreakers}>
                   {(props.metadata.dealbreakerOptions || props.metadata.options).map(o => (
                     <Checkbox
                       key={o}
@@ -223,7 +225,7 @@ function EditPreference(props: EditPreferenceProps) {
                     className="pref-option"
                     onChange={() => onDealbreakerSelect(NO_DEALBREAKERS)}
                   >{NO_DEALBREAKERS}</Checkbox>
-                </Checkbox.Group>
+                </StoryCheckboxGroup>
               </div>
             </div>
           }
