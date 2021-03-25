@@ -88,7 +88,7 @@ function EditPreference(props: EditPreferenceProps) {
         } else {
           setValue([...value, option])
         }
-      } else if (value === undefined) {
+      } else if (!value) {
         setValue([option])
       }
     }
