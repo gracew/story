@@ -169,14 +169,12 @@ function EditPreference(props: EditPreferenceProps) {
                     <Checkbox
                       key={o}
                       value={o}
-                      className="pref-option"
                       onClick={() => onMultipleChoiceSelect(o)}
                     >{o}</Checkbox>
                   ))}
                   {props.metadata.allowOther && <div>
                     <Checkbox
                       value="Other"
-                      className="pref-option"
                       onClick={() => onMultipleChoiceSelect("Other")}
                     >Other</Checkbox>
                   </div>
@@ -190,14 +188,12 @@ function EditPreference(props: EditPreferenceProps) {
                   <Radio
                     key={o}
                     value={o}
-                    className="pref-option"
                     onClick={() => onMultipleChoiceSelect(o)}
                   >{o}</Radio>
                 ))}
                 {props.metadata.allowOther && <div>
                   <Radio
                     value="Other"
-                    className="pref-option"
                     onClick={() => onMultipleChoiceSelect("Other")}
                   >Other</Radio>
                 </div>
@@ -216,13 +212,11 @@ function EditPreference(props: EditPreferenceProps) {
                     <Checkbox
                       key={o}
                       value={o}
-                      className="pref-option"
                       onChange={() => onDealbreakerSelect(o)}
                     >{o}</Checkbox>
                   ))}
                   <Checkbox
                     value={NO_DEALBREAKERS}
-                    className="pref-option"
                     onChange={() => onDealbreakerSelect(NO_DEALBREAKERS)}
                   >{NO_DEALBREAKERS}</Checkbox>
                 </StoryCheckboxGroup>
