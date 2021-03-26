@@ -2,11 +2,11 @@ import { CopyOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 import "firebase/remote-config";
 import React from "react";
-import balloons from './assets/balloons.svg';
-import socials1 from './assets/socials-1.svg';
-import socials2 from './assets/socials-2.svg';
-import socials3 from './assets/socials-3.svg';
-import socials from './assets/socials.svg';
+import balloons from '../assets/balloons.svg';
+import socials1 from '../assets/socials-1.svg';
+import socials2 from '../assets/socials-2.svg';
+import socials3 from '../assets/socials-3.svg';
+import socials from '../assets/socials.svg';
 import "./ReferralCard.css";
 
 interface ReferralCardProps {

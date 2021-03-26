@@ -2,7 +2,7 @@ import { Checkbox, Radio } from "antd";
 import firebase from "firebase";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import CenteredSpin from "../CenteredSpin";
+import CenteredSpin from "../components/CenteredSpin";
 import StoryButton from "../components/StoryButton";
 import StoryButtonContainer from "../components/StoryButtonContainer";
 import StoryCheckboxGroup from "../components/StoryCheckboxGroup";

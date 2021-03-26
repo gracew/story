@@ -1,7 +1,7 @@
 import firebase from "firebase";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import CenteredSpin from "./CenteredSpin";
+import CenteredSpin from "../components/CenteredSpin";
 import ProfileCard from "./ProfileCard";
 import "./PublicProfile.css";
 

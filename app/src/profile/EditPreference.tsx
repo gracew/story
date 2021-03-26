@@ -6,10 +6,10 @@ import "firebase/remote-config";
 import "firebase/storage";
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import StoryButton from "./components/StoryButton";
-import StoryButtonContainer from "./components/StoryButtonContainer";
-import StoryCheckboxGroup from "./components/StoryCheckboxGroup";
-import StoryRadioGroup from "./components/StoryRadioGroup";
+import StoryButton from "../components/StoryButton";
+import StoryButtonContainer from "../components/StoryButtonContainer";
+import StoryCheckboxGroup from "../components/StoryCheckboxGroup";
+import StoryRadioGroup from "../components/StoryRadioGroup";
 import "./EditPreference.css";
 
 export enum PreferenceType {

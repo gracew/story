@@ -6,7 +6,7 @@ import "firebase/storage";
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import * as uuid from "uuid";
-import CenteredSpin from "./CenteredSpin";
+import CenteredSpin from "../components/CenteredSpin";
 import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPreference";
 import Preference from "./Preference";
 import "./Profile.css";
