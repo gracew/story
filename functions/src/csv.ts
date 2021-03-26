@@ -6,7 +6,7 @@ import * as neatCsv from 'neat-csv';
 import * as os from "os";
 import * as path from "path";
 import { Firestore, IMatch, IUser } from "./firestore";
-import { availability as availabilityCopy, matchNotification } from "./smsCopy";
+import { availability as availabilityCopy, matchNotification, optInReminder } from "./smsCopy";
 import { processTimeZone } from "./times";
 import { sendSms, TWILIO_NUMBER } from './twilio';
 
@@ -106,7 +106,7 @@ async function reminderHelper(timezone: string) {
     await Promise.all(usersTimezone.map(doc => {
         const user = doc.data() as IUser;
         return sendSms({
-            body: `Your match will expire soon! If you'd like to connect this week, fill out this super short form in the next hour to let us know your availability: https://storydating.com/weekly#u=${user.id}&tz=${user.timezone}"`,
+            body: optInReminder(user),
             from: TWILIO_NUMBER,
             to: user.phone,
         })

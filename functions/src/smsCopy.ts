@@ -3,7 +3,7 @@ import * as moment from "moment-timezone";
 import { IMatch, IUser } from "./firestore";
 
 export function welcome(user: IUser) {
-  return `Hi ${user.firstName}, thanks for joining Story Dating! Think of us as a personalized matchmaker that finds great matches for you and handles all of the scheduling. You're currently on the waitlist, but we'll notify you as soon as we have some matches we think you'll like. In the meantime, feel free to text us with any questions, and refer your friends with this link to get off the waitlist sooner: https://storydating.com/join#r=${user.id}`;
+  return `Hi ${user.firstName}, thanks for joining Story Dating! I'm Grace and I founded Story because I believe that magic happens when people like you choose talking over swiping. You're currently on the waitlist, but I'll notify you as soon as I have some matches I think you'll like. In the meantime, text me with any questions and refer your friends with this link to get off the waitlist sooner: https://story.dating/r?r=${user.id}`;
 }
 
 export async function availability(user: IUser) {
@@ -20,7 +20,7 @@ export async function availability(user: IUser) {
 }
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
-    const phoneSwapText = `If you miss the call, you can call back. Afterwards, we'll ask if you want to connect again over video. In the case of mutual interest we'll help schedule a second call. If not no sweat!`;
+    const phoneSwapText = `If you miss the call, you can call us back. Afterwards, we'll ask if you want to connect again over video. If there's mutual interest, we'll help schedule a second call.`;
     const user = usersById[userId];
     if (matches.length === 0) {
         return [];
@@ -33,13 +33,15 @@ export function matchNotification(userId: string, matches: IMatch[], usersById: 
         const matchUserId = match.user_a_id === userId ? match.user_b_id : match.user_a_id;
         const matchUser = usersById[matchUserId];
         const texts = [
-            `Hi ${user.firstName}, on ${day(match)} you'll be chatting with ${matchUser.firstName}${location(matchUser)}. At ${formattedTime}, you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+            `Hi ${user.firstName}, you've got a match! On ${day(match)} you'll be chatting with ${matchUser.firstName}${location(matchUser)}.
+
+Here's how it works: at ${formattedTime}, you'll receive a phone call connecting you with your match. ${phoneSwapText}`
         ];
         if (user.funFacts && matchUser.funFacts) {
             texts.push(
                 `Here are a few fun facts about ${matchUser.firstName}: "${matchUser.funFacts}"
 
-Happy chatting!`
+Happy chatting! 🙌`
             );
         }
         return texts;
@@ -59,21 +61,29 @@ Happy chatting!`
         if (formattedTime === formattedTime2) {
             if (match1Location !== match2Location) {
                 texts.push(
-                    `Hi ${user.firstName}, we have two matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName}${match1Location} and on ${day(match2)} you'll be chatting with ${match2User.firstName}${match2Location}. At ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+                    `Hi ${user.firstName}, we have two matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName}${match1Location} and on ${day(match2)} you'll be chatting with ${match2User.firstName}${match2Location}.
+
+Here's how it works: at ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
                 );
             } else {
                 texts.push(
-                    `Hi ${user.firstName}, we have two matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. They are both${match1Location}. At ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+                    `Hi ${user.firstName}, we have two matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
+
+Here's how it works: at ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
                 );
             }
         } else {
             if (match1Location !== match2Location) {
                 texts.push(
-                    `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName}${match1Location} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}${match2Location}. Both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+                    `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName}${match1Location} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}${match2Location}.
+
+Here's how it works: both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
                 );
             } else {
                 texts.push(
-                    `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}. They are both${match1Location}. Both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+                    `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
+
+Here's how it works: both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
                 );
             }
         }
@@ -111,6 +121,10 @@ function timezone(user: IUser) {
 function day(match: IMatch) {
     const matchTime = moment(match.created_at.toDate()).tz("America/Los_Angeles")
     return matchTime.format("dddd");
+}
+
+export function optInReminder(user: IUser) {
+    return `Hey, it's Grace from Story Dating! I'm currently scheduling this week's dates - if you'd like to connect this week, let me know your availability here: https://story.dating/weekly#u=${user.id}&tz=${user.timezone}`;
 }
 
 export function videoReminder(userA: IUser, userB: IUser) {
