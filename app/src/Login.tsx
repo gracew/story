@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useHistory } from "react-router-dom";
+import CenteredDiv from "./components/CenteredDiv";
 import StoryButton from "./components/StoryButton";
 import StoryButtonContainer from "./components/StoryButtonContainer";
 import "./Login.css";
@@ -72,7 +73,7 @@ function Login() {
   if (step === "verification-code") {
     return (
       <div className="login">
-        <div className="login-input-container">
+        <CenteredDiv>
           <div className="login-input">
             <div className="login-input-title">Verify your phone number</div>
             <div className="login-input-desc">Enter the 6-digit code we sent to <span className="phone-number">{phone}</span></div>
@@ -84,8 +85,8 @@ function Login() {
             />
             {!validCode && <div className="code-error">Wrong code. Try again.</div>}
           </div>
-        </div>
-        <div className="button-container">
+        </CenteredDiv>
+        <StoryButtonContainer>
           <StoryButton
             className="login-cancel"
             onClick={onCancel}
@@ -97,14 +98,14 @@ function Login() {
             disabled={code.length !== 6}
             loading={verifyingCode}
           >Verify</StoryButton>
-        </div>
+        </StoryButtonContainer>
       </div>
     );
   }
 
   return (
     <div className="login">
-      <div className="login-input-container">
+      <CenteredDiv>
         <div className="login-input">
           <div className="login-input-title">Enter your phone number</div>
           <PhoneInput
@@ -114,7 +115,7 @@ function Login() {
             onChange={setPhone}
           />
         </div>
-      </div>
+      </CenteredDiv>
       <StoryButtonContainer>
         <StoryButton
           id="request-code"

@@ -1,3 +1,7 @@
+.st-radio-group {
+  width: 100%;
+}
+
 .st-radio-group .ant-radio-wrapper {
   width: 100%;
   padding: 14px;

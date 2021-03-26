@@ -4,12 +4,6 @@
   flex-direction: column;
 }
 
-.login-input-container {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
 .login-input {
   width: 100%;
 }
