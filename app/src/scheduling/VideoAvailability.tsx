@@ -17,13 +17,13 @@ export enum Timezone {
 }
 
 export enum Day {
-  Sunday = "Sun",
-  Monday = "Mon",
-  Tuesday = "Tue",
-  Wednesday = "Wed",
-  Thursday = "Thu",
-  Friday = "Fri",
-  Saturday = "Sat",
+  Sunday = "Sunday",
+  Monday = "Monday",
+  Tuesday = "Tuesday",
+  Wednesday = "Wednesday",
+  Thursday = "Thursday",
+  Friday = "Friday",
+  Saturday = "Saturday",
 }
 
 function timeOptions(tz: Timezone, matchTz: Timezone) {
@@ -32,12 +32,12 @@ function timeOptions(tz: Timezone, matchTz: Timezone) {
     case (tz === Timezone.PT && matchTz === Timezone.PT):
       return ["6pm", "7pm", "8pm"];
     case (tz === Timezone.PT && matchTz === Timezone.CT):
-      return ["6pm", "7pm"];
+      return ["6pm"];
     case (tz === Timezone.PT && matchTz === Timezone.ET):
       return ["6pm"];
     // CT
     case (tz === Timezone.CT && matchTz === Timezone.PT):
-      return ["6pm"];
+      return ["8pm"];
     case (tz === Timezone.CT && matchTz === Timezone.CT):
       return ["6pm", "7pm", "8pm"];
     case (tz === Timezone.CT && matchTz === Timezone.ET):
@@ -126,8 +126,8 @@ function VideoAvailability() {
     return <CenteredSpin />
   }
 
-  const times = timeOptions(data.tz, data.matchTz);
   const days = dayOptions();
+  const times = timeOptions(data.tz, data.matchTz);
   const options: string[] = []
   days.map(d => times.map(t => options.push(`${d} ${t}`)));
 
@@ -154,7 +154,7 @@ function VideoAvailability() {
 
       <StoryButtonContainer>
         <StoryButton
-          id="request-code"
+          className="video-availability-submit"
           type="primary"
           onClick={onSubmit}
           disabled={swapNumbers === undefined}

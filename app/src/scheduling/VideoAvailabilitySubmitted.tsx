@@ -13,7 +13,7 @@ function VideoAvailabilitySubmitted() {
       <CenteredDiv>
         <div>
           <h3>Thanks!</h3>
-          <div>When we hear back from your match we'll text you about the time of the video date ️✌️</div>
+          <div>When we hear back from your match we'll text you about the time of the video date ️<span role="img" aria-label="emoji-v">✌</span>️</div>
         </div>
       </CenteredDiv>
       <StoryButtonContainer>

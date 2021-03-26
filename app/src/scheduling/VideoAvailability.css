@@ -1,14 +1,25 @@
+.video-availability-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .video-availability-input {
-    margin-bottom: 40px;
+  margin-bottom: 40px;
+  flex: 1;
 }
 
 .video-availability-input h3 {
-    margin-top: 40px;
-    font-size: 17px;
+  margin-top: 40px;
+  font-size: 17px;
 }
 
 .video-availability-description {
   margin-bottom: 15px;
   color: #826C86;
   font-size: 17px;
+}
+
+.video-availability-submit {
+  width: 100%;
 }
