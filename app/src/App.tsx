@@ -10,6 +10,7 @@ import Logout from "./Logout";
 import Privacy from "./Privacy";
 import Profile from "./Profile";
 import PublicProfile from "./PublicProfile";
+import VideoAvailability from "./scheduling/VideoAvailability";
 import Terms from "./Terms";
 import VideoRedirect from "./VideoRedirect";
 
@@ -77,6 +78,10 @@ function App() {
             <Route path="/u/:userId">
               <Header />
               <PublicProfile />
+            </Route>
+            <Route path="/m/:matchId">
+              <Header showLogout={true} />
+              <VideoAvailability />
             </Route>
             <Route path="/login">
               <Header />

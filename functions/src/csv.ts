@@ -7,6 +7,7 @@ import * as os from "os";
 import * as path from "path";
 import { Firestore, IMatch, IUser } from "./firestore";
 import { availability as availabilityCopy, matchNotification } from "./smsCopy";
+import { processTimeZone } from "./times";
 import { sendSms, TWILIO_NUMBER } from './twilio';
 
 export async function processBulkSmsCsv(tempFilePath: string, sendSmsFn: (opts: any) => Promise<any>) {
@@ -215,15 +216,4 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
     };
     await firestore.createMatch(match);
     return match;
-}
-
-function processTimeZone(tz: string) {
-    if (tz === "PT") {
-        return "America/Los_Angeles"
-    } else if (tz === "CT") {
-        return "America/Chicago"
-    } else if (tz === "ET") {
-        return "America/New_York"
-    }
-    return undefined;
 }
