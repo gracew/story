@@ -8,6 +8,7 @@ import Header from "./Header";
 import Login from "./Login";
 import Logout from "./Logout";
 import Privacy from "./Privacy";
+import PrivateRoute from "./PrivateRoute";
 import Profile from "./profile/Profile";
 import PublicProfile from "./profile/PublicProfile";
 import VideoAvailability from "./scheduling/VideoAvailability";
@@ -79,10 +80,10 @@ function App() {
               <Header />
               <PublicProfile />
             </Route>
-            <Route path="/m/:matchId">
+            <PrivateRoute path="/m/:matchId">
               <Header showLogout={true} />
               <VideoAvailability />
-            </Route>
+            </PrivateRoute>
             <Route path="/login">
               <Header />
               <Login />

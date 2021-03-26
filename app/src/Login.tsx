@@ -3,7 +3,7 @@ import firebase from "firebase/app";
 import React, { useEffect, useState } from "react";
 import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import CenteredDiv from "./components/CenteredDiv";
 import StoryButton from "./components/StoryButton";
 import StoryButtonContainer from "./components/StoryButtonContainer";
@@ -11,6 +11,7 @@ import "./Login.css";
 
 function Login() {
   const history = useHistory();
+  const location = useLocation();
 
   // save user input
   const [phone, setPhone] = useState("");
@@ -26,9 +27,14 @@ function Login() {
 
   firebase.auth().onAuthStateChanged(function (user) {
     if (user) {
-      history.push("/profile")
+      history.push(redirect());
     }
   });
+
+  function redirect() {
+    const r = (location.state as any)?.redirect;
+    return r || "/profile";
+  }
 
   useEffect(() => {
     setRecaptchaVerifier(new firebase.auth.RecaptchaVerifier('request-code', {
@@ -62,7 +68,7 @@ function Login() {
     setVerifyingCode(true);
     try {
       await confirmationResult?.confirm(code);
-      history.push("/profile");
+      history.push(redirect());
     } catch (e) {
       setValidCode(false);
     } finally {
