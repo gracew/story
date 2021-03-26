@@ -19,6 +19,10 @@ export async function availability(user: IUser) {
     return `${availabilityTexts.map((text: string) => text.replace("FIRST_NAME", user.firstName).replace("TIMEZONE", user.timezone).replace("USER_ID", user.id)).join("\n\n")}`;
 }
 
+export function optInReminder(user: IUser) {
+    return `Hey, it's Grace from Story Dating! I'm currently scheduling this week's dates - if you'd like to connect this week, let me know your availability here: https://story.dating/weekly#u=${user.id}&tz=${user.timezone}`;
+}
+
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
     const phoneSwapText = `If you miss the call, you can call us back. Afterwards, we'll ask if you want to connect again over video. If there's mutual interest, we'll help schedule a second call.`;
     const user = usersById[userId];
@@ -123,16 +127,12 @@ function day(match: IMatch) {
     return matchTime.format("dddd");
 }
 
-export function optInReminder(user: IUser) {
-    return `Hey, it's Grace from Story Dating! I'm currently scheduling this week's dates - if you'd like to connect this week, let me know your availability here: https://story.dating/weekly#u=${user.id}&tz=${user.timezone}`;
-}
-
 export function videoReminder(userA: IUser, userB: IUser) {
     return `Hi ${userA.firstName}! Just a reminder that you'll be speaking with ${userB.firstName} in an hour. We'll send you the video link then! There's no time limit so you can chat for as short or as long as you like.`
 }
 
 export function videoLink(user: IUser, match: any) {
-    return `Hi ${user.firstName}! You can join the video call in a few minutes at https://storydating.com/v/${match.get("videoId")}/a. In case you need it, the passcode is ${match.get("videoPasscode")}. Happy chatting!`;
+    return `Hi ${user.firstName}! You can join the video call in a few minutes at https://story.dating/v/${match.get("videoId")}/a. In case you need it, the passcode is ${match.get("videoPasscode")}. Happy chatting!`;
 }
 
 export async function reminder(userA: IUser, userB: IUser) {
