@@ -12,6 +12,7 @@ import "./Login.css";
 function Login() {
   const history = useHistory();
   const location = useLocation();
+  const redirect = (location.state as any)?.redirect || "/profile";
 
   // save user input
   const [phone, setPhone] = useState("");
@@ -27,14 +28,9 @@ function Login() {
 
   firebase.auth().onAuthStateChanged(function (user) {
     if (user) {
-      history.push(redirect());
+      history.push(redirect);
     }
   });
-
-  function redirect() {
-    const r = (location.state as any)?.redirect;
-    return r || "/profile";
-  }
 
   useEffect(() => {
     setRecaptchaVerifier(new firebase.auth.RecaptchaVerifier('request-code', {
@@ -68,7 +64,7 @@ function Login() {
     setVerifyingCode(true);
     try {
       await confirmationResult?.confirm(code);
-      history.push(redirect());
+      history.push(redirect);
     } catch (e) {
       setValidCode(false);
     } finally {
