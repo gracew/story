@@ -2,6 +2,7 @@
   from = "https://story.dating/*"
   to = "https://storydating.com/:splat"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/"
