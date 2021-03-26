@@ -5,12 +5,18 @@ export interface IUser {
     id: string;
     firstName: string;
     phone: string;
+    gender: string;
+    genderPreference: string[];
+    age: number | string;
+    matchMin: number;
+    matchMax: number;
     location: string;
     timezone: string;
     locationFlexibility?: boolean;
     funFacts?: string;
     status?: string;
     photo?: string;
+    beta: boolean;
 }
 export interface IMatch {
     id: string;

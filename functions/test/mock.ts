@@ -19,7 +19,13 @@ export function user(firstName: string, funFacts?: string, location?: string, lo
     return {
         id: uuid.v4(),
         firstName,
+        gender: "Female",
+        genderPreference: [],
+        age: 30,
+        matchMin: 20,
+        matchMax: 40,
         phone: uuid.v4(),
+        beta: true,
         funFacts,
         location: location || "San Francisco Bay Area",
         timezone: "PT",

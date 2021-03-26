@@ -1,6 +1,9 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { CallableContext } from "firebase-functions/lib/providers/https";
+import * as moment from "moment-timezone";
+import { Firestore } from "./firestore";
+import { parseTime, processTimeZone } from "./times";
 
 export const getPublicProfile = functions.https.onCall(async (data, context) => {
   const user = await admin
@@ -23,30 +26,21 @@ export const getPublicProfile = functions.https.onCall(async (data, context) => 
 });
 
 async function getUser(data: any, context: CallableContext) {
-  if (!context.auth) {
+  if (!context.auth || !context.auth.token.phone_number) {
     throw new functions.https.HttpsError("unauthenticated", "authentication required");
   }
-  if (data.userId && context.auth.uid === "EfR3VzvvQHVAE1DbtQbCE546Q1F3") {
-    return admin
-      .firestore()
-      .collection("users")
-      .doc(data.userId)
-      .get();
-  }
-
-  const users = await admin
-    .firestore()
-    .collection("users")
-    .where("phone", "==", context.auth.token.phone_number)
-    .get();
-  if (users.empty) {
+  const firestore = new Firestore();
+  const userPromise = data.userId && context.auth.uid === "EfR3VzvvQHVAE1DbtQbCE546Q1F3"
+    ? firestore.getUser(data.userId)
+    : firestore.getUserByPhone(context.auth.token.phone_number);
+  const user = await userPromise;
+  if (!user) {
     throw new functions.https.HttpsError("not-found", "unknown user");
   }
-  return users.docs[0];
+  return user;
 }
 
 export const getPreferences = functions.https.onCall(async (data, context) => {
-  const user = await getUser(data, context);
   const {
     id,
     beta,
@@ -60,11 +54,11 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
     genderPreference,
     funFacts,
     photo,
-  } = user.data() as any;
+  } = await getUser(data, context)
   const prefs = await admin
     .firestore()
     .collection("preferences")
-    .doc(user.id)
+    .doc(id)
     .get();
   return {
     id,
@@ -121,7 +115,7 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
     const tz = timezone(location.value);
     if (tz) {
       mainPrefs.timezone = tz;
-    } 
+    }
   }
   if (locationFlexibility !== undefined) {
     mainPrefs.locationFlexibility = locationFlexibility.value === "Yes";
@@ -172,3 +166,38 @@ function timezone(location: string) {
   }
   return map[location];
 }
+
+export const getVideoAvailabilityParameters = functions.https.onCall(async (data, context) => {
+  const user = await getUser(data, context);
+  const firestore = new Firestore();
+  const match = await firestore.getMatch(data.matchId);
+  if (!match) {
+    throw new functions.https.HttpsError("not-found", "unknown match");
+  }
+
+  const otherUserId = match.user_a_id === user.id ? match.user_b_id : match.user_a_id;
+  const otherUser = await firestore.getUser(otherUserId);
+  if (!otherUser) {
+    throw new functions.https.HttpsError("internal", "unknown user");
+  }
+
+  return {
+    tz: user.timezone,
+    matchTz: otherUser.timezone,
+    matchName: otherUser.firstName,
+  };
+});
+
+export const saveVideoAvailability = functions.https.onCall(async (data, context) => {
+  const user = await getUser(data, context);
+  if (!data.matchId) {
+    throw new functions.https.HttpsError("invalid-argument", "match id required");
+  }
+  const tz = processTimeZone(user.timezone);
+  if (!tz) {
+    throw new functions.https.HttpsError("internal", "could not process timezone for user " + user.id);
+  }
+  const times = data.selectedTimes.map((t: string) => parseTime(t, tz, moment))
+  await admin.firestore().collection("matches").doc(data.matchId).update(`videoAvailability.${user.id}`, times);
+  return {};
+});

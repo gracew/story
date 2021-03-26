@@ -3,6 +3,7 @@ import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
 import { IUser } from "./firestore";
 import { welcome } from "./smsCopy";
+import { parseTime } from "./times";
 import { client, TWILIO_NUMBER } from "./twilio";
 
 /** Called upon typeform submission to save user data in firebase. */
@@ -161,36 +162,3 @@ export function parseAvailability(answers: any[], getTimestamp: () => moment.Mom
   })
   return update;
 };
-
-function parseTime(time: string, timezone: string, getTimestamp: () => moment.Moment) {
-  const week = getTimestamp().tz(timezone).startOf("week");
-  switch (time) {
-    case "Tue 6pm":
-      return week.add(2, "days").add(18, "hours");
-    case "Tue 7pm":
-      return week.add(2, "days").add(19, "hours")
-    case "Tue 8pm":
-      return week.add(2, "days").add(20, "hours")
-    case "Tue 9pm":
-      return week.add(2, "days").add(21, "hours")
-    case "Wed 6pm":
-      return week.add(3, "days").add(18, "hours");
-    case "Wed 7pm":
-      return week.add(3, "days").add(19, "hours");
-    case "Wed 8pm":
-      return week.add(3, "days").add(20, "hours");
-    case "Wed 9pm":
-      return week.add(3, "days").add(21, "hours");
-    case "Thu 6pm":
-      return week.add(4, "days").add(18, "hours");
-    case "Thu 7pm":
-      return week.add(4, "days").add(19, "hours");
-    case "Thu 8pm":
-      return week.add(4, "days").add(20, "hours");
-    case "Thu 9pm":
-      return week.add(4, "days").add(21, "hours");
-    default:
-      console.error(new Error("could not parse time: " + time));
-      return undefined;
-  }
-}
