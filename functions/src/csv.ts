@@ -7,7 +7,6 @@ import * as os from "os";
 import * as path from "path";
 import { Firestore, IMatch, IUser } from "./firestore";
 import { availability as availabilityCopy, matchNotification, optInReminder } from "./smsCopy";
-import { processTimeZone } from "./times";
 import { sendSms, TWILIO_NUMBER } from './twilio';
 
 export async function processBulkSmsCsv(tempFilePath: string, sendSmsFn: (opts: any) => Promise<any>) {
@@ -132,7 +131,7 @@ export const createMatches = functions.storage
             .download({ destination: tempFilePath });
 
         const contents = fs.readFileSync(tempFilePath).toString();
-        const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "date", "time", "timezone"] })
+        const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "time"] })
         await Promise.all(rows.map(data => createMatchFirestore(data, new Firestore())));
     });
 
@@ -190,18 +189,12 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
         console.error(new Error("unknown user id " + data.userBId));
         return;
     }
-    const timezone = processTimeZone(data.timezone.trim())
-    if (!timezone) {
-        console.error(new Error("invalid timezone, skipping row: " + data))
-        return;
-    }
-    const createdAt = moment.tz(data.date + " " + data.time, "MM-DD-YYYY hh:mm:ss a", timezone)
     const match = {
         user_a_id: data.userAId,
         user_b_id: data.userBId,
         user_ids: [data.userAId, data.userBId],
         joined: {},
-        created_at: new admin.firestore.Timestamp(createdAt.unix(), 0),
+        created_at: new Date(data.time),
         canceled: data.canceled || false,
         interactions: {
             notified: false,

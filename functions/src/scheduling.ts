@@ -21,8 +21,8 @@ export const remainingMatches = functions.https.onRequest(
             results.push({
                 ...user,
                 optInLikelihood: optInLikelihood[user.id],
-                remainingMatches: remaining,
-                remainingMatchesSameTz: remainingSameTz,
+                remainingMatches: remaining.map(u => u.firstName + " " + u.lastName),
+                remainingMatchesSameTz: remainingSameTz.map(u => u.firstName + " " + u.lastName),
                 remainingLikely,
                 remainingSameTzLikely,
                 // @ts-ignore
