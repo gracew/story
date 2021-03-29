@@ -194,7 +194,7 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
         user_b_id: data.userBId,
         user_ids: [data.userAId, data.userBId],
         joined: {},
-        created_at: new Date(data.time),
+        created_at: new admin.firestore.Timestamp(new Date(data.time).getTime() / 1000, 0),
         canceled: data.canceled || false,
         interactions: {
             notified: false,
