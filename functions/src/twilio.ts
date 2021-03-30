@@ -156,6 +156,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
             from: TWILIO_NUMBER,
             parameters: {
                 mode: "reveal",
+                matchId: body.matchId,
                 ...otherData,
                 ...otherNextMatch,
                 nextDays,
@@ -174,6 +175,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
                 from: TWILIO_NUMBER,
                 parameters: {
                     mode: "reveal_other_no",
+                    matchId: body.matchId,
                     ...otherData,
                     ...otherNextMatch,
                     video: match.mode === "video",

@@ -107,7 +107,7 @@ function VideoAvailability() {
 
   async function onSubmit() {
     setSubmitState(SubmitState.SUBMITTING);
-    await firebase.functions().httpsCallable("saveVideoAVailability")( { matchId, selectedTimes })
+    await firebase.functions().httpsCallable("saveVideoAvailability")( { matchId, selectedTimes })
     setSubmitState(SubmitState.SUBMITTED);
   }
 
