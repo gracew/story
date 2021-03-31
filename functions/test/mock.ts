@@ -46,6 +46,7 @@ export function match(userIdA: string, userIdB: string, createdAt: string): IMat
             notified: false,
             reminded: false,
             called: false,
+            recalled: false,
             flakesHandled: false,
             warned5Min: false,
             warned1Min: false,

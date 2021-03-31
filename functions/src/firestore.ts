@@ -32,6 +32,7 @@ export interface IMatch {
         notified?: boolean;
         reminded?: boolean;
         called?: boolean;
+        recalled?: boolean;
         flakesHandled?: boolean;
         warned5Min?: boolean;
         warned1Min?: boolean;
@@ -40,6 +41,8 @@ export interface IMatch {
     mode?: string;
     twilioSid?: string;
     recordingOverride?: boolean;
+    // whether at least 1 participant is on the call
+    ongoing?: boolean;
 }
 
 export class Firestore {

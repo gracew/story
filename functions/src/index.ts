@@ -5,7 +5,7 @@ import * as moment from "moment-timezone";
 import * as os from "os";
 import * as path from "path";
 import { getPreferences, getPublicProfile, getVideoAvailabilityParameters, savePreferences, saveVideoAvailability } from "./app";
-import { addUserToCall, call1MinWarning, call5MinWarning, callUser, conferenceStatusWebhook, createSmsChat, handleFlakes, issueCalls, markJoined, notifyIncomingTextHelper, revealRequest, revealRequestVideo, saveReveal, sendReminderTexts, sendVideoLink, warnSmsChatExpiration } from "./calls";
+import { addUserToCall, call1MinWarning, call5MinWarning, callUser, conferenceStatusWebhook, createSmsChat, handleFlakes, issueCalls, issueRecalls, markJoined, notifyIncomingTextHelper, revealRequest, revealRequestVideo, saveReveal, sendReminderTexts, sendVideoLink, warnSmsChatExpiration } from "./calls";
 import { createMatches, createSchedulingRecords, processBulkSmsCsv, sendAvailabilityReminderCT, sendAvailabilityReminderET, sendAvailabilityReminderPT, sendAvailabilityTexts, sendMatchNotificationTexts } from "./csv";
 import { analyzeCollection, cancelMatch, createMatch } from "./retool";
 import { bipartiteMatches, potentialMatches, remainingMatches } from "./scheduling";
@@ -34,6 +34,7 @@ export {
   getPublicProfile,
   getVideoAvailabilityParameters,
   issueCalls,
+  issueRecalls,
   markJoined,
   registerUser,
   revealRequest,

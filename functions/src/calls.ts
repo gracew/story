@@ -168,6 +168,49 @@ export const issueCalls = functions.pubsub
     });
   });
 
+export const issueRecalls = functions.pubsub
+  .schedule("2,32 * * * *")
+  .onRun(async (context) => {
+    const createdAt = moment().utc().startOf("hour");
+    if (moment().minutes() >= 30) {
+      createdAt.add(30, "minutes");
+    }
+    await admin.firestore().runTransaction(async (txn) => {
+      const matches = await txn.get(
+        admin
+          .firestore()
+          .collection("matches")
+          .where("created_at", "==", createdAt)
+          .where("interactions.recalled", "==", false)
+          .where("canceled", "==", false)
+      );
+      const matchesToRecall = matches.docs
+        .map(doc => doc.data() as IMatch)
+        .filter(m => m.mode === "phone" && m.twilioSid === undefined)
+      console.log(
+        "found the following matches: " + matchesToRecall.map(m => m.id)
+      );
+
+      const usersToRecall: string[] = [];
+      matchesToRecall.forEach(m => {
+        const joined = Object.keys(m.joined || {});
+        if (!joined.includes(m.user_a_id)) {
+          usersToRecall.push(m.user_a_id);
+        }
+        if (!joined.includes(m.user_b_id)) {
+          usersToRecall.push(m.user_b_id);
+        }
+      })
+
+      console.log("issuing calls to the following users: " + usersToRecall);
+
+      await Promise.all(usersToRecall.map((id) => callUserHelper(id)));
+      await Promise.all(
+        matches.docs.map((doc) => txn.update(doc.ref, "interactions.recalled", true))
+      );
+    });
+  });
+
 export const handleFlakes = functions.pubsub
   .schedule("10,40 * * * *")
   .onRun(async (context) => {
@@ -391,19 +434,32 @@ export const conferenceStatusWebhook = functions.https.onRequest(
       const participants = await client
         .conferences(conferenceSid)
         .participants.list();
-      if (participants.length === 1) {
-        response.end();
-        return;
-      }
-      const match = await admin
+      const matchDoc = await admin
         .firestore()
         .collection("matches")
         .doc(request.body.FriendlyName)
         .get();
-      await match.ref.update({ ongoing: true, twilioSid: conferenceSid });
+      const match = matchDoc.data() as IMatch;
+      if (participants.length === 1) {
+        if (match.ongoing === false) {
+          // one of the following could have happened:
+          // 1. the current user previously joined and left the conference, is now rejoining
+          // 2. the other user previously joined and left the conference
+          // 3. both users were previously in the conference and have now left (e.g. due to connection issues)
+          const userId = participants[0].label;
+          const otherId = match.user_a_id === userId ? match.user_b_id : match.user_a_id;
+          console.log("issuing call to user: " + otherId);
+          await callUserHelper(otherId);
+        }
+        response.end();
+        return;
+      }
+
+      // both participants have joined, save off the conferenceSid and play intro message
+      await matchDoc.ref.update({ twilioSid: conferenceSid });
       await client
         .conferences(conferenceSid)
-        .update({ announceUrl: getIntroUrl(match.data() as IMatch), announceMethod: "GET" });
+        .update({ announceUrl: getIntroUrl(match), announceMethod: "GET" });
       await util.promisify(setTimeout)(26_000);
       await Promise.all(
         participants.map((participant) =>
@@ -414,6 +470,7 @@ export const conferenceStatusWebhook = functions.https.onRequest(
         )
       );
     } else if (request.body.StatusCallbackEvent === "conference-end") {
+      // the last participant has left the conference
       await admin
         .firestore()
         .collection("matches")
