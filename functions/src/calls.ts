@@ -610,7 +610,6 @@ export async function notifyIncomingTextHelper(phone: string, message: string) {
     .collection("users")
     .where("phone", "==", phone)
     .get();
-<<<<<<< HEAD
   const fullName = userQuery.empty ? "Unknown user" : userQuery.docs[0].get("firstName") + " " + userQuery.docs[0].get("lastName");
   return fetch(functions.config().slack.webhook_url, {
     method: "post",
@@ -620,20 +619,4 @@ Body: ${message}`
     }),
     headers: { "Content-Type": "application/json" },
   });
-=======
-  if (userQuery.empty) {
-    console.error("No user with phone " + phone);
-    return;
-  }
-  const user = userQuery.docs[0];
-  const fullName = user.get("firstName") + " " + user.get("lastName");
-  await client.conversations.conversations
-    .get("CH3b12dac2b9484e5fb719bd2a32f16272")
-    .messages.create({
-      author: "+12036338466",
-      body: `From: ${fullName}
-Body: ${message}`,
-    });
-  return user.data() as IUser;
->>>>>>> automatic recall after 2 min + call forwarding
 }
