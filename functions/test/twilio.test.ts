@@ -117,6 +117,7 @@ it("saveReveal Y, other Y next match", async () => {
         from: TWILIO_NUMBER,
         parameters: {
             mode: "reveal",
+            matchId: m1.id,
             userId: user2.id,
             firstName: user2.firstName,
             matchName: user1.firstName,
@@ -149,6 +150,7 @@ it("saveReveal N, other Y next match", async () => {
         from: TWILIO_NUMBER,
         parameters: {
             mode: "reveal_other_no",
+            matchId: m1.id,
             userId: user2.id,
             firstName: user2.firstName,
             matchName: user1.firstName,
