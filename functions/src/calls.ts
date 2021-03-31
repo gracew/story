@@ -449,14 +449,17 @@ export const conferenceStatusWebhook = functions.https.onRequest(
           const userId = participants[0].label;
           const otherId = match.user_a_id === userId ? match.user_b_id : match.user_a_id;
           console.log("issuing call to user: " + otherId);
-          await callUserHelper(otherId);
+          await Promise.all([
+            callUserHelper(otherId),
+            matchDoc.ref.update({ ongoing: true }),
+          ]);
         }
         response.end();
         return;
       }
 
       // both participants have joined, save off the conferenceSid and play intro message
-      await matchDoc.ref.update({ twilioSid: conferenceSid });
+      await matchDoc.ref.update({ ongoing: true, twilioSid: conferenceSid });
       await client
         .conferences(conferenceSid)
         .update({ announceUrl: getIntroUrl(match), announceMethod: "GET" });

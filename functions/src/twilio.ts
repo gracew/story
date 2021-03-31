@@ -30,10 +30,7 @@ export async function getConferenceTwimlForPhone(phone: string) {
     if (!match) {
         return errorResponse;
     }
-    await firestore.updateMatch(match.id, {
-        ["joined." + userId]: true,
-        ongoing: true,
-    })
+    await firestore.updateMatch(match.id, { ["joined." + userId]: true })
 
     const twiml = new twilio.twiml.VoiceResponse();
     const dial = twiml.dial();
