@@ -1,0 +1,22 @@
+.onboarding-complete {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.onboarding-complete-header {
+    margin-bottom: 20px;
+}
+
+.section {
+    margin: 15px 0;
+}
+
+.section-header {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.see-profile {
+    width: 100%;
+}

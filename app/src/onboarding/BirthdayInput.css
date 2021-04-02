@@ -1,0 +1,11 @@
+.birthday-input {
+    display: flex;
+    font-size: 24px;
+    color: #949494;
+}
+
+.birthday-input .st-input {
+    text-align: center;
+    flex: 1;
+    margin: 0 5px;
+}

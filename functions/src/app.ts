@@ -5,6 +5,101 @@ import * as moment from "moment-timezone";
 import { Firestore } from "./firestore";
 import { parseTime, processTimeZone } from "./times";
 
+// required fields
+const onboardingreq = [
+    "whereDidYouHearAboutUs",
+    "firstName",
+    "birthdate",
+    "pronouns",
+    "relationshipType",
+    "genderPreference",
+    "location",
+    "interests",
+    "photo",
+    "funFacts",
+    "social",
+];
+
+// just checks for existence of fields - doesn't validate values
+function onboardingComplete(data: Record<string, any>) {
+  return onboardingreq.every(k => data[k] !== undefined);
+}
+
+export const onboardUser = functions.https.onCall(async (data, context) => {
+  const {
+    whereDidYouHearAboutUs,
+    firstName,
+    birthdate,
+    pronouns,
+    relationshipType, // deal with this one
+    genderPreference,
+    location,
+    interests,
+    photo,
+    funFacts,
+    social,
+  } = data;
+  // iterate through onboardingreqs
+  const update: Record<string, any> = {};
+  if (whereDidYouHearAboutUs !== undefined) {
+    update.whereDidYouHearAboutUs = whereDidYouHearAboutUs;
+  }
+  if (firstName !== undefined) {
+    update.firstName = firstName;
+  }
+  if (birthdate !== undefined) {
+    update.birthdate = birthdate;
+    // calculate age as well
+  }
+  if (pronouns !== undefined) {
+    update.pronouns = pronouns;
+    // update gender as well
+  }
+  if (genderPreference !== undefined) {
+    if (genderPreference.value === "Men") {
+      update.genderPreference = ["Men"];
+    }
+    if (genderPreference.value === "Women") {
+      update.genderPreference = ["Women"];
+    }
+    if (genderPreference.value === "Everyone") {
+      update.genderPreference = ["Men", "Women"];
+    }
+  }
+  if (location !== undefined) {
+    update.location = location.value;
+    const tz = timezone(location.value);
+    if (tz) {
+      update.timezone = tz;
+    }
+  }
+  if (interests !== undefined) {
+    update.interests = interests;
+  }
+  if (funFacts !== undefined) {
+    update.funFacts = funFacts.value;
+  }
+
+  if (Object.keys(update).length === 0) {
+    return;
+  }
+
+  const ue = await admin
+    .firestore()
+    .collection("users")
+    .where("phone", "==", context.auth?.token.phone)
+    .get();
+  if (ue.empty) {
+    // add id, phone
+    update.onboardingComplete = onboardingComplete(update);
+    await admin.firestore().collection("users").doc().create(update);
+  } else {
+    const u = ue.docs[0];
+    update.onboardingCompleete = onboardingComplete({ ...u.data, ...update });
+    await ue.docs[0].ref.update(update);
+  }
+});
+
 export const getPublicProfile = functions.https.onCall(async (data, context) => {
   const user = await admin
     .firestore()
