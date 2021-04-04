@@ -13,6 +13,28 @@ import "./Profile.css";
 import ProfileCard from "./ProfileCard";
 import ReferralCard from "./ReferralCard";
 
+export const LOCATIONS =
+  [
+    "Boston",
+    "Chicago",
+    "Los Angeles",
+    "New York City",
+    "Philadelphia",
+    "San Diego",
+    "San Francisco Bay Area",
+    "Seattle",
+    "Toronto",
+    "Washington, DC",
+  ];
+export const FUN_FACTS_DESCRIPTION = `<p>These will be shared with your matches, so make them good 🙂</p>
+<p>Some ideas:</p>
+<ul>
+<li>What are you passionate about?</li>
+<li>How might your friends describe you?</li>
+<li>What's something you want to learn?</li>
+<li>What do you take pride in?</li>
+</ul>
+`
 
 const prefs: Record<string, any> = {
   basic: [
@@ -31,18 +53,7 @@ const prefs: Record<string, any> = {
       id: "location",
       label: "Location",
       type: PreferenceType.MULTIPLE_CHOICE,
-      options: [
-        "Boston",
-        "Chicago",
-        "Los Angeles",
-        "New York City",
-        "Philadelphia",
-        "San Diego",
-        "San Francisco Bay Area",
-        "Seattle",
-        "Toronto",
-        "Washington, DC",
-      ],
+      options: LOCATIONS,
       allowOther: true,
     },
     {
@@ -56,15 +67,7 @@ const prefs: Record<string, any> = {
       id: "funFacts",
       label: "Fun facts",
       type: PreferenceType.FREE_TEXT,
-      description: `<p>These will be shared with your matches, so make them good 🙂</p>
-<p>Some ideas:</p>
-<ul>
-<li>What are you passionate about?</li>
-<li>How might your friends describe you?</li>
-<li>What's something you want to learn?</li>
-<li>What do you take pride in?</li>
-</ul>
-`,
+      description: FUN_FACTS_DESCRIPTION,
     },
   ],
   details: [{
@@ -130,29 +133,32 @@ function Profile() {
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [photoUploading, setPhotoUploading] = useState(false);
   const history = useHistory();
+  // @ts-ignore
   const { userId } = useParams();
 
   const userPrefsPhoto = userPrefs?.photo;
 
   useEffect(() => {
-    firebase
-      .functions()
-      .httpsCallable("getPreferences")({ userId })
-      .then((res) => {
-        setUserPrefs(res.data);
-        FullStory.identify(res.data.id, {
-          displayName: res.data.firstName,
-        });
-      })
-      .catch((err) => {
-        if (err.code === "not-found" && userPhone) {
-          // the user logged in, but we don't have an entry for them, so redirect to login
-          window.location.href = "https://storydating.com/join#phone=" + encodeURIComponent(userPhone);
-        } else {
-          throw err;
-        }
-      })
-  }, [userLoading, userPhone, userId]);
+    if (userPhone) {
+      firebase
+        .functions()
+        .httpsCallable("getPreferences")({ userId })
+        .then((res) => {
+          setUserPrefs(res.data);
+          FullStory.identify(res.data.id, {
+            displayName: res.data.firstName,
+          });
+        })
+        .catch((err) => {
+          if (err.code === "not-found") {
+            // the user logged in, but we don't have an entry for them, so redirect to signup
+            history.push("/signup")
+          } else {
+            throw err;
+          }
+        })
+    }
+  }, [userLoading, userPhone, userId, history]);
 
   useEffect(() => {
     if (userPrefsPhoto) {

@@ -7,6 +7,8 @@ import "./App.less";
 import Header from "./Header";
 import Login from "./Login";
 import Logout from "./Logout";
+import Onboarding from "./onboarding/Onboarding";
+import OnboardingComplete from "./onboarding/OnboardingComplete";
 import Privacy from "./Privacy";
 import PrivateRoute from "./PrivateRoute";
 import Profile from "./profile/Profile";
@@ -76,6 +78,14 @@ function App() {
             <Route path="/login">
               <Header />
               <Login />
+            </Route>
+            <Route path="/signup/complete" >
+              <Header />
+              <OnboardingComplete />
+            </Route>
+            <Route path={["/signup/:step", "/signup"]} >
+              <Header />
+              <Onboarding />
             </Route>
             <Route path="/logout">
               <Logout />

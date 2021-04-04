@@ -1,0 +1,9 @@
+.st-input {
+  font-size: 18px;
+}
+
+.st-input,
+.st-input:hover,
+.st-input:focus {
+  border-bottom: 2px solid #949494;
+}

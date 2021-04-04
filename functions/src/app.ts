@@ -2,8 +2,124 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { CallableContext } from "firebase-functions/lib/providers/https";
 import * as moment from "moment-timezone";
-import { Firestore } from "./firestore";
+import { Firestore, IUser } from "./firestore";
+import { welcome } from "./smsCopy";
 import { parseTime, processTimeZone } from "./times";
+import { client, TWILIO_NUMBER } from "./twilio";
+
+// required fields
+const REQUIRED_ONBOARDING_FIELDS = [
+  "whereDidYouHearAboutUs",
+  "firstName",
+  "birthdate",
+  "pronouns",
+  "genderPreference",
+  "location",
+  "interests",
+  "photo",
+  "funFacts",
+  "social",
+];
+
+// just checks for existence of fields - doesn't validate values
+function onboardingComplete(data: Record<string, any>) {
+  return REQUIRED_ONBOARDING_FIELDS.every(k => data[k] !== undefined);
+}
+
+async function getOrCreateUser(phone: string) {
+  const userResult = await admin
+    .firestore()
+    .collection("users")
+    .where("phone", "==", phone)
+    .get();
+  if (userResult.empty) {
+    // create record
+    const doc = admin.firestore().collection("users").doc();
+    const data = {
+      id: doc.id,
+      phone,
+      registeredAt: admin.firestore.FieldValue.serverTimestamp(),
+      eligible: true,
+      status: "waitlist",
+    };
+    await doc.create(data);
+    return data;
+  }
+  return userResult.docs[0].data();
+}
+
+export const onboardUser = functions.https.onCall(async (data, context) => {
+  if (!context.auth || !context.auth.token.phone_number) {
+    throw new functions.https.HttpsError("unauthenticated", "authentication required");
+  }
+
+  const user = await getOrCreateUser(context.auth.token.phone_number);
+
+  const update: Record<string, any> = {};
+  REQUIRED_ONBOARDING_FIELDS.forEach(field => {
+    const value = data[field];
+    if (value === undefined) {
+      return;
+    }
+
+    update[field] = value;
+    if (field === "birthdate") {
+      // also calculate age
+      update.age = moment().diff(value, "years");
+    } else if (field === "pronouns") {
+      // also set gender
+      switch (value) {
+        case "He/him":
+          update.gender = "Male";
+          break;
+        case "She/her":
+          update.gender = "Female";
+          break;
+        case "They/them":
+          update.gender = "Non-binary";
+          break;
+        default:
+          console.error(new Error("unknown pronouns: " + value));
+      }
+    } else if (field === "genderPreference") {
+      if (value === "Men") {
+        update.genderPreference = ["Men"];
+      }
+      if (value === "Women") {
+        update.genderPreference = ["Women"];
+      }
+      if (value === "Everyone") {
+        update.genderPreference = ["Men", "Women"];
+      }
+    } else if (field === "location") {
+      const tz = timezone(value);
+      if (tz) {
+        update.timezone = tz;
+      }
+    }
+  })
+
+  if (Object.keys(update).length > 0) {
+    update.onboardingComplete = onboardingComplete({ ...user, ...update });
+    await admin.firestore().collection("users").doc(user.id).update(update);
+    if (update.onboardingComplete && user.phone.startsWith("+1")) {
+      // US or Canada
+      await client.messages.create({
+        body: welcome(user as IUser),
+        from: TWILIO_NUMBER,
+        to: user.phone,
+      });
+    }
+  }
+
+  if (data.connectionType !== undefined) {
+    await admin.firestore().collection("preferences").doc(user.id).create({
+      connectionType: { value: data.connectionType }
+    });
+  }
+
+  return { id: user.id, phone: user.phone };
+});
 
 export const getPublicProfile = functions.https.onCall(async (data, context) => {
   const user = await admin

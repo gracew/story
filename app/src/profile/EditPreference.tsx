@@ -1,5 +1,4 @@
 import { Checkbox, Radio, Slider } from "antd";
-import TextArea from "antd/lib/input/TextArea";
 import firebase from "firebase";
 import "firebase/analytics";
 import "firebase/remote-config";
@@ -10,6 +9,7 @@ import StoryButton from "../components/StoryButton";
 import StoryButtonContainer from "../components/StoryButtonContainer";
 import StoryCheckboxGroup from "../components/StoryCheckboxGroup";
 import StoryRadioGroup from "../components/StoryRadioGroup";
+import StoryTextArea from "../components/StoryTextArea";
 import "./EditPreference.css";
 
 export enum PreferenceType {
@@ -51,6 +51,7 @@ function EditPreference(props: EditPreferenceProps) {
   const [matchMin, setMatchMin] = useState(props.matchMin);
   const [matchMax, setMatchMax] = useState(props.matchMax);
   const [saving, setSaving] = useState(false);
+  // @ts-ignore
   const { userId } = useParams();
 
   function emptyState() {
@@ -149,7 +150,7 @@ function EditPreference(props: EditPreferenceProps) {
           {props.metadata.dealbreakers && <div className="edit-prefs-header">About me</div>}
           {props.metadata.description && <div className="edit-pref-description" dangerouslySetInnerHTML={{ __html: props.metadata.description }}></div>}
 
-          {props.metadata.type === PreferenceType.FREE_TEXT && <TextArea value={value} onChange={e => setValue(e.target.value)} allowClear autoSize={{ minRows: 6 }} />}
+          {props.metadata.type === PreferenceType.FREE_TEXT && <StoryTextArea value={value} onChange={e => setValue(e.target.value)} />}
           {props.metadata.type === PreferenceType.AGE && <Slider
             className="edit-pref-age"
             range
