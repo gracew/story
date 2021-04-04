@@ -139,23 +139,25 @@ function Profile() {
   const userPrefsPhoto = userPrefs?.photo;
 
   useEffect(() => {
-    firebase
-      .functions()
-      .httpsCallable("getPreferences")({ userId })
-      .then((res) => {
-        setUserPrefs(res.data);
-        FullStory.identify(res.data.id, {
-          displayName: res.data.firstName,
-        });
-      })
-      .catch((err) => {
-        if (err.code === "not-found" && userPhone) {
-          // the user logged in, but we don't have an entry for them, so redirect to signup
-          history.push("/signup")
-        } else {
-          throw err;
-        }
-      })
+    if (userPhone) {
+      firebase
+        .functions()
+        .httpsCallable("getPreferences")({ userId })
+        .then((res) => {
+          setUserPrefs(res.data);
+          FullStory.identify(res.data.id, {
+            displayName: res.data.firstName,
+          });
+        })
+        .catch((err) => {
+          if (err.code === "not-found") {
+            // the user logged in, but we don't have an entry for them, so redirect to signup
+            history.push("/signup")
+          } else {
+            throw err;
+          }
+        })
+    }
   }, [userLoading, userPhone, userId]);
 
   useEffect(() => {

@@ -1,3 +1,4 @@
+import firebase from "firebase";
 import React, { useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { FUN_FACTS_DESCRIPTION, LOCATIONS } from "../profile/Profile";
@@ -7,7 +8,6 @@ export enum OnboardingType {
   FREE_TEXT,
   SHORT_TEXT,
   MULTIPLE_CHOICE,
-  MULTIPLE_CHOICE_ALLOW_MULTIPLE,
   PHOTO,
   BIRTHDAY,
   SOCIAL,
@@ -96,8 +96,7 @@ function Onboarding() {
   // @ts-ignore
   const { step } = useParams();
   const history = useHistory();
-  const [data, setData] = useState<Record<string, any>>([]);
-  const [submitting, setSubmitting] = useState(false);
+  const [data, setData] = useState<Record<string, any>>({});
   const [stepIndex, setStepIndex] = useState(step || 0);
 
   if (stepIndex >= steps.length) {
@@ -108,12 +107,10 @@ function Onboarding() {
     setStepIndex(stepIndex - 1);
   }
 
-  async function onNext() {
-    setSubmitting(true);
+  async function onNext(update: Record<string, any>) {
+    await firebase.functions().httpsCallable("onboardUser")(update)
+    setData({ ...data, update});
     setStepIndex(stepIndex + 1);
-    setSubmitting(false);
-    // TODO: fix this
-    // await firebase.functions().httpsCallable("saveOnboarding")({ id: currStep!.id, selection })
   }
 
   return (

@@ -68,12 +68,25 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
     .where("phone", "==", context.auth.token.phone)
     .get();
   if (userResult.empty) {
-    // create record, setting id and phone
+    // create record
     const doc = admin.firestore().collection("users").doc();
     update.id = doc.id;
     update.phone = context.auth.token.phone;
+
+    update.registeredAt = admin.firestore.FieldValue.serverTimestamp();
     update.onboardingComplete = onboardingComplete(update);
+    update.eligible = true;
+    update.status = "waitlist";
     await doc.create(update);
+
+    if (update.phone.startsWith("+1")) {
+      // US or Canada
+      /*await client.messages.create({
+        body: welcome(user as IUser),
+        from: TWILIO_NUMBER,
+        to: user.phone,
+      });*/
+    }
   } else {
     const user = userResult.docs[0];
     update.onboardingComplete = onboardingComplete({ ...user.data(), ...update });

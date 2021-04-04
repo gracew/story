@@ -83,7 +83,7 @@ function App() {
               <Header />
               <OnboardingComplete />
             </Route>
-            <Route path={["/signup/:step", "/signup", "/join"]} >
+            <Route path={["/signup/:step", "/signup"]} >
               <Header />
               <Onboarding />
             </Route>

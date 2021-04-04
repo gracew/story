@@ -82,6 +82,7 @@ function Login() {
             <Input
               className="code-input"
               placeholder="6-digit code"
+              maxLength={6}
               value={code}
               onChange={e => setCode(e.target.value)}
             />

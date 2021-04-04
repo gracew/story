@@ -1,8 +1,7 @@
-import { Checkbox, Radio } from "antd";
+import { Radio } from "antd";
 import React, { useEffect, useState } from "react";
 import StoryButton from "../components/StoryButton";
 import StoryButtonContainer from "../components/StoryButtonContainer";
-import StoryCheckboxGroup from "../components/StoryCheckboxGroup";
 import StoryInput from "../components/StoryInput";
 import StoryRadioGroup from "../components/StoryRadioGroup";
 import StoryTextArea from "../components/StoryTextArea";
@@ -19,7 +18,8 @@ interface OnboardingStepProps {
 }
 
 function OnboardingStep(props: OnboardingStepProps) {
-  const [value, setValue] = useState<string | string[]>();
+  const [value, setValue] = useState<string>();
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     setValue(undefined);
@@ -27,24 +27,17 @@ function OnboardingStep(props: OnboardingStepProps) {
   }, [props.step]);
 
   function onMultipleChoiceSelect(option: string) {
-    if (props.step.type === OnboardingType.MULTIPLE_CHOICE) {
-      if (value === option) {
-        setValue(undefined);
-      } else {
-        setValue(option);
-      }
-    } else if (props.step.type === OnboardingType.MULTIPLE_CHOICE_ALLOW_MULTIPLE) {
-      if (Array.isArray(value)) {
-        if (value.includes(option)) {
-          const i = value.indexOf(option);
-          setValue(value.slice(0, i).concat(value.slice(i + 1)));
-        } else {
-          setValue([...value, option])
-        }
-      } else if (!value) {
-        setValue([option])
-      }
+    if (value === option) {
+      setValue(undefined);
+    } else {
+      setValue(option);
     }
+  }
+
+  function onNext() {
+    setSubmitting(true);
+    props.update({ [props.step.id]: value });
+    setSubmitting(false);
   }
 
   return (
@@ -61,16 +54,6 @@ function OnboardingStep(props: OnboardingStepProps) {
           <BirthdayInput />}
         {props.step.type === OnboardingType.PHOTO &&
           <PhotoUpload />}
-
-        {props.step.type === OnboardingType.MULTIPLE_CHOICE_ALLOW_MULTIPLE &&
-          <StoryCheckboxGroup value={value as string[]}>
-            {props.step.options!.map((o: any) => (
-              <Checkbox
-                key={o}
-                value={o}
-                onClick={() => onMultipleChoiceSelect(o)}
-              >{o}</Checkbox>))}
-          </StoryCheckboxGroup>}
 
         {props.step.type === OnboardingType.MULTIPLE_CHOICE &&
           <StoryRadioGroup>
@@ -97,7 +80,7 @@ function OnboardingStep(props: OnboardingStepProps) {
         <StoryButton
           className="onboarding-step-next"
           type="primary"
-          onClick={() => props.update({ [props.step.id]: value })}
+          onClick={onNext}
         >
           Next
         </StoryButton>
