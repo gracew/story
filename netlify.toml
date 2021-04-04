@@ -28,16 +28,6 @@
   status = 301
 
 [[redirects]]
-  from = "/join"
-  to = "https://storydating.typeform.com/to/ocxmmOHo"
-  status = 301
-
-[[redirects]]
-  from = "/signup"
-  to = "https://storydating.typeform.com/to/ocxmmOHo"
-  status = 301
-
-[[redirects]]
   from = "/rate"
   to = "https://storydating.typeform.com/to/Qrb9ZgUh"
   status = 301
