@@ -24,7 +24,7 @@ function OnboardingStep(props: OnboardingStepProps) {
 
   useEffect(() => {
     setValue(props.value);
-  }, [props.step]);
+  }, [props.step, props.value]);
 
   function onMultipleChoiceSelect(option: string) {
     if (value === option) {
@@ -66,7 +66,7 @@ function OnboardingStep(props: OnboardingStepProps) {
           </StoryRadioGroup>}
 
         {props.step.type === OnboardingType.SOCIAL &&
-          <SocialVerification />}
+          <SocialVerification update={(link) => setValue(link)} />}
       </div>
 
       <StoryButtonContainer>

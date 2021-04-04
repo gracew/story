@@ -1,6 +1,6 @@
 import firebase from "firebase";
 import React, { useState } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { Redirect, useParams } from "react-router-dom";
 import { FUN_FACTS_DESCRIPTION, LOCATIONS } from "../profile/Profile";
 import OnboardingStep from "./OnboardingStep";
 
@@ -95,12 +95,17 @@ const steps: OnboardingMetadata[] = [
 function Onboarding() {
   // @ts-ignore
   const { step } = useParams();
-  const history = useHistory();
+  const [userId, setUserId] = useState<string>();
+  const [phone, setPhone] = useState<string>();
   const [data, setData] = useState<Record<string, any>>({});
   const [stepIndex, setStepIndex] = useState(step || 0);
 
   if (stepIndex >= steps.length) {
-    history.push("/signup/complete")
+    const redirectProps = {
+      pathname: "/signup/complete",
+      state: { id: userId, phone },
+    }
+    return <Redirect to={redirectProps} />
   }
 
   async function onBack() {
@@ -108,7 +113,9 @@ function Onboarding() {
   }
 
   async function onNext(update: Record<string, any>) {
-    await firebase.functions().httpsCallable("onboardUser")(update)
+    const res = await firebase.functions().httpsCallable("onboardUser")(update)
+    setUserId(res.data.id);
+    setPhone(res.data.phone);
     setData({ ...data, ...update });
     setStepIndex(stepIndex + 1);
   }

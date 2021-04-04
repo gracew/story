@@ -1,5 +1,28 @@
+.social-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  column-gap: 15px;
+  row-gap: 15px;
+}
+
+.social-button {
+  padding: 20px;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.social-button-selected {
+  background: rgb(0, 0, 0, 0.018);
+}
+
+.social-button img {
+  width: 40px;
+  height: 40px;
+}
+
 .social-link {
-    margin: 20px 0;
+  margin-top: 20px;
 }
 
 .social-link-prefix {
@@ -7,6 +30,6 @@
 }
 
 .social-handle {
-  width: 100px;
+  width: 120px;
   padding: 0 10px;
 }

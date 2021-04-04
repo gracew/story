@@ -1,12 +1,16 @@
 import React from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import CenteredDiv from "../components/CenteredDiv";
 import StoryButton from "../components/StoryButton";
 import StoryButtonContainer from "../components/StoryButtonContainer";
+import ReferralCard from "../profile/ReferralCard";
 import "./OnboardingComplete.css";
 
 function OnboardingComplete() {
   const history = useHistory();
+  const location = useLocation();
+  const userId = (location.state as any)?.id;
+  const phone = (location.state as any)?.phone;
 
   return (
     <div className="onboarding-complete">
@@ -15,30 +19,32 @@ function OnboardingComplete() {
           <h3 className="onboarding-complete-header">Your profile is complete!</h3>
           <div className="section">
             <div className="section-header">
-              Once you're off the waitlist, our matchmakers will text you for your availability so we can schedule a
-              phone call with your match.
+              Look out for a confirmation text from us
             </div>
             <div>
-              In the meantime, if you have any other preferences we should know, just text us
-              <span role="img" aria-label="emoji-blush">😊</span>
+              We just texted you at {phone} to confirm your spot on the waitlist. We'll be back in touch as soon as we
+              have a match for you!
             </div>
           </div>
 
           <div className="section">
-            <div className="section-header">You can always opt out - but please don't flake</div>
+            <div className="section-header">We're just a text away</div>
             <div>
-              Life happens, and we understand if your schedule changes! If you need to cancel or reschedulue, just
-              send us a text.
+              Questions? Preferences that aren't covered by our web app? Just reply to the confirmation text - our
+              team reads and responds to every message <span role="img" aria-label="emoji-blush">😊</span>
             </div>
           </div>
 
           <div className="section">
-            <div className="section-header">We're always here if you need help</div>
+            <div className="section-header">Refer your friends</div>
             <div>
-              If you ever feel uncomfortable with a match or have a negative experience, text us and we'll step in.
-              We take safety extremely seriously and we'll have your back.
+              Tell your friends about a better way to date. The more friends you refer, the sooner you'll be off the 
+              waitlist!
             </div>
           </div>
+
+          <ReferralCard referrerId={userId} />
+
         </div>
       </CenteredDiv>
 
