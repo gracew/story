@@ -11,7 +11,6 @@ const REQUIRED_ONBOARDING_FIELDS = [
   "firstName",
   "birthdate",
   "pronouns",
-  "connectionType",
   "genderPreference",
   "location",
   "interests",
@@ -25,72 +24,88 @@ function onboardingComplete(data: Record<string, any>) {
   return REQUIRED_ONBOARDING_FIELDS.every(k => data[k] !== undefined);
 }
 
+async function getOrCreateUser(phone: string) {
+  const userResult = await admin
+    .firestore()
+    .collection("users")
+    .where("phone", "==", phone)
+    .get();
+  if (userResult.empty) {
+    // create record
+    const doc = admin.firestore().collection("users").doc();
+    const data = {
+      id: doc.id,
+      phone,
+      registeredAt: admin.firestore.FieldValue.serverTimestamp(),
+      eligible: true,
+      status: "waitlist",
+    };
+    await doc.create(data);
+    return data;
+  }
+  return userResult.docs[0].data();
+}
+
 export const onboardUser = functions.https.onCall(async (data, context) => {
   if (!context.auth || !context.auth.token.phone_number) {
     throw new functions.https.HttpsError("unauthenticated", "authentication required");
   }
 
+  const user = await getOrCreateUser(context.auth.token.phone_number);
+
   const update: Record<string, any> = {};
   REQUIRED_ONBOARDING_FIELDS.forEach(field => {
     const value = data[field];
-    if (value !== undefined) {
-      update[field] = value;
-      if (field === "birthdate") {
-        // also calculate age
-      } else if (field === "pronouns") {
-        // set gender
-      } else if (field === "genderPreference") {
-        if (value === "Men") {
-          update.genderPreference = ["Men"];
-        }
-        if (value === "Women") {
-          update.genderPreference = ["Women"];
-        }
-        if (value === "Everyone") {
-          update.genderPreference = ["Men", "Women"];
-        }
-      } else if (field === "location") {
-        const tz = timezone(value);
-        if (tz) {
-          update.timezone = tz;
-        }
+    if (value === undefined) {
+      return;
+    }
+
+    update[field] = value;
+    if (field === "birthdate") {
+      // also calculate age
+      update.age = moment().diff(value, "years");
+    } else if (field === "pronouns") {
+      // also set gender
+      switch (value) {
+        case "He/him":
+          update.gender = "Male";
+          break;
+        case "She/her":
+          update.gender = "Female";
+          break;
+        case "They/them":
+          update.gender = "Non-binary";
+          break;
+        default:
+          console.error(new Error("unknown pronouns: " + value));
+      }
+    } else if (field === "genderPreference") {
+      if (value === "Men") {
+        update.genderPreference = ["Men"];
+      }
+      if (value === "Women") {
+        update.genderPreference = ["Women"];
+      }
+      if (value === "Everyone") {
+        update.genderPreference = ["Men", "Women"];
+      }
+    } else if (field === "location") {
+      const tz = timezone(value);
+      if (tz) {
+        update.timezone = tz;
       }
     }
   })
 
-  if (Object.keys(update).length === 0) {
-    return;
+  if (Object.keys(update).length > 0) {
+    update.onboardingComplete = onboardingComplete({ ...user, ...update });
+    await admin.firestore().collection("users").doc(user.id).update(update);
   }
 
-  const userResult = await admin
-    .firestore()
-    .collection("users")
-    .where("phone", "==", context.auth.token.phone)
-    .get();
-  if (userResult.empty) {
-    // create record
-    const doc = admin.firestore().collection("users").doc();
-    update.id = doc.id;
-    update.phone = context.auth.token.phone;
-
-    update.registeredAt = admin.firestore.FieldValue.serverTimestamp();
-    update.onboardingComplete = onboardingComplete(update);
-    update.eligible = true;
-    update.status = "waitlist";
-    await doc.create(update);
-
-    if (update.phone.startsWith("+1")) {
-      // US or Canada
-      /*await client.messages.create({
-        body: welcome(user as IUser),
-        from: TWILIO_NUMBER,
-        to: user.phone,
-      });*/
-    }
-  } else {
-    const user = userResult.docs[0];
-    update.onboardingComplete = onboardingComplete({ ...user.data(), ...update });
-    await user.ref.update(update);
+  if (data.connectionType !== undefined) {
+    await admin.firestore().collection("preferences").doc(user.id).create({
+      connectionType: { value: data.connectionType }
+    });
   }
 });
 

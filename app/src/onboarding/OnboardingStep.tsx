@@ -5,7 +5,7 @@ import StoryButtonContainer from "../components/StoryButtonContainer";
 import StoryInput from "../components/StoryInput";
 import StoryRadioGroup from "../components/StoryRadioGroup";
 import StoryTextArea from "../components/StoryTextArea";
-import BirthdayInput from "./BirthdayInput";
+import BirthdateInput from "./BirthdateInput";
 import { OnboardingMetadata, OnboardingType } from "./Onboarding";
 import "./OnboardingStep.css";
 import PhotoUpload from "./PhotoUpload";
@@ -14,16 +14,16 @@ import SocialVerification from "./SocialVerification";
 interface OnboardingStepProps {
   step: OnboardingMetadata;
   update: (u: Record<string, any>) => void;
+  value?: string;
   back?: () => void;
 }
 
 function OnboardingStep(props: OnboardingStepProps) {
-  const [value, setValue] = useState<string>();
+  const [value, setValue] = useState(props.value);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    setValue(undefined);
-
+    setValue(props.value);
   }, [props.step]);
 
   function onMultipleChoiceSelect(option: string) {
@@ -51,12 +51,12 @@ function OnboardingStep(props: OnboardingStepProps) {
         {props.step.type === OnboardingType.FREE_TEXT &&
           <StoryTextArea value={value} onChange={e => setValue(e.target.value)} />}
         {props.step.type === OnboardingType.BIRTHDAY &&
-          <BirthdayInput />}
+          <BirthdateInput update={(birthdate) => setValue(birthdate)} />}
         {props.step.type === OnboardingType.PHOTO &&
-          <PhotoUpload />}
+          <PhotoUpload update={path => setValue(path)} />}
 
         {props.step.type === OnboardingType.MULTIPLE_CHOICE &&
-          <StoryRadioGroup>
+          <StoryRadioGroup value={value}>
             {props.step.options!.map((o: any) => (
               <Radio
                 key={o}
@@ -81,6 +81,8 @@ function OnboardingStep(props: OnboardingStepProps) {
           className="onboarding-step-next"
           type="primary"
           onClick={onNext}
+          disabled={value === undefined || value === ""}
+          loading={submitting}
         >
           Next
         </StoryButton>

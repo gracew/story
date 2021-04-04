@@ -49,7 +49,7 @@ const steps: OnboardingMetadata[] = [
     options: ["He/him", "She/her", "They/them"],
   },
   {
-    id: "relationshipType",
+    id: "connectionType",
     label: "I am looking for these types of connections...",
     type: OnboardingType.MULTIPLE_CHOICE,
     options: ["Serious dating", "Casual dating", "Open to either"],
@@ -109,7 +109,7 @@ function Onboarding() {
 
   async function onNext(update: Record<string, any>) {
     await firebase.functions().httpsCallable("onboardUser")(update)
-    setData({ ...data, update});
+    setData({ ...data, ...update });
     setStepIndex(stepIndex + 1);
   }
 
@@ -117,6 +117,7 @@ function Onboarding() {
     <OnboardingStep
       step={steps[stepIndex]}
       update={onNext}
+      value={data[steps[stepIndex].id]}
       back={stepIndex > 0 ? onBack : undefined}
     />
   );

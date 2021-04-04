@@ -158,7 +158,7 @@ function Profile() {
           }
         })
     }
-  }, [userLoading, userPhone, userId]);
+  }, [userLoading, userPhone, userId, history]);
 
   useEffect(() => {
     if (userPrefsPhoto) {
