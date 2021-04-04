@@ -50,9 +50,9 @@ const steps: OnboardingMetadata[] = [
   },
   {
     id: "relationshipType",
-    label: "I am looking for a...",
-    type: OnboardingType.MULTIPLE_CHOICE_ALLOW_MULTIPLE,
-    options: ["Serious relationship", "Casual relationship"],
+    label: "I am looking for these types of connections...",
+    type: OnboardingType.MULTIPLE_CHOICE,
+    options: ["Serious dating", "Casual dating", "Open to either"],
   },
   {
     id: "genderPreference",

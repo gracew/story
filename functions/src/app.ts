@@ -6,97 +6,78 @@ import { Firestore } from "./firestore";
 import { parseTime, processTimeZone } from "./times";
 
 // required fields
-const onboardingreq = [
-    "whereDidYouHearAboutUs",
-    "firstName",
-    "birthdate",
-    "pronouns",
-    "relationshipType",
-    "genderPreference",
-    "location",
-    "interests",
-    "photo",
-    "funFacts",
-    "social",
+const REQUIRED_ONBOARDING_FIELDS = [
+  "whereDidYouHearAboutUs",
+  "firstName",
+  "birthdate",
+  "pronouns",
+  "connectionType",
+  "genderPreference",
+  "location",
+  "interests",
+  "photo",
+  "funFacts",
+  "social",
 ];
 
 // just checks for existence of fields - doesn't validate values
 function onboardingComplete(data: Record<string, any>) {
-  return onboardingreq.every(k => data[k] !== undefined);
+  return REQUIRED_ONBOARDING_FIELDS.every(k => data[k] !== undefined);
 }
 
 export const onboardUser = functions.https.onCall(async (data, context) => {
-  const {
-    whereDidYouHearAboutUs,
-    firstName,
-    birthdate,
-    pronouns,
-    relationshipType, // deal with this one
-    genderPreference,
-    location,
-    interests,
-    photo,
-    funFacts,
-    social,
-  } = data;
-  // iterate through onboardingreqs
+  if (!context.auth || !context.auth.token.phone_number) {
+    throw new functions.https.HttpsError("unauthenticated", "authentication required");
+  }
+
   const update: Record<string, any> = {};
-  if (whereDidYouHearAboutUs !== undefined) {
-    update.whereDidYouHearAboutUs = whereDidYouHearAboutUs;
-  }
-  if (firstName !== undefined) {
-    update.firstName = firstName;
-  }
-  if (birthdate !== undefined) {
-    update.birthdate = birthdate;
-    // calculate age as well
-  }
-  if (pronouns !== undefined) {
-    update.pronouns = pronouns;
-    // update gender as well
-  }
-  if (genderPreference !== undefined) {
-    if (genderPreference.value === "Men") {
-      update.genderPreference = ["Men"];
+  REQUIRED_ONBOARDING_FIELDS.forEach(field => {
+    const value = data[field];
+    if (value !== undefined) {
+      update[field] = value;
+      if (field === "birthdate") {
+        // also calculate age
+      } else if (field === "pronouns") {
+        // set gender
+      } else if (field === "genderPreference") {
+        if (value === "Men") {
+          update.genderPreference = ["Men"];
+        }
+        if (value === "Women") {
+          update.genderPreference = ["Women"];
+        }
+        if (value === "Everyone") {
+          update.genderPreference = ["Men", "Women"];
+        }
+      } else if (field === "location") {
+        const tz = timezone(value);
+        if (tz) {
+          update.timezone = tz;
+        }
+      }
     }
-    if (genderPreference.value === "Women") {
-      update.genderPreference = ["Women"];
-    }
-    if (genderPreference.value === "Everyone") {
-      update.genderPreference = ["Men", "Women"];
-    }
-  }
-  if (location !== undefined) {
-    update.location = location.value;
-    const tz = timezone(location.value);
-    if (tz) {
-      update.timezone = tz;
-    }
-  }
-  if (interests !== undefined) {
-    update.interests = interests;
-  }
-  if (funFacts !== undefined) {
-    update.funFacts = funFacts.value;
-  }
+  })
 
   if (Object.keys(update).length === 0) {
     return;
   }
 
-  const ue = await admin
+  const userResult = await admin
     .firestore()
     .collection("users")
-    .where("phone", "==", context.auth?.token.phone)
+    .where("phone", "==", context.auth.token.phone)
     .get();
-  if (ue.empty) {
-    // add id, phone
+  if (userResult.empty) {
+    // create record, setting id and phone
+    const doc = admin.firestore().collection("users").doc();
+    update.id = doc.id;
+    update.phone = context.auth.token.phone;
     update.onboardingComplete = onboardingComplete(update);
-    await admin.firestore().collection("users").doc().create(update);
+    await doc.create(update);
   } else {
-    const u = ue.docs[0];
-    update.onboardingCompleete = onboardingComplete({ ...u.data, ...update });
-    await ue.docs[0].ref.update(update);
+    const user = userResult.docs[0];
+    update.onboardingComplete = onboardingComplete({ ...user.data(), ...update });
+    await user.ref.update(update);
   }
 });
 

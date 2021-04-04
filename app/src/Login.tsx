@@ -116,10 +116,6 @@ function Login() {
             value={phone}
             onChange={setPhone}
           />
-          <div className="login-legal-text">
-            We'll text you a verification code. Message and data rates apply.
-            By continuing, you agree to our <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.
-          </div>
         </div>
       </CenteredDiv>
       <StoryButtonContainer>
@@ -130,7 +126,7 @@ function Login() {
           disabled={!isPossiblePhoneNumber(phone || "")}
           loading={requestingCode}
         >
-          Continue
+          Request Verification Code
         </StoryButton>
       </StoryButtonContainer>
     </div>
