@@ -32,7 +32,6 @@ function BirthdateInput(props: BirthdateInputProps) {
       return;
     }
     const month = parseInt(s);
-    console.log("onMonth: " + month);
     if (month <= 0 || month > 12) {
       props.update({ ...props.value, month: undefined });
       return;

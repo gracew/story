@@ -120,7 +120,6 @@ function Onboarding() {
     setStepIndex(stepIndex + 1);
   }
 
-  console.log(data);
   return (
     <OnboardingStep
       step={steps[stepIndex]}
