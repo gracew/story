@@ -4,8 +4,12 @@
     flex: 1;
 }
 
+.onboarding-complete-inner {
+    flex: 1;
+}
+
 .onboarding-complete-header {
-    margin-bottom: 20px;
+    margin-top: 40px;
 }
 
 .section {

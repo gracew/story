@@ -41,15 +41,20 @@ function OnboardingStep(props: OnboardingStepProps) {
   }
 
   return (
-    <div className="onboarding-step-container">
+    <div className="onboarding-step">
       <div className="onboarding-step-input">
         <h3>{props.step.label}</h3>
         {props.step.description && <div className="onboarding-step-description" dangerouslySetInnerHTML={{ __html: props.step.description }}></div>}
 
         {props.step.type === OnboardingType.SHORT_TEXT &&
-          <StoryInput placeholder={props.step.placeholder} value={value} onChange={e => setValue(e.target.value)} />}
+          <StoryInput
+            placeholder={props.step.placeholder}
+            value={value}
+            onChange={e => setValue(e.target.value)} 
+            autoFocus
+          />}
         {props.step.type === OnboardingType.FREE_TEXT &&
-          <StoryTextArea value={value} onChange={e => setValue(e.target.value)} />}
+          <StoryTextArea value={value} onChange={e => setValue(e.target.value)} autoFocus />}
         {props.step.type === OnboardingType.BIRTHDAY &&
           <BirthdateInput update={(birthdate) => setValue(birthdate)} />}
         {props.step.type === OnboardingType.PHOTO &&

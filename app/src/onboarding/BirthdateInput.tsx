@@ -62,6 +62,7 @@ function BirthdateInput(props: BirthdateInputProps) {
           value={value[0]}
           onChange={e => onChange(e.target.value, 0)}
           onKeyDown={e => onKeyDown(e.keyCode, 0)}
+          autoFocus
         />
         <StoryInput
           name="birthdate-input-1"
