@@ -1,38 +1,44 @@
 import moment from "moment";
-import React, { useState } from "react";
+import React from "react";
 import StoryInput from "../components/StoryInput";
 import "./BirthdateInput.css";
 
+interface BirthdateSelection {
+  month?: number;
+  day?: number;
+  year?: number;
+}
+
 interface BirthdateInputProps {
-  update: (birthdate?: string) => void;
+  value?: BirthdateSelection;
+  update: (birthdate: BirthdateSelection) => void;
 }
 
-function isValidNumber(v: string) {
-  return !isNaN(parseInt(v));
-}
-
-function getDate(value: Array<string>) {
-  if (!value.every(v => isValidNumber(v))) {
-    return undefined;
+function warnMinAge(value?: BirthdateSelection) {
+  if (!value || !value.month || !value.day || !value.year) {
+    return false;
   }
-  const month = value.slice(0, 2).join("");
-  const day = value.slice(2, 4).join("");
-  const year = value.slice(4).join("");
-  return `${year}-${month}-${day}`;
+  if (value.year < 1900) {
+    return false;
+  }
+  const formatted = `${value.year}-${value.month}-${value.day}`;
+  return moment().diff(formatted, "years") < 18;
 }
 
 function BirthdateInput(props: BirthdateInputProps) {
-  const [value, setValue] = useState(new Array(8));
-
-  function onChange(v: string, i: number) {
-    const newValue = [...value]
-    newValue[i] = v;
-    setValue(newValue);
-    props.update(getDate(newValue));
-    if (i !== 7 && isValidNumber(v)) {
-      // Get the next input field
-      const nextField = document.querySelector(`input[name=birthdate-input-${i + 1}]`);
-      // If found, focus the next field
+  function onMonth(s?: string) {
+    if (!s || isNaN(parseInt(s))) {
+      props.update({ ...props.value, month: undefined });
+      return;
+    }
+    const month = parseInt(s);
+    if (month <= 0 || month > 12) {
+      props.update({ ...props.value, month: undefined });
+      return;
+    }
+    props.update({ ...props.value, month });
+    if (month >= 2 || s.length === 2) {
+      const nextField = document.querySelector("input[id=birthdate-input-d]");
       if (nextField) {
         // @ts-ignore
         nextField.focus();
@@ -40,90 +46,67 @@ function BirthdateInput(props: BirthdateInputProps) {
     }
   }
 
-  function onKeyDown(keyCode: number, i: number) {
-    if (keyCode === 8 && (value[i] === undefined || value[i] === "") && i > 0) {
-      // backspace
-      const prevField = document.querySelector(`input[name=birthdate-input-${i - 1}]`);
-      // If found, focus the prev field
-      if (prevField) {
+  function onDay(s?: string) {
+    if (!s || isNaN(parseInt(s))) {
+      props.update({ ...props.value, day: undefined });
+      return;
+    }
+    const day = parseInt(s);
+    if (day <= 0 && day > 31) {
+      props.update({ ...props.value, day: undefined });
+      return;
+    }
+    props.update({ ...props.value, day });
+    if (day >= 4 || s.length === 2) {
+      const nextField = document.querySelector("input[id=birthdate-input-y]");
+      if (nextField) {
         // @ts-ignore
-        prevField.focus();
+        nextField.focus();
       }
     }
+  }
+
+  function onYear(s: string) {
+    if (!s || isNaN(parseInt(s))) {
+      props.update({ ...props.value, year: undefined });
+      return;
+    }
+    const year = parseInt(s);
+    props.update({ ...props.value, year });
   }
 
   return (
     <div>
       <div className="birthdate-input">
         <StoryInput
-          name="birthdate-input-0"
-          placeholder="M"
-          maxLength={1}
-          value={value[0]}
-          onChange={e => onChange(e.target.value, 0)}
-          onKeyDown={e => onKeyDown(e.keyCode, 0)}
+          type="number"
+          id="birthdate-input-m"
+          placeholder="MM"
+          maxLength={2}
+          value={props.value?.month}
+          onChange={e => onMonth(e.target.value)}
           autoFocus
         />
+      /
         <StoryInput
-          name="birthdate-input-1"
-          placeholder="M"
-          maxLength={1}
-          value={value[1]}
-          onChange={e => onChange(e.target.value, 1)}
-          onKeyDown={e => onKeyDown(e.keyCode, 1)}
+          type="number"
+          id="birthdate-input-d"
+          placeholder="DD"
+          maxLength={2}
+          value={props.value?.day}
+          onChange={e => onDay(e.target.value)}
         />
       /
         <StoryInput
-          name="birthdate-input-2"
-          placeholder="D"
-          maxLength={1}
-          value={value[2]}
-          onChange={e => onChange(e.target.value, 2)}
-          onKeyDown={e => onKeyDown(e.keyCode, 2)}
-        />
-        <StoryInput
-          name="birthdate-input-3"
-          placeholder="D"
-          maxLength={1}
-          value={value[3]}
-          onChange={e => onChange(e.target.value, 3)}
-          onKeyDown={e => onKeyDown(e.keyCode, 3)}
-        />
-      /
-        <StoryInput
-          name="birthdate-input-4"
-          placeholder="Y"
-          maxLength={1}
-          value={value[4]}
-          onChange={e => onChange(e.target.value, 4)}
-          onKeyDown={e => onKeyDown(e.keyCode, 4)}
-        />
-        <StoryInput
-          name="birthdate-input-5"
-          placeholder="Y"
-          maxLength={1}
-          value={value[5]}
-          onChange={e => onChange(e.target.value, 5)}
-          onKeyDown={e => onKeyDown(e.keyCode, 5)}
-        />
-        <StoryInput
-          name="birthdate-input-6"
-          placeholder="Y"
-          maxLength={1}
-          value={value[6]}
-          onChange={e => onChange(e.target.value, 6)}
-          onKeyDown={e => onKeyDown(e.keyCode, 6)}
-        />
-        <StoryInput
-          name="birthdate-input-7"
-          placeholder="Y"
-          maxLength={1}
-          value={value[7]}
-          onChange={e => onChange(e.target.value, 7)}
-          onKeyDown={e => onKeyDown(e.keyCode, 7)}
+          type="number"
+          id="birthdate-input-y"
+          placeholder="YYYY"
+          maxLength={4}
+          value={props.value?.year}
+          onChange={e => onYear(e.target.value)}
         />
       </div>
-      {getDate(value) && moment().diff(getDate(value), "years") < 18 && <div className="min-age">You must be 18 years or older.</div>}
+      {warnMinAge(props.value) && <div className="min-age">You must be 18 years or older.</div>}
     </div>
 
   );

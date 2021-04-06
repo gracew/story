@@ -65,7 +65,8 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
     update[field] = value;
     if (field === "birthdate") {
       // also calculate age
-      update.age = moment().diff(value, "years");
+      const formatted = `${value.year}-${value.month}-${value.day}`;
+      update.age = moment().diff(formatted, "years");
     } else if (field === "pronouns") {
       // also set gender
       switch (value) {

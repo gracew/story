@@ -6,6 +6,8 @@ import StoryInput from "../components/StoryInput";
 import StoryRadioGroup from "../components/StoryRadioGroup";
 import StoryTextArea from "../components/StoryTextArea";
 import BirthdateInput from "./BirthdateInput";
+import ChannelInput, { ChannelSelection } from "./ChannelInput";
+import LocationInput from "./LocationInput";
 import { OnboardingMetadata, OnboardingType } from "./Onboarding";
 import "./OnboardingStep.css";
 import PhotoUpload from "./PhotoUpload";
@@ -19,20 +21,13 @@ interface OnboardingStepProps {
 }
 
 function OnboardingStep(props: OnboardingStepProps) {
-  const [value, setValue] = useState(props.value);
+  const [value, setValue] = useState<any>(props.value);
+  const [complete, setComplete] = useState<boolean>();
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     setValue(props.value);
   }, [props.step, props.value]);
-
-  function onMultipleChoiceSelect(option: string) {
-    if (value === option) {
-      setValue(undefined);
-    } else {
-      setValue(option);
-    }
-  }
 
   function onNext() {
     setSubmitting(true);
@@ -50,15 +45,19 @@ function OnboardingStep(props: OnboardingStepProps) {
           <StoryInput
             placeholder={props.step.placeholder}
             value={value}
-            onChange={e => setValue(e.target.value)} 
+            onChange={e => setValue(e.target.value)}
             autoFocus
           />}
         {props.step.type === OnboardingType.FREE_TEXT &&
           <StoryTextArea value={value} onChange={e => setValue(e.target.value)} autoFocus />}
         {props.step.type === OnboardingType.BIRTHDAY &&
-          <BirthdateInput update={(birthdate) => setValue(birthdate)} />}
+          <BirthdateInput value={value} update={(birthdate) => setValue(birthdate)} />}
         {props.step.type === OnboardingType.PHOTO &&
           <PhotoUpload update={path => setValue(path)} />}
+        {props.step.type === OnboardingType.CHANNEL &&
+          <ChannelInput value={value as ChannelSelection} update={o => setValue(o)} />}
+        {props.step.type === OnboardingType.LOCATION &&
+          <LocationInput value={value} update={(o, complete) => { setValue(o); setComplete(complete) }} />}
 
         {props.step.type === OnboardingType.MULTIPLE_CHOICE &&
           <StoryRadioGroup value={value}>
@@ -66,7 +65,7 @@ function OnboardingStep(props: OnboardingStepProps) {
               <Radio
                 key={o}
                 value={o}
-                onClick={() => onMultipleChoiceSelect(o)}
+                onClick={() => setValue(o)}
               >{o}</Radio>))}
           </StoryRadioGroup>}
 
@@ -86,7 +85,7 @@ function OnboardingStep(props: OnboardingStepProps) {
           className="onboarding-step-next"
           type="primary"
           onClick={onNext}
-          disabled={value === undefined || value === ""}
+          disabled={complete === false || (value === undefined || value === "")}
           loading={submitting}
         >
           Next
