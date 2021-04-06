@@ -2,7 +2,6 @@ import { Radio } from "antd";
 import React from "react";
 import StoryInput from "../components/StoryInput";
 import StoryRadioGroup from '../components/StoryRadioGroup';
-import "./PhotoUpload.css";
 
 const OPTIONS = ["Twitter", "Instagram", "Facebook", "TikTok", "Friend"];
 

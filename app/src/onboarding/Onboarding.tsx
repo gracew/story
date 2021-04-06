@@ -1,7 +1,7 @@
 import firebase from "firebase";
 import React, { useState } from "react";
 import { Redirect, useParams } from "react-router-dom";
-import { FUN_FACTS_DESCRIPTION, LOCATIONS } from "../profile/Profile";
+import { FUN_FACTS_DESCRIPTION } from "../profile/Profile";
 import OnboardingStep from "./OnboardingStep";
 
 export enum OnboardingType {
@@ -11,6 +11,8 @@ export enum OnboardingType {
   PHOTO,
   BIRTHDAY,
   SOCIAL,
+  CHANNELS,
+  LOCATION,
 }
 
 export interface OnboardingMetadata {
@@ -26,8 +28,7 @@ const steps: OnboardingMetadata[] = [
   {
     id: "whereDidYouHearAboutUs",
     label: "How did you find out about us?",
-    type: OnboardingType.MULTIPLE_CHOICE,
-    options: ["Twitter", "Instagram", "Facebook", "TikTok", "Friend", "Other"],
+    type: OnboardingType.CHANNELS,
   },
   {
     id: "firstName",
@@ -63,8 +64,7 @@ const steps: OnboardingMetadata[] = [
   {
     id: "location",
     label: "I live in...",
-    type: OnboardingType.MULTIPLE_CHOICE,
-    options: LOCATIONS,
+    type: OnboardingType.LOCATION,
   },
   {
     id: "interests",
