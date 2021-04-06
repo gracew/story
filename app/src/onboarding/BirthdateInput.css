@@ -6,9 +6,17 @@
 
 .birthdate-input .st-input {
     text-align: center;
-    flex: 1;
     margin: 0 5px;
     padding: 0;
+}
+
+#birthdate-input-m,
+#birthdate-input-d {
+    flex: 1;
+}
+
+#birthdate-input-y {
+    flex: 2;
 }
 
 .min-age {

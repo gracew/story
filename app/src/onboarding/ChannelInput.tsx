@@ -34,12 +34,12 @@ function followUp(option: string) {
   }
 }
 
-interface ChannelsProps {
+interface ChannelInputProps {
   value?: ChannelSelection;
-  update: (value?: ChannelSelection) => void;
+  update: (value: ChannelSelection) => void;
 }
 
-function Channels(props: ChannelsProps) {
+function ChannelInput(props: ChannelInputProps) {
 
   function onOptionSelect(option: string) {
     props.update({ ...props.value, option });
@@ -75,4 +75,4 @@ function Channels(props: ChannelsProps) {
   );
 }
 
-export default Channels;
+export default ChannelInput;

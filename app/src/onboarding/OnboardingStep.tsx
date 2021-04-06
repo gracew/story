@@ -6,7 +6,7 @@ import StoryInput from "../components/StoryInput";
 import StoryRadioGroup from "../components/StoryRadioGroup";
 import StoryTextArea from "../components/StoryTextArea";
 import BirthdateInput from "./BirthdateInput";
-import Channels, { ChannelSelection } from "./Channels";
+import ChannelInput, { ChannelSelection } from "./ChannelInput";
 import LocationInput from "./LocationInput";
 import { OnboardingMetadata, OnboardingType } from "./Onboarding";
 import "./OnboardingStep.css";
@@ -51,11 +51,11 @@ function OnboardingStep(props: OnboardingStepProps) {
         {props.step.type === OnboardingType.FREE_TEXT &&
           <StoryTextArea value={value} onChange={e => setValue(e.target.value)} autoFocus />}
         {props.step.type === OnboardingType.BIRTHDAY &&
-          <BirthdateInput update={(birthdate) => setValue(birthdate)} />}
+          <BirthdateInput value={value} update={(birthdate) => setValue(birthdate)} />}
         {props.step.type === OnboardingType.PHOTO &&
           <PhotoUpload update={path => setValue(path)} />}
-        {props.step.type === OnboardingType.CHANNELS &&
-          <Channels value={value as ChannelSelection} update={o => setValue(o)} />}
+        {props.step.type === OnboardingType.CHANNEL &&
+          <ChannelInput value={value as ChannelSelection} update={o => setValue(o)} />}
         {props.step.type === OnboardingType.LOCATION &&
           <LocationInput value={value} update={(o, complete) => { setValue(o); setComplete(complete) }} />}
 

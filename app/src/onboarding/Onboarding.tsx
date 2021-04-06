@@ -11,7 +11,7 @@ export enum OnboardingType {
   PHOTO,
   BIRTHDAY,
   SOCIAL,
-  CHANNELS,
+  CHANNEL,
   LOCATION,
 }
 
@@ -28,7 +28,7 @@ const steps: OnboardingMetadata[] = [
   {
     id: "whereDidYouHearAboutUs",
     label: "How did you find out about us?",
-    type: OnboardingType.CHANNELS,
+    type: OnboardingType.CHANNEL,
   },
   {
     id: "firstName",
@@ -120,6 +120,7 @@ function Onboarding() {
     setStepIndex(stepIndex + 1);
   }
 
+  console.log(data);
   return (
     <OnboardingStep
       step={steps[stepIndex]}
