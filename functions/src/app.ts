@@ -98,15 +98,19 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
   })
 
   if (Object.keys(update).length > 0) {
-    update.onboardingComplete = onboardingComplete({ ...user, ...update });
+    const allData = { ...user, ...update };
+    update.onboardingComplete = onboardingComplete(allData);
     await admin.firestore().collection("users").doc(user.id).update(update);
-    if (update.onboardingComplete && user.phone.startsWith("+1")) {
-      // US or Canada
-      /*await client.messages.create({
-        body: welcome(user as IUser),
-        from: TWILIO_NUMBER,
-        to: user.phone,
-      });*/
+    if (update.onboardingComplete) {
+      await notifyNewSignup(allData);
+      if (user.phone.startsWith("+1")) {
+        // US or Canada
+        /*await client.messages.create({
+          body: welcome(user as IUser),
+          from: TWILIO_NUMBER,
+          to: user.phone,
+        });*/
+      }
     }
   }
 
@@ -118,6 +122,21 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
 
   return { id: user.id, phone: user.phone };
 });
+
+function notifyNewSignup(user: Record<string, any>) {
+  const text = `New user signup
+Name: ${user.firstName}
+Gender: ${user.gender}
+Wants to meet: ${user.genderPreference} 
+Age: ${user.age}
+Location: ${user.location}
+Channel: ${user.whereDidYouHearAboutUs}`
+  return fetch(functions.config().slack.webhook_url, {
+    method: "post",
+    body: JSON.stringify({ text }),
+    headers: { "Content-Type": "application/json" },
+  });
+}
 
 export const getPublicProfile = functions.https.onCall(async (data, context) => {
   const user = await admin
