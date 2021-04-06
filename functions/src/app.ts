@@ -2,10 +2,8 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { CallableContext } from "firebase-functions/lib/providers/https";
 import * as moment from "moment-timezone";
-import { Firestore, IUser } from "./firestore";
-import { welcome } from "./smsCopy";
+import { Firestore } from "./firestore";
 import { parseTime, processTimeZone } from "./times";
-import { client, TWILIO_NUMBER } from "./twilio";
 
 // required fields
 const REQUIRED_ONBOARDING_FIELDS = [
@@ -104,16 +102,16 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
     await admin.firestore().collection("users").doc(user.id).update(update);
     if (update.onboardingComplete && user.phone.startsWith("+1")) {
       // US or Canada
-      await client.messages.create({
+      /*await client.messages.create({
         body: welcome(user as IUser),
         from: TWILIO_NUMBER,
         to: user.phone,
-      });
+      });*/
     }
   }
 
   if (data.connectionType !== undefined) {
-    await admin.firestore().collection("preferences").doc(user.id).create({
+    await admin.firestore().collection("preferences").doc(user.id).set({
       connectionType: { value: data.connectionType }
     });
   }

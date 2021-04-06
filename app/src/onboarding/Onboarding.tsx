@@ -33,7 +33,7 @@ const steps: OnboardingMetadata[] = [
     id: "firstName",
     label: "My first name is...",
     type: OnboardingType.SHORT_TEXT,
-    description: "This is how your name will appear on Story Dating and you will not be able to change it.",
+    description: "This is how your name will appear on Story Dating.",
     placeholder: "First name",
   },
   {
@@ -74,9 +74,9 @@ const steps: OnboardingMetadata[] = [
   },
   {
     id: "photo",
-    label: "Add a photo of yourself",
+    label: "Add a profile photo",
     type: OnboardingType.PHOTO,
-    description: "Choose a photo of just you where your face is clearly visible. You can change this later.",
+    description: "Choose a photo of just you where your face is clearly visible. You can change this later. This will be shown to your match after the phone call!",
   },
   {
     id: "funFacts",
