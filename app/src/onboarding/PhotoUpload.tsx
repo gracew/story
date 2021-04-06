@@ -48,7 +48,7 @@ function PhotoUpload(props: PhotoUploadProps) {
       showUploadList={false}
       onChange={handleChange}
     >
-      {imageUrl ? <img src={imageUrl} alt="avatar" style={{ width: '100%' }} /> : uploadButton}
+      {imageUrl ? <div className="photo-container"><img src={imageUrl} alt="avatar" style={{ width: '100%' }} /></div> : uploadButton}
     </Upload>
   );
 }
