@@ -13,7 +13,7 @@ function OnboardingComplete() {
 
   return (
     <div className="onboarding-complete">
-      <div>
+      <div className="onboarding-complete-inner">
         <h3 className="onboarding-complete-header">Woohoo, you're on the waitlist!</h3>
         <div className="section">
           <div className="section-header">
@@ -41,7 +41,6 @@ function OnboardingComplete() {
         </div>
 
         <ReferralCard referrerId={userId} />
-
       </div>
 
       <StoryButtonContainer>

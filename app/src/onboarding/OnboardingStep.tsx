@@ -41,7 +41,7 @@ function OnboardingStep(props: OnboardingStepProps) {
   }
 
   return (
-    <div className="onboarding-step-container">
+    <div className="onboarding-step">
       <div className="onboarding-step-input">
         <h3>{props.step.label}</h3>
         {props.step.description && <div className="onboarding-step-description" dangerouslySetInnerHTML={{ __html: props.step.description }}></div>}
