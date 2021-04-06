@@ -67,7 +67,7 @@ function SocialVerification(props: SocialVerificationProps) {
       </div>
       {selected && <div className="social-link">
         <span className="social-link-prefix">{selected!.linkPrefix}</span>
-        <StoryInput className="social-handle" onChange={e => onChange(e.target.value)} />
+        <StoryInput className="social-handle" onChange={e => onChange(e.target.value)} autoFocus />
       </div>}
     </div>
   );
