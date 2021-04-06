@@ -83,10 +83,10 @@ function App() {
               <Header />
               <OnboardingComplete />
             </Route>
-            <Route path={["/signup/:step", "/signup"]} >
+            <PrivateRoute path={["/signup/:step", "/signup"]} >
               <Header />
               <Onboarding />
-            </Route>
+            </PrivateRoute>
             <Route path="/logout">
               <Logout />
             </Route>

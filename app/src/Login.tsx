@@ -106,11 +106,12 @@ function Login() {
     );
   }
 
+  const titleText = redirect === "/signup" ? "What's your phone number?" : "Enter your phone number";
   return (
     <div className="login">
       <CenteredDiv>
         <div className="login-input">
-          <div className="login-input-title">Enter your phone number</div>
+          <div className="login-input-title">{titleText}</div>
           <PhoneInput
             placeholder="Enter phone number"
             defaultCountry="US"
@@ -127,9 +128,13 @@ function Login() {
           disabled={!isPossiblePhoneNumber(phone || "")}
           loading={requestingCode}
         >
-          Request Verification Code
+          Next
         </StoryButton>
       </StoryButtonContainer>
+      {redirect === "/signup" && <div className="legal-text">
+        Joining means you agree to our <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>, and to
+        get several messages per week. Data rates may apply. Text STOP to cancel, HELP for help.
+      </div>}
     </div>
   );
 }

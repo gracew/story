@@ -71,13 +71,21 @@
 
 .login-cancel {
   width: 30%;
+  margin-right: 10px;
   background-color: #E0E0E0;
 }
 
 .verify-code {
-  width: 66%;
+  flex: 1;
 }
 
 #request-code {
   width: 100%;
+}
+
+.legal-text {
+  color: black;
+  margin-top: 15px;
+  font-size: 16px;
+  line-height: 19px;
 }
