@@ -1,5 +1,5 @@
 import { Button } from "antd";
-import React, { useState } from "react";
+import React from "react";
 import facebook from "../assets/facebook.svg";
 import instagram from "../assets/instagram.svg";
 import linkedin from "../assets/linkedin.svg";
@@ -7,11 +7,6 @@ import tiktok from "../assets/tiktok.svg";
 import twitter from "../assets/twitter.svg";
 import StoryInput from "../components/StoryInput";
 import "./SocialVerification.css";
-
-interface Link {
-  id: string;
-  linkPrefix: string;
-}
 
 const links = [
   {
@@ -41,14 +36,20 @@ const links = [
   },
 ]
 
+interface SocialHandle {
+  id?: string;
+  handle?: string;
+}
+
 interface SocialVerificationProps {
-  update: (link: string) => void;
+  value?: SocialHandle;
+  update: (value: SocialHandle) => void;
 }
 
 function SocialVerification(props: SocialVerificationProps) {
-  const [selected, setSelected] = useState<Link>();
-  function onChange(handle: string) {
-    props.update(selected!.linkPrefix + handle);
+  function linkPrefix() {
+    const link = links.find(l => l.id === props.value?.id);
+    return link?.linkPrefix;
   }
 
   return (
@@ -57,17 +58,22 @@ function SocialVerification(props: SocialVerificationProps) {
         {links.map(l =>
           <Button
             type="text"
-            className={selected?.id === l.id ? "social-button social-button-selected" : "social-button"}
+            className={props.value?.id === l.id ? "social-button social-button-selected" : "social-button"}
             key={l.id}
-            onClick={() => setSelected(l)}
+            onClick={() => props.update({ ...props.value, id: l.id })}
           >
             <img src={l.image} alt={l.id} />
           </Button>
         )}
       </div>
-      {selected && <div className="social-link">
-        <span className="social-link-prefix">{selected!.linkPrefix}</span>
-        <StoryInput className="social-handle" onChange={e => onChange(e.target.value)} autoFocus />
+      {props.value?.id && <div className="social-link">
+        <span className="social-link-prefix">{linkPrefix()}</span>
+        <StoryInput
+          className="social-handle"
+          value={props.value?.handle}
+          onChange={e => props.update({ ...props.value, handle: e.target.value })}
+          autoFocus
+        />
       </div>}
     </div>
   );

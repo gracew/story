@@ -86,7 +86,7 @@ const steps: OnboardingMetadata[] = [
   },
   {
     id: "social",
-    label: "Final verification!",
+    label: "One last thing -",
     type: OnboardingType.SOCIAL,
     description: "Prove to us that you're a real person by providing a social media handle. This is used only by the Story Dating team and won't be shown to your matches.",
   },
