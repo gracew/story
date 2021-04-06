@@ -2,8 +2,10 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { CallableContext } from "firebase-functions/lib/providers/https";
 import * as moment from "moment-timezone";
-import { Firestore } from "./firestore";
+import { Firestore, IUser } from "./firestore";
+import { welcome } from "./smsCopy";
 import { parseTime, processTimeZone } from "./times";
+import { client, TWILIO_NUMBER } from "./twilio";
 
 // required fields
 const REQUIRED_ONBOARDING_FIELDS = [
@@ -103,13 +105,13 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
     await admin.firestore().collection("users").doc(user.id).update(update);
     if (update.onboardingComplete) {
       await notifyNewSignup(allData);
-      if (user.phone.startsWith("+1")) {
+      if (user.phone.startsWith("+1") && !isTestNumber(user.phone)) {
         // US or Canada
-        /*await client.messages.create({
+        await client.messages.create({
           body: welcome(user as IUser),
           from: TWILIO_NUMBER,
           to: user.phone,
-        });*/
+        });
       }
     }
   }
@@ -122,6 +124,10 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
 
   return { id: user.id, phone: user.phone };
 });
+
+function isTestNumber(phone: string) {
+  return ["+16501111111", "+16502222222"].includes(phone);
+}
 
 function notifyNewSignup(user: Record<string, any>) {
   const text = `New user signup

@@ -50,7 +50,8 @@ function OnboardingStep(props: OnboardingStepProps) {
           <StoryInput
             placeholder={props.step.placeholder}
             value={value}
-            onChange={e => setValue(e.target.value)} autoFocus
+            onChange={e => setValue(e.target.value)} 
+            autoFocus
           />}
         {props.step.type === OnboardingType.FREE_TEXT &&
           <StoryTextArea value={value} onChange={e => setValue(e.target.value)} autoFocus />}
