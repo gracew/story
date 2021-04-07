@@ -2,6 +2,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { CallableContext } from "firebase-functions/lib/providers/https";
 import * as moment from "moment-timezone";
+import fetch from "node-fetch";
 import { Firestore, IUser } from "./firestore";
 import { welcome } from "./smsCopy";
 import { parseTime, processTimeZone } from "./times";
@@ -132,12 +133,13 @@ function isTestNumber(phone: string) {
 
 function notifyNewSignup(user: Record<string, any>) {
   const text = `New user signup
+
 Name: ${user.firstName}
 Gender: ${user.gender}
 Wants to meet: ${user.genderPreference} 
 Age: ${user.age}
 Location: ${user.location}
-Channel: ${user.whereDidYouHearAboutUs}`
+Channel: ${user.whereDidYouHearAboutUs.option}, ${user.whereDidYouHearAboutUs.context}`
   return fetch(functions.config().slack.webhook_url, {
     method: "post",
     body: JSON.stringify({ text }),

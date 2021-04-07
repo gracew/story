@@ -1,12 +1,12 @@
-import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
-import { Upload } from "antd";
-import { RcFile, UploadChangeParam } from "antd/lib/upload";
+import { CloseOutlined, LoadingOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, Upload } from "antd";
 import firebase from 'firebase';
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import * as uuid from "uuid";
 import "./PhotoUpload.css";
 
 interface PhotoUploadProps {
+  value?: string; // path, e.g. photos/XXX
   update: (path?: string) => void;
 }
 
@@ -14,23 +14,25 @@ function PhotoUpload(props: PhotoUploadProps) {
   const [imageUrl, setImageUrl] = useState();
   const [loading, setLoading] = useState(false);
 
-  async function upload(file: RcFile) {
+  useEffect(() => {
+    if (!props.value) {
+      setImageUrl(undefined);
+    } else {
+      firebase.storage().ref(props.value).getDownloadURL().then(url => setImageUrl(url));
+    }
+  }, [props.value])
+
+  async function upload(opts: any) {
+    setLoading(true);
     const path = `photos/${uuid.v4()}`;
-    const ref = firebase.storage().ref(path);
-    await ref.put(file);
-    const url = await ref.getDownloadURL();
+    await firebase.storage().ref(path).put(opts.file);
     props.update(path);
-    setImageUrl(url);
-    return url;
+    setLoading(false);
   }
 
-  function handleChange(info: UploadChangeParam) {
-    if (info.file.status === 'uploading') {
-      setLoading(true);
-    } else if (info.file.status === 'done') {
-      setLoading(false);
-    }
-  };
+  function onRemoveImage() {
+    props.update(undefined);
+  }
 
   const uploadButton = (
     <div>
@@ -39,17 +41,19 @@ function PhotoUpload(props: PhotoUploadProps) {
     </div>
   );
   return (
-    <Upload
-      className="photo-upload"
-      name="avatar"
-      accept="image/*"
-      action={upload}
-      listType="picture-card"
-      showUploadList={false}
-      onChange={handleChange}
-    >
-      {imageUrl ? <div className="photo-container"><img src={imageUrl} alt="avatar" style={{ width: '100%' }} /></div> : uploadButton}
-    </Upload>
+    <div className="photo-upload-container">
+      <Upload
+        className="photo-upload"
+        name="avatar"
+        accept="image/*"
+        customRequest={upload}
+        listType="picture-card"
+        showUploadList={false}
+      >
+        {imageUrl ? <div className="photo-container"><img src={imageUrl} alt="avatar" style={{ width: '100%' }} /></div> : uploadButton}
+      </Upload>
+      {imageUrl && <Button className="remove-photo" onClick={onRemoveImage}><CloseOutlined /></Button>}
+    </div>
   );
 }
 

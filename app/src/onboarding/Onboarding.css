@@ -1,0 +1,15 @@
+.onboarding {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-step-back {
+  width: 30%;
+  margin-right: 10px;
+  background-color: #E0E0E0;
+}
+
+.onboarding-step-next {
+  flex: 1;
+}
