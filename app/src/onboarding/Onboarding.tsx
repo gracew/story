@@ -79,7 +79,7 @@ const steps: OnboardingMetadata[] = [
     id: "photo",
     label: "Add a profile photo",
     type: OnboardingType.PHOTO,
-    description: "Choose a photo of just you where your face is clearly visible. You can change this later. This will be shown to your match after the phone call!",
+    description: "This is shown to your match after the phone call, so choose a photo of just you where your face is clearly visible.",
   },
   {
     id: "funFacts",
