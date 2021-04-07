@@ -133,12 +133,13 @@ function isTestNumber(phone: string) {
 
 function notifyNewSignup(user: Record<string, any>) {
   const text = `New user signup
+
 Name: ${user.firstName}
 Gender: ${user.gender}
 Wants to meet: ${user.genderPreference} 
 Age: ${user.age}
 Location: ${user.location}
-Channel: ${user.whereDidYouHearAboutUs}`
+Channel: ${user.whereDidYouHearAboutUs.option}, ${user.whereDidYouHearAboutUs.context}`
   return fetch(functions.config().slack.webhook_url, {
     method: "post",
     body: JSON.stringify({ text }),

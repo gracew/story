@@ -1,5 +1,5 @@
 import firebase from "firebase";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Redirect, useParams } from "react-router-dom";
 import StoryButton from "../components/StoryButton";
 import StoryButtonContainer from "../components/StoryButtonContainer";
@@ -105,17 +105,16 @@ function Onboarding() {
   const [stepIndex, setStepIndex] = useState(step || 0);
   const [submitting, setSubmitting] = useState(false);
 
-  if (stepIndex >= steps.length) {
-    const redirectProps = {
-      pathname: "/signup/complete",
-      state: { id: userId, phone },
+  useEffect(() => {
+    if (userId) {
+      firebase.analytics().setUserId(userId);
     }
-    return <Redirect to={redirectProps} />
-  }
+  }, [userId])
 
-  async function onBack() {
-    setStepIndex(stepIndex - 1);
-  }
+  useEffect(() => {
+    const stepId = steps[stepIndex].id;
+    firebase.analytics().setCurrentScreen("onboarding_" + stepId)
+  }, [stepIndex])
 
   async function onUpdate(update: any, updateComplete?: boolean) {
     const stepId = steps[stepIndex].id;
@@ -123,10 +122,20 @@ function Onboarding() {
     setComplete({ ...complete, [stepId]: updateComplete });
   }
 
+  async function onBack() {
+    const stepId = steps[stepIndex].id;
+    firebase.analytics().logEvent(`onboarding_${stepId}_back`);
+
+    setStepIndex(stepIndex - 1);
+  }
+
   async function onNext() {
     setSubmitting(true);
-    const id = steps[stepIndex].id;
-    const res = await firebase.functions().httpsCallable("onboardUser")({ [id]: data[id] })
+
+    const stepId = steps[stepIndex].id;
+    firebase.analytics().logEvent(`onboarding_${stepId}_next`);
+
+    const res = await firebase.functions().httpsCallable("onboardUser")({ [stepId]: data[stepId] })
     setUserId(res.data.id);
     setPhone(res.data.phone);
     setStepIndex(stepIndex + 1);
@@ -137,6 +146,14 @@ function Onboarding() {
     const stepId = steps[stepIndex].id;
     const value = data[stepId];
     return complete[stepId] === false || value === undefined || value === "";
+  }
+
+  if (stepIndex >= steps.length) {
+    const redirectProps = {
+      pathname: "/signup/complete",
+      state: { id: userId, phone },
+    }
+    return <Redirect to={redirectProps} />
   }
 
   return (
