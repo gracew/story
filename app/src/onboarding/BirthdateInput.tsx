@@ -11,7 +11,13 @@ interface BirthdateSelection {
 
 interface BirthdateInputProps {
   value?: BirthdateSelection;
-  update: (birthdate: BirthdateSelection) => void;
+  update: (birthdate: BirthdateSelection, complete?: boolean) => void;
+}
+
+function valid(value: BirthdateSelection) {
+  return value.month !== undefined && value.month > 0 && value.month <= 12 &&
+    value.day !== undefined && value.day > 0 && value.day <= 31 &&
+    value.year !== undefined && value.year > 1900 && !warnMinAge(value);
 }
 
 function warnMinAge(value?: BirthdateSelection) {
@@ -28,15 +34,16 @@ function warnMinAge(value?: BirthdateSelection) {
 function BirthdateInput(props: BirthdateInputProps) {
   function onMonth(s?: string) {
     if (!s || isNaN(parseInt(s))) {
-      props.update({ ...props.value, month: undefined });
+      props.update({ ...props.value, month: undefined }, false);
       return;
     }
     const month = parseInt(s);
     if (month <= 0 || month > 12) {
-      props.update({ ...props.value, month: undefined });
+      props.update({ ...props.value, month: undefined }, false);
       return;
     }
-    props.update({ ...props.value, month });
+    const newValue = { ...props.value, month };
+    props.update(newValue, valid(newValue));
     if (month >= 2 || s.length === 2) {
       const nextField = document.querySelector("input[id=birthdate-input-d]");
       if (nextField) {
@@ -48,15 +55,16 @@ function BirthdateInput(props: BirthdateInputProps) {
 
   function onDay(s?: string) {
     if (!s || isNaN(parseInt(s))) {
-      props.update({ ...props.value, day: undefined });
+      props.update({ ...props.value, day: undefined }, false);
       return;
     }
     const day = parseInt(s);
     if (day <= 0 && day > 31) {
-      props.update({ ...props.value, day: undefined });
+      props.update({ ...props.value, day: undefined }, false);
       return;
     }
-    props.update({ ...props.value, day });
+    const newValue = { ...props.value, day };
+    props.update(newValue, valid(newValue));
     if (day >= 4 || s.length === 2) {
       const nextField = document.querySelector("input[id=birthdate-input-y]");
       if (nextField) {
@@ -68,11 +76,12 @@ function BirthdateInput(props: BirthdateInputProps) {
 
   function onYear(s: string) {
     if (!s || isNaN(parseInt(s))) {
-      props.update({ ...props.value, year: undefined });
+      props.update({ ...props.value, year: undefined }, false);
       return;
     }
     const year = parseInt(s);
-    props.update({ ...props.value, year });
+    const newValue = { ...props.value, year };
+    props.update(newValue, valid(newValue));
   }
 
   return (

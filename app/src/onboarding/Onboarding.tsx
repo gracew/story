@@ -1,7 +1,10 @@
 import firebase from "firebase";
 import React, { useState } from "react";
 import { Redirect, useParams } from "react-router-dom";
+import StoryButton from "../components/StoryButton";
+import StoryButtonContainer from "../components/StoryButtonContainer";
 import { FUN_FACTS_DESCRIPTION } from "../profile/Profile";
+import "./Onboarding.css";
 import OnboardingStep from "./OnboardingStep";
 
 export enum OnboardingType {
@@ -98,7 +101,9 @@ function Onboarding() {
   const [userId, setUserId] = useState<string>();
   const [phone, setPhone] = useState<string>();
   const [data, setData] = useState<Record<string, any>>({});
+  const [complete, setComplete] = useState<Record<string, any>>({});
   const [stepIndex, setStepIndex] = useState(step || 0);
+  const [submitting, setSubmitting] = useState(false);
 
   if (stepIndex >= steps.length) {
     const redirectProps = {
@@ -112,21 +117,54 @@ function Onboarding() {
     setStepIndex(stepIndex - 1);
   }
 
-  async function onNext(update: Record<string, any>) {
-    const res = await firebase.functions().httpsCallable("onboardUser")(update)
+  async function onUpdate(update: any, updateComplete?: boolean) {
+    const stepId = steps[stepIndex].id;
+    setData({ ...data, [stepId]: update });
+    setComplete({ ...complete, [stepId]: updateComplete });
+  }
+
+  async function onNext() {
+    setSubmitting(true);
+    const id = steps[stepIndex].id;
+    const res = await firebase.functions().httpsCallable("onboardUser")({ [id]: data[id] })
     setUserId(res.data.id);
     setPhone(res.data.phone);
-    setData({ ...data, ...update });
     setStepIndex(stepIndex + 1);
+    setSubmitting(false);
+  }
+
+  function incomplete() {
+    const stepId = steps[stepIndex].id;
+    const value = data[stepId];
+    return complete[stepId] === false || value === undefined || value === "";
   }
 
   return (
-    <OnboardingStep
-      step={steps[stepIndex]}
-      update={onNext}
-      value={data[steps[stepIndex].id]}
-      back={stepIndex > 0 ? onBack : undefined}
-    />
+    <div className="onboarding">
+      <OnboardingStep
+        step={steps[stepIndex]}
+        update={onUpdate}
+        value={data[steps[stepIndex].id]}
+      />
+      <StoryButtonContainer>
+        {stepIndex > 0 && <StoryButton
+          className="onboarding-step-back"
+          type="default"
+          onClick={onBack}
+        >
+          Back
+        </StoryButton>}
+        <StoryButton
+          className="onboarding-step-next"
+          type="primary"
+          onClick={onNext}
+          disabled={incomplete()}
+          loading={submitting}
+        >
+          Next
+        </StoryButton>
+      </StoryButtonContainer>
+    </div>
   );
 }
 
