@@ -106,6 +106,9 @@ function Onboarding() {
   const [stepIndex, setStepIndex] = useState(step || 0);
   const [submitting, setSubmitting] = useState(false);
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const referrer = urlParams.get("r");
+
   useEffect(() => {
     if (userId) {
       firebase.analytics().setUserId(userId);
@@ -136,7 +139,7 @@ function Onboarding() {
     const stepId = steps[stepIndex].id;
     firebase.analytics().logEvent(`onboarding_${stepId}_next`);
 
-    const res = await firebase.functions().httpsCallable("onboardUser")({ [stepId]: data[stepId] })
+    const res = await firebase.functions().httpsCallable("onboardUser")({ [stepId]: data[stepId], referrer })
     setUserId(res.data.id);
     setPhone(res.data.phone);
 

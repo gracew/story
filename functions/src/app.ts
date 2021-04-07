@@ -101,6 +101,10 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
     }
   })
 
+  if (data.referrer !== undefined) {
+    update.referrer = data.referrer;
+  }
+
   if (Object.keys(update).length > 0) {
     const allData = { ...user, ...update };
     update.onboardingComplete = onboardingComplete(allData);
