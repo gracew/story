@@ -1,6 +1,6 @@
 import firebase from "firebase";
 import React, { useEffect, useState } from "react";
-import { Redirect, useParams } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 import StoryButton from "../components/StoryButton";
 import StoryButtonContainer from "../components/StoryButtonContainer";
 import { FUN_FACTS_DESCRIPTION } from "../profile/Profile";
@@ -98,6 +98,7 @@ const steps: OnboardingMetadata[] = [
 function Onboarding() {
   // @ts-ignore
   const { step } = useParams();
+  const history = useHistory();
   const [userId, setUserId] = useState<string>();
   const [phone, setPhone] = useState<string>();
   const [data, setData] = useState<Record<string, any>>({});
@@ -138,7 +139,13 @@ function Onboarding() {
     const res = await firebase.functions().httpsCallable("onboardUser")({ [stepId]: data[stepId] })
     setUserId(res.data.id);
     setPhone(res.data.phone);
-    setStepIndex(stepIndex + 1);
+
+    if (stepIndex === steps.length - 1) {
+      history.push("/signup/complete", { id: userId, phone });
+    } else {
+      setStepIndex(stepIndex + 1);
+    }
+
     setSubmitting(false);
   }
 
@@ -146,14 +153,6 @@ function Onboarding() {
     const stepId = steps[stepIndex].id;
     const value = data[stepId];
     return complete[stepId] === false || value === undefined || value === "";
-  }
-
-  if (stepIndex >= steps.length) {
-    const redirectProps = {
-      pathname: "/signup/complete",
-      state: { id: userId, phone },
-    }
-    return <Redirect to={redirectProps} />
   }
 
   return (
