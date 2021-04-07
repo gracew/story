@@ -35,7 +35,7 @@ function OnboardingStep(props: OnboardingStepProps) {
       {props.step.type === OnboardingType.BIRTHDAY &&
         <BirthdateInput value={props.value} update={props.update} />}
       {props.step.type === OnboardingType.PHOTO &&
-        <PhotoUpload update={props.update} />}
+        <PhotoUpload value={props.value} update={props.update} />}
       {props.step.type === OnboardingType.CHANNEL &&
         <ChannelInput value={props.value} update={props.update} />}
       {props.step.type === OnboardingType.LOCATION &&

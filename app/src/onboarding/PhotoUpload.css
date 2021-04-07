@@ -1,3 +1,7 @@
+.photo-upload-container {
+    position: relative;
+}
+
 .photo-upload {
     margin-top: 20px;
 }
@@ -12,4 +16,17 @@
 .photo-upload .ant-upload.ant-upload-select-picture-card {
     width: 100%;
     height: 300px;
+}
+
+.remove-photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    bottom: -12px;
+    right: -20px;
 }

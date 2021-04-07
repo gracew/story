@@ -2,6 +2,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { CallableContext } from "firebase-functions/lib/providers/https";
 import * as moment from "moment-timezone";
+import fetch from "node-fetch";
 import { Firestore, IUser } from "./firestore";
 import { welcome } from "./smsCopy";
 import { parseTime, processTimeZone } from "./times";
