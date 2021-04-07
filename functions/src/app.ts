@@ -42,6 +42,7 @@ async function getOrCreateUser(phone: string) {
       registeredAt: admin.firestore.FieldValue.serverTimestamp(),
       eligible: true,
       status: "waitlist",
+      locationFlexibility: true,
     };
     await doc.create(data);
     return data;
