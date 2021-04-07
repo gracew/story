@@ -17,7 +17,7 @@ import VideoAvailability from "./scheduling/VideoAvailability";
 import Terms from "./Terms";
 import VideoRedirect from "./VideoRedirect";
 
-const firebaseConfig = process.env.URL?.startsWith("https://storydating.com")
+const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://storydating.com")
   ? {
     apiKey: "AIzaSyATNRFSSQDVmI90c5y7FI817U9lWiH19_w",
     authDomain: "speakeasy-prod.firebaseapp.com",
