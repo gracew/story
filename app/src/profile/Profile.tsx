@@ -180,6 +180,21 @@ function Profile() {
     }
   });
 
+  function formatAgeRange() {
+    const min = userPrefs!.matchMin;
+    const max = userPrefs!.matchMax;
+    if (!min && !max) {
+      return undefined;
+    }
+    if (!min) {
+      return `${max} and under`;
+    }
+    if (!max) {
+      return `${min} and over`;
+    }
+    return `${min} - ${max}`;
+  }
+
   async function uploadProfilePhoto(files: FileList | null) {
     if (!files || files.length < 1) {
       return;
@@ -243,7 +258,7 @@ function Profile() {
         <div key={pref.id}>
           { i !== 0 && <Divider />}
           {pref.id !== "age" && <Preference id={pref.id} label={pref.label} value={userPrefs[pref.id].value} onSelect={setSelectedPref} />}
-          {pref.id === "age" && <Preference id={pref.id} label={pref.label} value={`${userPrefs.matchMin} - ${userPrefs.matchMax}`} onSelect={setSelectedPref} />}
+          {pref.id === "age" && <Preference id={pref.id} label={pref.label} value={formatAgeRange()} onSelect={setSelectedPref} />}
         </div>
       ))}
 

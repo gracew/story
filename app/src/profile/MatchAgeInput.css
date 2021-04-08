@@ -2,10 +2,10 @@
     display: flex;
     font-size: 24px;
     color: #949494;
+    align-items: center;
 }
 
-#match-age-input-min,
-#match-age-input-max {
-    width: 80px;
+.match-age-input .st-input-number {
+    width: 100px;
     margin: 0 10px;
 }

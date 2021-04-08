@@ -1,5 +1,5 @@
 import React from "react";
-import StoryInput from "../components/StoryInput";
+import StoryInputNumber from "../components/StoryInputNumber";
 import "./MatchAgeInput.css";
 
 interface MatchAgeInputProps {
@@ -10,22 +10,42 @@ interface MatchAgeInputProps {
 }
 
 function MatchAgeInput(props: MatchAgeInputProps) {
+  function onMatchMin(s?: string | number | null) {
+    if (!s) {
+      props.updateMatchMin(undefined);
+      return;
+    }
+    const min = typeof s === "number" ? s : parseInt(s);
+    props.updateMatchMin(min);
+  }
+
+  function onMatchMax(s?: string | number | null) {
+    if (!s) {
+      props.updateMatchMax(undefined);
+      return;
+    }
+    const min = typeof s === "number" ? s : parseInt(s);
+    props.updateMatchMax(min);
+  }
+
   return (
     <div>
       <div className="match-age-input">
-        <StoryInput
-          type="number"
+        <StoryInputNumber
           id="match-age-input-min"
-          maxLength={2}
+          min={18}
+          max={99}
           value={props.matchMin}
+          onChange={onMatchMin}
           autoFocus
         />
       -
-        <StoryInput
-          type="number"
+        <StoryInputNumber
           id="match-age-input-max"
-          maxLength={2}
+          min={18}
+          max={99}
           value={props.matchMax}
+          onChange={onMatchMax}
         />
       </div>
     </div>
