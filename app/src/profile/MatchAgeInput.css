@@ -1,0 +1,11 @@
+.match-age-input {
+    display: flex;
+    font-size: 24px;
+    color: #949494;
+}
+
+#match-age-input-min,
+#match-age-input-max {
+    width: 80px;
+    margin: 0 10px;
+}

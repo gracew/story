@@ -24,8 +24,7 @@
 }
 
 .login-input .PhoneInputCountry,
-.login-input .PhoneInputInput,
-.code-input {
+.login-input .PhoneInputInput {
   border: 1px solid #D8AAE0;
   font-size: 16px;
   color: #682873;
@@ -47,15 +46,9 @@
   margin-left: 15px;
 }
 
-.login-input .PhoneInputInput,
-.code-input {
+.login-input .PhoneInputInput {
   background: #F4EEFC;
   padding: 15px;
-}
-
-.code-input {
-  border-radius: 4px;
-  margin: 5px 0;
 }
 
 .code-error {

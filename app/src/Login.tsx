@@ -1,4 +1,3 @@
-import { Input } from "antd";
 import firebase from "firebase/app";
 import React, { useEffect, useState } from "react";
 import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
@@ -7,6 +6,7 @@ import { useHistory, useLocation } from "react-router-dom";
 import CenteredDiv from "./components/CenteredDiv";
 import StoryButton from "./components/StoryButton";
 import StoryButtonContainer from "./components/StoryButtonContainer";
+import StoryFilledInput from "./components/StoryFilledInput";
 import "./Login.css";
 
 function Login() {
@@ -79,8 +79,7 @@ function Login() {
           <div className="login-input">
             <div className="login-input-title">Verify your phone number</div>
             <div className="login-input-desc">Enter the 6-digit code we sent to <span className="phone-number">{phone}</span></div>
-            <Input
-              className="code-input"
+            <StoryFilledInput
               placeholder="6-digit code"
               maxLength={6}
               value={code}

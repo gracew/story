@@ -1,4 +1,4 @@
-import { Checkbox, Radio, Slider } from "antd";
+import { Checkbox, Radio } from "antd";
 import firebase from "firebase";
 import "firebase/analytics";
 import "firebase/remote-config";
@@ -11,6 +11,7 @@ import StoryCheckboxGroup from "../components/StoryCheckboxGroup";
 import StoryRadioGroup from "../components/StoryRadioGroup";
 import StoryTextArea from "../components/StoryTextArea";
 import "./EditPreference.css";
+import MatchAgeInput from "./MatchAgeInput";
 
 export enum PreferenceType {
   FREE_TEXT,
@@ -151,14 +152,11 @@ function EditPreference(props: EditPreferenceProps) {
           {props.metadata.description && <div className="edit-pref-description" dangerouslySetInnerHTML={{ __html: props.metadata.description }}></div>}
 
           {props.metadata.type === PreferenceType.FREE_TEXT && <StoryTextArea value={value} onChange={e => setValue(e.target.value)} />}
-          {props.metadata.type === PreferenceType.AGE && <Slider
-            className="edit-pref-age"
-            range
-            min={18}
-            max={65}
-            tooltipVisible
-            defaultValue={[matchMin!, matchMax!]}
-            onChange={([min, max]) => { setMatchMin(min); setMatchMax(max); }}
+          {props.metadata.type === PreferenceType.AGE && <MatchAgeInput
+            matchMin={matchMin}
+            matchMax={matchMax}
+            updateMatchMin={setMatchMin}
+            updateMatchMax={setMatchMax}
           />}
 
           <div className="pref-options">
