@@ -315,7 +315,7 @@ function timezone(location: string) {
   return map[location];
 }
 
-export const getVideoAvailabilityParameters = functions.https.onCall(async (data, context) => {
+export const getVideoAvailability = functions.https.onCall(async (data, context) => {
   const user = await getUser(data, context);
   const firestore = new Firestore();
   const match = await firestore.getMatch(data.matchId);
@@ -329,10 +329,18 @@ export const getVideoAvailabilityParameters = functions.https.onCall(async (data
     throw new functions.https.HttpsError("internal", "unknown user");
   }
 
+  const tz = processTimeZone(user.timezone);
+  if (!tz) {
+    throw new functions.https.HttpsError("internal", "could not process timezone for user " + user.id);
+  }
+  const videoAvailability = match.videoAvailability ? match.videoAvailability[user.id] : undefined;
+  const selectedTimes = (videoAvailability?.times || []).map((t: admin.firestore.Timestamp) => moment(t.toDate()).tz(tz).format("dddd ha"));
   return {
     tz: user.timezone,
     matchTz: otherUser.timezone,
     matchName: otherUser.firstName,
+    selectedTimes,
+    swapNumbers: videoAvailability?.swapNumbers,
   };
 });
 
@@ -346,6 +354,9 @@ export const saveVideoAvailability = functions.https.onCall(async (data, context
     throw new functions.https.HttpsError("internal", "could not process timezone for user " + user.id);
   }
   const times = data.selectedTimes.map((t: string) => parseTime(t, tz, moment))
-  await admin.firestore().collection("matches").doc(data.matchId).update(`videoAvailability.${user.id}`, times);
+  await admin.firestore()
+    .collection("matches")
+    .doc(data.matchId)
+    .update(`videoAvailability.${user.id}`, { times, swapNumbers: data.swapNumbers });
   return {};
 });

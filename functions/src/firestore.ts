@@ -43,6 +43,7 @@ export interface IMatch {
     recordingOverride?: boolean;
     // whether at least 1 participant is on the call
     ongoing?: boolean;
+    videoAvailability?: Record<string, any>;
 }
 
 export class Firestore {
