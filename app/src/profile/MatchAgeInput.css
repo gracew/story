@@ -1,0 +1,11 @@
+.match-age-input {
+    display: flex;
+    font-size: 24px;
+    color: #949494;
+    align-items: center;
+}
+
+.match-age-input .st-input-number {
+    width: 100px;
+    margin: 0 10px;
+}
