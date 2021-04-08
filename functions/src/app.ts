@@ -144,7 +144,8 @@ Gender: ${user.gender}
 Wants to meet: ${user.genderPreference} 
 Age: ${user.age}
 Location: ${user.location}
-Channel: ${user.whereDidYouHearAboutUs.option}, ${user.whereDidYouHearAboutUs.context}`
+Channel: ${user.whereDidYouHearAboutUs.option}, ${user.whereDidYouHearAboutUs.context}
+Referrer: ${user.referrer}`
   return fetch(functions.config().slack.signup_webhook_url, {
     method: "post",
     body: JSON.stringify({ text }),

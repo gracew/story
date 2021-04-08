@@ -14,6 +14,7 @@ const PrivateRoute: FunctionComponent<RouteProps> = (props) => {
 
   const redirectProps = {
     pathname: "/login",
+    search: window.location.search,
     state: { redirect: location.pathname },
   }
   return <Route path={props.path} render={props2 => userLoading

@@ -14,8 +14,10 @@ function Login() {
   const location = useLocation();
   const redirect = (location.state as any)?.redirect || "/profile";
 
+  const urlParams = new URLSearchParams(window.location.search);
+
   // save user input
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(urlParams.get("phone") || "");
   const [code, setCode] = useState("");
 
   // used internally
