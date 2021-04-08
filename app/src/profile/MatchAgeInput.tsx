@@ -29,27 +29,24 @@ function MatchAgeInput(props: MatchAgeInputProps) {
   }
 
   return (
-    <div>
-      <div className="match-age-input">
-        <StoryInputNumber
-          id="match-age-input-min"
-          min={18}
-          max={99}
-          value={props.matchMin}
-          onChange={onMatchMin}
-          autoFocus
-        />
+    <div className="match-age-input">
+      <StoryInputNumber
+        id="match-age-input-min"
+        min={18}
+        max={99}
+        value={props.matchMin}
+        onChange={onMatchMin}
+        autoFocus
+      />
       -
-        <StoryInputNumber
-          id="match-age-input-max"
-          min={18}
-          max={99}
-          value={props.matchMax}
-          onChange={onMatchMax}
-        />
-      </div>
+      <StoryInputNumber
+        id="match-age-input-max"
+        min={18}
+        max={99}
+        value={props.matchMax}
+        onChange={onMatchMax}
+      />
     </div>
-
   );
 }
 
