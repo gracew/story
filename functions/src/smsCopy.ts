@@ -131,8 +131,9 @@ export function videoReminder(userA: IUser, userB: IUser) {
     return `Hi ${userA.firstName}! Just a reminder that you'll be speaking with ${userB.firstName} in an hour. We'll send you the video link then! There's no time limit so you can chat for as short or as long as you like.`
 }
 
-export function videoLink(user: IUser, match: any) {
-    return `Hi ${user.firstName}! You can join the video call in a few minutes at https://story.dating/v/${match.get("videoId")}/a. In case you need it, the passcode is ${match.get("videoPasscode")}. Happy chatting!`;
+export function videoLink(user: IUser, match: IMatch) {
+    const aOrB = user.id === match.user_a_id ? "a" : "b";
+    return `Hi ${user.firstName}! You can join the video call in a few minutes at https://story.dating/v/${match.videoId}/${aOrB}. In case you need it, the passcode is ${match.videoPasscode}. Happy chatting!`;
 }
 
 export async function reminder(userA: IUser, userB: IUser) {

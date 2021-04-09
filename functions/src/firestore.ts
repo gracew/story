@@ -39,10 +39,16 @@ export interface IMatch {
         revealRequested?: boolean;
     },
     mode?: string;
+
+    // used for phone matches
     twilioSid?: string;
     recordingOverride?: boolean;
-    // whether at least 1 participant is on the call
-    ongoing?: boolean;
+    ongoing?: boolean;  // whether at least 1  person is on the call
+
+    // used for video matches
+    videoId?: string;
+    videoLink?: string;
+    videoPasscode?: string;
     videoAvailability?: Record<string, any>;
 }
 

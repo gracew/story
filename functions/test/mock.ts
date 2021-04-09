@@ -33,7 +33,7 @@ export function user(firstName: string, funFacts?: string, location?: string, lo
     }
 }
 
-export function match(userIdA: string, userIdB: string, createdAt: string): IMatch {
+export function match(userIdA: string, userIdB: string, createdAt: string, other?: Partial<IMatch>): IMatch {
     return {
         id: uuid.v4(),
         user_a_id: userIdA,
@@ -53,5 +53,6 @@ export function match(userIdA: string, userIdB: string, createdAt: string): IMat
             revealRequested: false,
         },
         mode: "phone",
+        ...other,
     }
 }
