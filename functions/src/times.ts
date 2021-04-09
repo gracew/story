@@ -1,3 +1,6 @@
+import * as admin from "firebase-admin";
+import * as moment from "moment-timezone";
+
 export function processTimeZone(tz: string) {
     if (tz === "PT") {
         return "America/Los_Angeles"
@@ -58,4 +61,8 @@ export function parseTime(dayTime: string, timezone: string, getTimestamp: () =>
       console.error(new Error("could not parse time: " + dayTime));
       return undefined;
   }
+}
+
+export function formatTime(t: admin.firestore.Timestamp, tz: string) {
+  return moment(t.toDate()).tz(tz).format("dddd ha");
 }

@@ -5,7 +5,7 @@ import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import { Firestore, IUser } from "./firestore";
 import { welcome } from "./smsCopy";
-import { parseTime, processTimeZone } from "./times";
+import { formatTime, parseTime, processTimeZone } from "./times";
 import { client, TWILIO_NUMBER } from "./twilio";
 
 // required fields
@@ -334,7 +334,7 @@ export const getVideoAvailability = functions.https.onCall(async (data, context)
     throw new functions.https.HttpsError("internal", "could not process timezone for user " + user.id);
   }
   const videoAvailability = match.videoAvailability ? match.videoAvailability[user.id] : undefined;
-  const selectedTimes = (videoAvailability?.times || []).map((t: admin.firestore.Timestamp) => moment(t.toDate()).tz(tz).format("dddd ha"));
+  const selectedTimes = (videoAvailability?.times || []).map((t: admin.firestore.Timestamp) => formatTime(t, tz));
   return {
     tz: user.timezone,
     matchTz: otherUser.timezone,
