@@ -1,5 +1,6 @@
 import { Checkbox, Radio } from "antd";
 import firebase from "firebase";
+import moment from "moment-timezone";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import CenteredSpin from "../components/CenteredSpin";
@@ -16,58 +17,8 @@ export enum Timezone {
   ET = "ET",
 }
 
-export enum Day {
-  Sunday = "Sunday",
-  Monday = "Monday",
-  Tuesday = "Tuesday",
-  Wednesday = "Wednesday",
-  Thursday = "Thursday",
-  Friday = "Friday",
-  Saturday = "Saturday",
-}
-
-function timeOptions(tz: Timezone, matchTz: Timezone) {
-  switch (true) {
-    // PT
-    case (tz === Timezone.PT && matchTz === Timezone.PT):
-      return ["6pm", "7pm", "8pm"];
-    case (tz === Timezone.PT && matchTz === Timezone.CT):
-      return ["6pm"];
-    case (tz === Timezone.PT && matchTz === Timezone.ET):
-      return ["6pm"];
-    // CT
-    case (tz === Timezone.CT && matchTz === Timezone.PT):
-      return ["8pm"];
-    case (tz === Timezone.CT && matchTz === Timezone.CT):
-      return ["6pm", "7pm", "8pm"];
-    case (tz === Timezone.CT && matchTz === Timezone.ET):
-      return ["6pm", "7pm", "8pm"];
-    // ET
-    case (tz === Timezone.ET && matchTz === Timezone.PT):
-      return ["9pm"];
-    case (tz === Timezone.ET && matchTz === Timezone.CT):
-      return ["7pm", "8pm", "9pm"];
-    case (tz === Timezone.ET && matchTz === Timezone.ET):
-      return ["7pm", "8pm", "9pm"];
-    default:
-      return [];
-  }
-}
-
-function dayOptions() {
-  const day = new Date().getDay();  // 0: Sunday, 1: Monday, etc
-  switch (day) {
-    case 2: // Tuesday
-      return [Day.Wednesday, Day.Thursday, Day.Friday];
-    case 3: // Wednesday
-      return [Day.Thursday, Day.Friday, Day.Saturday];
-    case 4: // Thursday
-      return [Day.Friday, Day.Saturday, Day.Sunday];
-    case 5: // Friday
-      return [Day.Saturday, Day.Sunday, Day.Monday];
-    default:
-      return [];
-  }
+export function formatTime(t: string, tz: string) {
+  return moment(t).tz(tz).format("dddd ha");
 }
 
 function formatTimezone(tz: Timezone) {
@@ -117,7 +68,7 @@ function VideoAvailability() {
       .httpsCallable("getVideoAvailability")({ matchId })
       .then((res) => {
         setData(res.data);
-        setSelectedTimes(res.data.selectedTimes);
+        setSelectedTimes(res.data.selectedTimes || []);
         setSwapNumbers(res.data.swapNumbers);
       })
   }, [matchId]);
@@ -130,23 +81,18 @@ function VideoAvailability() {
     return <CenteredSpin />
   }
 
-  const days = dayOptions();
-  const times = timeOptions(data.tz, data.matchTz);
-  const options: string[] = []
-  days.map(d => times.map(t => options.push(`${d} ${t}`)));
-
   return (
     <div className="video-availability-container">
       <div className="video-availability-input">
         <h3>What times are you free to video chat with {data.matchName}?</h3>
         <div className="video-availability-description">All times are {formatTimezone(data.tz)}</div>
         <StoryCheckboxGroup value={selectedTimes}  >
-          {options.map(o => (
+          {data.timeOptions.map((o: string) => (
             <Checkbox
               key={o}
               value={o}
               onClick={() => onTimeSelect(o)}
-            >{o}</Checkbox>))}
+            >{formatTime(o, data.tz)}</Checkbox>))}
         </StoryCheckboxGroup>
 
         <h3>What would you like to do if none of these times work for you and {data.matchName}?</h3>

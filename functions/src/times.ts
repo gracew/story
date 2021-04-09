@@ -1,15 +1,18 @@
-import * as admin from "firebase-admin";
 import * as moment from "moment-timezone";
 
 export function processTimeZone(tz: string) {
-    if (tz === "PT") {
-        return "America/Los_Angeles"
-    } else if (tz === "CT") {
+    switch (tz) {
+      case "PT":
+        return "America/Los_Angeles";
+      case "MT":
+        return "America/Denver";
+      case "CT":
         return "America/Chicago"
-    } else if (tz === "ET") {
+      case "ET":
         return "America/New_York"
+      default:
+        return undefined;
     }
-    return undefined;
 }
 
 export function parseTime(dayTime: string, timezone: string, getTimestamp: () => moment.Moment) {
@@ -63,6 +66,59 @@ export function parseTime(dayTime: string, timezone: string, getTimestamp: () =>
   }
 }
 
-export function formatTime(t: admin.firestore.Timestamp, tz: string) {
-  return moment(t.toDate()).tz(tz).format("dddd ha");
+export enum Timezone {
+  PT = "PT",
+  MT = "MT",
+  CT = "CT",
+  ET = "ET",
+}
+
+function dayOptions(tz: Timezone,  getTimestamp: () => moment.Moment) {
+  const parsed = processTimeZone(tz);
+  if (!parsed) {
+    return [];
+  }
+  return [
+    getTimestamp().tz(parsed).add(1, "days").startOf("day"),
+    getTimestamp().tz(parsed).add(2, "days").startOf("day"),
+    getTimestamp().tz(parsed).add(3, "days").startOf("day"),
+  ]
+}
+
+function timeOptions(tz: Timezone, matchTz: Timezone) {
+  switch (true) {
+    // PT
+    case (tz === Timezone.PT && matchTz === Timezone.PT):
+      return [18, 19, 20];
+    case (tz === Timezone.PT && matchTz === Timezone.CT):
+      return [18];
+    case (tz === Timezone.PT && matchTz === Timezone.ET):
+      return [18];
+    // CT
+    case (tz === Timezone.CT && matchTz === Timezone.PT):
+      return [20];
+    case (tz === Timezone.CT && matchTz === Timezone.CT):
+      return [18, 19, 20];
+    case (tz === Timezone.CT && matchTz === Timezone.ET):
+      return [18, 19, 20];
+    // ET
+    case (tz === Timezone.ET && matchTz === Timezone.PT):
+      return [21];
+    case (tz === Timezone.ET && matchTz === Timezone.CT):
+      return [19, 20, 21];
+    case (tz === Timezone.ET && matchTz === Timezone.ET):
+      return [19, 20, 21];
+    default:
+      return [];
+  }
+}
+
+export function videoTimeOptions(tz: Timezone, matchTz: Timezone,  getTimestamp: () => moment.Moment) {
+  const days = dayOptions(tz, getTimestamp);
+  const ret: string[] = [];
+  days.forEach(d => {
+    const times = timeOptions(tz, matchTz);
+    times.forEach(t => ret.push(d.clone().add(t, "hours").format()));
+  });
+  return ret;
 }
