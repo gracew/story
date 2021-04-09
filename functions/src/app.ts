@@ -5,7 +5,7 @@ import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import { Firestore, IUser } from "./firestore";
 import { welcome } from "./smsCopy";
-import { formatTime, parseTime, processTimeZone } from "./times";
+import { processTimeZone, Timezone, videoTimeOptions } from "./times";
 import { client, TWILIO_NUMBER } from "./twilio";
 
 // required fields
@@ -334,13 +334,11 @@ export const getVideoAvailability = functions.https.onCall(async (data, context)
     throw new functions.https.HttpsError("internal", "could not process timezone for user " + user.id);
   }
   const videoAvailability = match.videoAvailability ? match.videoAvailability[user.id] : undefined;
-  const selectedTimes = (videoAvailability?.times || []).map((t: admin.firestore.Timestamp) => formatTime(t, tz));
   return {
     tz: user.timezone,
-    matchTz: otherUser.timezone,
     matchName: otherUser.firstName,
-    selectedTimes,
-    swapNumbers: videoAvailability?.swapNumbers,
+    timeOptions: videoTimeOptions(user.timezone as Timezone, otherUser.timezone as Timezone, moment),
+    ...videoAvailability,
   };
 });
 
@@ -353,10 +351,9 @@ export const saveVideoAvailability = functions.https.onCall(async (data, context
   if (!tz) {
     throw new functions.https.HttpsError("internal", "could not process timezone for user " + user.id);
   }
-  const times = data.selectedTimes.map((t: string) => parseTime(t, tz, moment))
   await admin.firestore()
     .collection("matches")
     .doc(data.matchId)
-    .update(`videoAvailability.${user.id}`, { times, swapNumbers: data.swapNumbers });
+    .update(`videoAvailability.${user.id}`, { selectedTimes: data.selectedTimes, swapNumbers: data.swapNumbers });
   return {};
 });
