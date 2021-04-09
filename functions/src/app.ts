@@ -133,7 +133,7 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
 });
 
 function isTestNumber(phone: string) {
-  return ["+16501111111", "+16502222222"].includes(phone);
+  return ["+16501111111", "+16502222222", "+16503333333"].includes(phone);
 }
 
 function notifyNewSignup(user: Record<string, any>) {
