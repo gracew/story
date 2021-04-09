@@ -93,13 +93,13 @@ export const sendVideoLink = functions.pubsub
       );
       const videoMatches = matches.docs.filter(
         (doc) => doc.get("mode") === "video"
-      );
+      ).map(doc => doc.data() as IMatch);
       console.log(
-        "found the following matches: " + videoMatches.map((doc) => doc.id)
+        "found the following matches: " + videoMatches.map((m) => m.id)
       );
 
-      const userAIds = videoMatches.map((doc) => doc.get("user_a_id"));
-      const userBIds = videoMatches.map((doc) => doc.get("user_b_id"));
+      const userAIds = videoMatches.map((m) => m.user_a_id);
+      const userBIds = videoMatches.map((m) => m.user_b_id);
       const userIds = userAIds.concat(userBIds);
       console.log("sending texts to the following users: " + userIds);
 
@@ -116,11 +116,11 @@ export const sendVideoLink = functions.pubsub
       );
 
       const allPromises: Array<Promise<any>> = [];
-      videoMatches.forEach((doc) => {
-        const userA = usersById[doc.get("user_a_id")];
-        const userB = usersById[doc.get("user_b_id")];
-        const bodyA = videoLink(userA, doc);
-        const bodyB = videoLink(userB, doc);
+      videoMatches.forEach((m) => {
+        const userA = usersById[m.user_a_id];
+        const userB = usersById[m.user_b_id];
+        const bodyA = videoLink(userA, m);
+        const bodyB = videoLink(userB, m);
         allPromises.push(
           sendSms({ body: bodyA, from: TWILIO_NUMBER, to: userA.phone })
         );
@@ -131,7 +131,8 @@ export const sendVideoLink = functions.pubsub
 
       await Promise.all(allPromises);
       await Promise.all(
-        videoMatches.map((doc) => txn.update(doc.ref, "interactions.called", true))
+        videoMatches.map((m) =>
+          txn.update(admin.firestore().collection("matches").doc(m.id), "interactions.called", true))
       );
     });
   });
