@@ -4,7 +4,7 @@ import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
 import * as os from "os";
 import * as path from "path";
-import { getPreferences, getPublicProfile, getVideoAvailabilityParameters, onboardUser, savePreferences, saveVideoAvailability } from "./app";
+import { getPreferences, getPublicProfile, getVideoAvailability, onboardUser, savePreferences, saveVideoAvailability } from "./app";
 import { addUserToCall, call1MinWarning, call5MinWarning, callUser, conferenceStatusWebhook, createSmsChat, handleFlakes, issueCalls, issueRecalls, markJoined, notifyIncomingTextHelper, revealRequest, revealRequestVideo, saveReveal, sendReminderTexts, sendVideoLink, warnSmsChatExpiration } from "./calls";
 import { createMatches, createSchedulingRecords, processBulkSmsCsv, sendAvailabilityReminderCT, sendAvailabilityReminderET, sendAvailabilityReminderPT, sendAvailabilityTexts, sendMatchNotificationTexts } from "./csv";
 import { analyzeCollection, cancelMatch, createMatch } from "./retool";
@@ -32,7 +32,7 @@ export {
   handleFlakes,
   getPreferences,
   getPublicProfile,
-  getVideoAvailabilityParameters,
+  getVideoAvailability,
   issueCalls,
   issueRecalls,
   markJoined,

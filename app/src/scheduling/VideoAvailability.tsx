@@ -107,15 +107,19 @@ function VideoAvailability() {
 
   async function onSubmit() {
     setSubmitState(SubmitState.SUBMITTING);
-    await firebase.functions().httpsCallable("saveVideoAvailability")( { matchId, selectedTimes })
+    await firebase.functions().httpsCallable("saveVideoAvailability")( { matchId, selectedTimes, swapNumbers })
     setSubmitState(SubmitState.SUBMITTED);
   }
 
   useEffect(() => {
     firebase
       .functions()
-      .httpsCallable("getVideoAvailabilityParameters")({ matchId })
-      .then((res) => setData(res.data))
+      .httpsCallable("getVideoAvailability")({ matchId })
+      .then((res) => {
+        setData(res.data);
+        setSelectedTimes(res.data.selectedTimes);
+        setSwapNumbers(res.data.swapNumbers);
+      })
   }, [matchId]);
 
   if (submitState === SubmitState.SUBMITTED) {
