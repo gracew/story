@@ -181,6 +181,6 @@ it("videoLink", async () => {
         videoLink: "videoLink",
         videoPasscode: "videoPasscode",
     });
-    expect(videoLink(userA, m)).toContain("Hi userA! You can join the video call in a few minutes at https://story.dating/v/videoId/a. In case you need it, the passcode is videoPasscode.");
-    expect(videoLink(userB, m)).toContain("Hi userB! You can join the video call in a few minutes at https://story.dating/v/videoId/b. In case you need it, the passcode is videoPasscode.");
+    expect(videoLink(userA, m)).toContain("Hi userA! You can join the video call in a few minutes at https://storydating.com/v/videoId/a. In case you need it, the passcode is videoPasscode.");
+    expect(videoLink(userB, m)).toContain("Hi userB! You can join the video call in a few minutes at https://storydating.com/v/videoId/b. In case you need it, the passcode is videoPasscode.");
 });
