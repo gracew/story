@@ -2,6 +2,7 @@ import * as firestore from "@google-cloud/firestore";
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
+import fetch from "node-fetch";
 import * as os from "os";
 import * as path from "path";
 import { getPreferences, getPublicProfile, getVideoAvailability, onboardUser, savePreferences, saveVideoAvailability } from "./app";
@@ -118,6 +119,35 @@ export const notifyIncomingText = functions.https.onRequest(
     const phone = request.body.phone;
     const message = await client.messages(request.body.message).fetch();
     await notifyIncomingTextHelper(phone, message.body);
+    response.end();
+  }
+);
+
+export const smsStatusCallback = functions.https.onRequest(
+  async (request, response) => {
+    const status = request.body.MessageStatus;
+    if (status !== "undelivered" && status !== "failed") {
+      response.end();
+      return;
+    }
+
+    const userQuery = await admin
+      .firestore()
+      .collection("users")
+      .where("phone", "==", request.body.To)
+      .get();
+    const fullName = userQuery.empty ? "Unknown user" : userQuery.docs[0].get("firstName") + " " + userQuery.docs[0].get("lastName");
+    const message = await client.messages(request.body.MessageSid).fetch();
+
+    await fetch(functions.config().slack.webhook_url, {
+      method: "post",
+      body: JSON.stringify({
+        text: `Status: ${status}
+To: ${fullName}
+Body: ${message.body}`
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
     response.end();
   }
 );

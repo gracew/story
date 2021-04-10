@@ -4,7 +4,7 @@ import * as moment from "moment-timezone";
 import { IUser } from "./firestore";
 import { welcome } from "./smsCopy";
 import { parseTime } from "./times";
-import { client, TWILIO_NUMBER } from "./twilio";
+import { sendSms } from "./twilio";
 
 /** Called upon typeform submission to save user data in firebase. */
 export const registerUser = functions.https.onRequest(async (req, response) => {
@@ -110,9 +110,8 @@ export const registerUser = functions.https.onRequest(async (req, response) => {
   await reff.set(user);
   if (user.phone.length === 12 && user.phone.startsWith("+1")) {
     // US or Canada
-    await client.messages.create({
+    await sendSms({
       body: welcome(user as IUser),
-      from: TWILIO_NUMBER,
       to: user.phone,
     });
   }

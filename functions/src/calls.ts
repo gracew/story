@@ -10,8 +10,7 @@ import {
   client,
   getConferenceTwimlForPhone,
   saveRevealHelper,
-  sendSms,
-  TWILIO_NUMBER
+  sendSms
 } from "./twilio";
 
 export const sendReminderTexts = functions.pubsub
@@ -71,9 +70,8 @@ async function textUserHelper(userA: IUser, userB: IUser, video: boolean) {
   const body = video
     ? videoReminder(userA, userB)
     : await reminder(userA, userB);
-  await client.messages.create({
+  await sendSms({
     body,
-    from: TWILIO_NUMBER,
     to: userA.phone,
   });
 }
@@ -122,10 +120,10 @@ export const sendVideoLink = functions.pubsub
         const bodyA = videoLink(userA, m);
         const bodyB = videoLink(userB, m);
         allPromises.push(
-          sendSms({ body: bodyA, from: TWILIO_NUMBER, to: userA.phone })
+          sendSms({ body: bodyA, to: userA.phone })
         );
         allPromises.push(
-          sendSms({ body: bodyB, from: TWILIO_NUMBER, to: userB.phone })
+          sendSms({ body: bodyB, to: userB.phone })
         );
       });
 
@@ -253,7 +251,6 @@ export const handleFlakes = functions.pubsub
           smsPromises.push(
             sendSms({
               body,
-              from: TWILIO_NUMBER,
               to: user.phone,
             })
           );

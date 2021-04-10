@@ -6,7 +6,7 @@ import fetch from "node-fetch";
 import { Firestore, IUser } from "./firestore";
 import { welcome } from "./smsCopy";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
-import { client, TWILIO_NUMBER } from "./twilio";
+import { sendSms } from "./twilio";
 
 // required fields
 const REQUIRED_ONBOARDING_FIELDS = [
@@ -111,14 +111,13 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
     update.onboardingComplete = onboardingComplete(allData);
     await admin.firestore().collection("users").doc(user.id).update(update);
     if (update.onboardingComplete) {
-      notifyNewSignup(allData);
+      await notifyNewSignup(allData);
       if (user.phone.startsWith("+1")) {
         // US or Canada
-        client.messages.create({
+        await sendSms({
           body: welcome(user as IUser),
-          from: TWILIO_NUMBER,
           to: user.phone,
-        }).catch(err => console.error("error sending welcome message", err));
+        });
       }
     }
   }
@@ -145,13 +144,13 @@ Referrer: ${user.referrer}`;
   // So we mostly only see real signups in Slack
   if (process.env.NODE_ENV !== "production") {
     console.log(text);
-    return;
+    return Promise.resolve();
   }
 
   const slack_signup_webhook_url = functions.config().slack?.signup_webhook_url;
   if (!slack_signup_webhook_url) {
     console.error(new Error("Slack signup webhook not configured"));
-    return;
+    return Promise.resolve();
   }
   return fetch(slack_signup_webhook_url, {
     method: "post",
