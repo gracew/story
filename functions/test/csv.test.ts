@@ -1,7 +1,6 @@
 import * as test from "firebase-functions-test";
 test().mockConfig({ twilio: { auth_token: "token" } });
 import { processBulkSmsCsv } from "../src/csv";
-import { TWILIO_NUMBER } from "../src/twilio";
 
 const mockSendSms = jest.fn();
 beforeEach(() => jest.resetAllMocks());
@@ -13,6 +12,6 @@ it("processBulkSmsCsv", async () => {
 
 another line
 `
-    expect(mockSendSms).toHaveBeenCalledWith({ body: body1, from: TWILIO_NUMBER, to: "+1234567890" })
-    expect(mockSendSms).toHaveBeenCalledWith({ body: "another message", from: TWILIO_NUMBER, to: "+10123456789" })
+    expect(mockSendSms).toHaveBeenCalledWith({ body: body1, to: "+1234567890" })
+    expect(mockSendSms).toHaveBeenCalledWith({ body: "another message", to: "+10123456789" })
 });
