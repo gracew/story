@@ -3,7 +3,7 @@ import * as moment from "moment-timezone";
 import { IMatch, IUser } from "./firestore";
 
 export function welcome(user: IUser) {
-  return `Hi ${user.firstName}, thanks for joining Story Dating! I'm Grace and I founded Story because I believe that magic happens when people like you choose talking over swiping. You're currently on the waitlist, but I'll notify you as soon as I have some matches I think you'll like. In the meantime, text me with any questions and refer your friends with this link to get off the waitlist sooner: https://story.dating/r?r=${user.id}`;
+  return `Hi ${user.firstName}, thanks for joining Story Dating! I'm Grace and I founded Story because I believe that magic happens when people like you choose talking over swiping. You're currently on the waitlist, but I'll notify you as soon as I have some matches I think you'll like. In the meantime, text me with any questions and refer your friends with this link to get off the waitlist sooner: https://storydating.com/r?r=${user.id}`;
 }
 
 export async function availability(user: IUser) {
@@ -20,7 +20,7 @@ export async function availability(user: IUser) {
 }
 
 export function optInReminder(user: IUser) {
-    return `Hey, it's Grace from Story Dating! I'm currently scheduling this week's dates - if you'd like to connect this week, let me know your availability here: https://story.dating/weekly#u=${user.id}&tz=${user.timezone}`;
+    return `Hey, it's Grace from Story Dating! I'm currently scheduling this week's dates - if you'd like to connect this week, let me know your availability here: https://storydating.com/weekly#u=${user.id}&tz=${user.timezone}`;
 }
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
@@ -133,7 +133,7 @@ export function videoReminder(userA: IUser, userB: IUser) {
 
 export function videoLink(user: IUser, match: IMatch) {
     const aOrB = user.id === match.user_a_id ? "a" : "b";
-    return `Hi ${user.firstName}! You can join the video call in a few minutes at https://story.dating/v/${match.videoId}/${aOrB}. In case you need it, the passcode is ${match.videoPasscode}. Happy chatting!`;
+    return `Hi ${user.firstName}! You can join the video call in a few minutes at https://storydating.com/v/${match.videoId}/${aOrB}. In case you need it, the passcode is ${match.videoPasscode}. Happy chatting!`;
 }
 
 export async function reminder(userA: IUser, userB: IUser) {
