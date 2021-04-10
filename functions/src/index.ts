@@ -125,7 +125,7 @@ export const notifyIncomingText = functions.https.onRequest(
 
 export const smsStatusCallback = functions.https.onRequest(
   async (request, response) => {
-    const status = request.body.SmsStatus;
+    const status = request.body.MessageStatus;
     if (status !== "undelivered" && status !== "failed") {
       response.end();
       return;
@@ -137,13 +137,14 @@ export const smsStatusCallback = functions.https.onRequest(
       .where("phone", "==", request.body.To)
       .get();
     const fullName = userQuery.empty ? "Unknown user" : userQuery.docs[0].get("firstName") + " " + userQuery.docs[0].get("lastName");
+    const message = await client.messages(request.body.MessageSid).fetch();
 
     await fetch(functions.config().slack.webhook_url, {
       method: "post",
       body: JSON.stringify({
         text: `Status: ${status}
 To: ${fullName}
-Body: ${request.body.Body}`
+Body: ${message.body}`
       }),
       headers: { "Content-Type": "application/json" },
     });
