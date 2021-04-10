@@ -3,7 +3,7 @@
   "scripts": {
     "lint": "tslint --project tsconfig.json",
     "build": "tsc",
-    "serve": "npm run build && npx firebase emulators:start --only functions",
+    "serve": "npm run build && npx firebase emulators:start",
     "shell": "npm run build && npx firebase functions:shell",
     "start": "npm run shell",
     "deploy": "npx firebase deploy --only functions",

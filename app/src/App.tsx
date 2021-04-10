@@ -42,6 +42,10 @@ const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://storydating.co
 firebase.initializeApp(firebaseConfig);
 
 function App() {
+  if (process.env.NODE_ENV === "development" && !process.env.REACT_APP_STAGING_DEV) {
+    firebase.functions().useEmulator("localhost", 5001);
+    firebase.auth().useEmulator("http://localhost:9099");
+  }
   firebase.remoteConfig().fetchAndActivate();
   firebase.analytics();
 
