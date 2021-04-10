@@ -138,7 +138,7 @@ export const smsStatusCallback = functions.https.onRequest(
       .get();
     const fullName = userQuery.empty ? "Unknown user" : userQuery.docs[0].get("firstName") + " " + userQuery.docs[0].get("lastName");
 
-    fetch(functions.config().slack.webhook_url, {
+    await fetch(functions.config().slack.webhook_url, {
       method: "post",
       body: JSON.stringify({
         text: `Status: ${status}
