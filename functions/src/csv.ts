@@ -7,7 +7,7 @@ import * as os from "os";
 import * as path from "path";
 import { Firestore, IMatch, IUser } from "./firestore";
 import { availability as availabilityCopy, matchNotification, optInReminder } from "./smsCopy";
-import { sendSms, TWILIO_NUMBER } from './twilio';
+import { sendSms } from './twilio';
 
 export async function processBulkSmsCsv(tempFilePath: string, sendSmsFn: (opts: any) => Promise<any>) {
     const contents = fs.readFileSync(tempFilePath).toString();
@@ -15,7 +15,6 @@ export async function processBulkSmsCsv(tempFilePath: string, sendSmsFn: (opts: 
     return Promise.all(rows.map(async data => {
         return sendSmsFn({
             body: data.body,
-            from: TWILIO_NUMBER,
             to: data.phone,
         });
     }))
@@ -64,7 +63,6 @@ export const sendAvailabilityTexts = functions.pubsub
             const user = doc.data() as IUser;
             return sendSms({
                 body: await availabilityCopy(user),
-                from: TWILIO_NUMBER,
                 to: user.phone,
             });
         }));
@@ -106,7 +104,6 @@ async function reminderHelper(timezone: string) {
         const user = doc.data() as IUser;
         return sendSms({
             body: optInReminder(user),
-            from: TWILIO_NUMBER,
             to: user.phone,
         })
     }));
@@ -169,7 +166,6 @@ export const sendMatchNotificationTexts = functions.pubsub
                 for (const t of texts) {
                     await sendSms({
                         body: t,
-                        from: TWILIO_NUMBER,
                         to: usersById[userId].phone,
                     });
                 }

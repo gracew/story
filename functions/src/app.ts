@@ -6,7 +6,7 @@ import fetch from "node-fetch";
 import { Firestore, IUser } from "./firestore";
 import { welcome } from "./smsCopy";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
-import { client, TWILIO_NUMBER } from "./twilio";
+import { sendSms } from "./twilio";
 
 // required fields
 const REQUIRED_ONBOARDING_FIELDS = [
@@ -114,11 +114,10 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
       notifyNewSignup(allData);
       if (user.phone.startsWith("+1")) {
         // US or Canada
-        client.messages.create({
+        sendSms({
           body: welcome(user as IUser),
-          from: TWILIO_NUMBER,
           to: user.phone,
-        }).catch(err => console.error("error sending welcome message", err));
+        });
       }
     }
   }

@@ -236,5 +236,9 @@ async function nextMatchNameAndDate(matchesByUserId: Record<string, IMatch | und
 }
 
 export function sendSms(opts: any) {
-    return client.messages.create(opts).catch(err => console.error(err));
+    return client.messages.create({ 
+        ...opts, 
+        from: TWILIO_NUMBER,
+        statusCallback: BASE_URL + "smsStatusCallback",
+    }).catch(console.error);
 }
