@@ -111,14 +111,14 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
     update.onboardingComplete = onboardingComplete(allData);
     await admin.firestore().collection("users").doc(user.id).update(update);
     if (update.onboardingComplete) {
-      await notifyNewSignup(allData);
-      if (user.phone.startsWith("+1") && !isTestNumber(user.phone)) {
+      notifyNewSignup(allData);
+      if (user.phone.startsWith("+1")) {
         // US or Canada
-        await client.messages.create({
+        client.messages.create({
           body: welcome(user as IUser),
           from: TWILIO_NUMBER,
           to: user.phone,
-        });
+        }).catch(err => console.error("error sending welcome message", err));
       }
     }
   }
@@ -132,10 +132,6 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
   return { id: user.id, phone: user.phone };
 });
 
-function isTestNumber(phone: string) {
-  return ["+16501111111", "+16502222222", "+16503333333"].includes(phone);
-}
-
 function notifyNewSignup(user: Record<string, any>) {
   const text = `New user signup
 
@@ -145,12 +141,23 @@ Wants to meet: ${user.genderPreference}
 Age: ${user.age}
 Location: ${user.location}
 Channel: ${user.whereDidYouHearAboutUs.option}, ${user.whereDidYouHearAboutUs.context}
-Referrer: ${user.referrer}`
-  return fetch(functions.config().slack.signup_webhook_url, {
+Referrer: ${user.referrer}`;
+  // So we mostly only see real signups in Slack
+  if (process.env.NODE_ENV !== "production") {
+    console.log(text);
+    return;
+  }
+
+  const slack_signup_webhook_url = functions.config().slack?.signup_webhook_url;
+  if (!slack_signup_webhook_url) {
+    console.error(new Error("Slack signup webhook not configured"));
+    return;
+  }
+  return fetch(slack_signup_webhook_url, {
     method: "post",
     body: JSON.stringify({ text }),
     headers: { "Content-Type": "application/json" },
-  });
+  }).catch(console.error);
 }
 
 export const getPublicProfile = functions.https.onCall(async (data, context) => {

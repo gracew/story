@@ -18,6 +18,7 @@
     "uuid": "^8.2.0"
   },
   "scripts": {
+    "staging-dev": "REACT_APP_STAGING_DEV=1 craco start",
     "start": "craco start",
     "build": "craco build",
     "test": "craco test",

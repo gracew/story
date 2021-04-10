@@ -24,11 +24,27 @@ Note that we are using the Ant design component library. Information on theme cu
 - https://ant.design/docs/react/use-with-create-react-app#Customize-Theme
 - https://ant.design/docs/react/customize-theme
 
-### Running the app locally
+### Running the frontend app locally
 
-```
+This will run the app against local Firebase emulators (see instructions below).
+
+```bash
 cd app
-yarn start
+yarn start # or `yarn staging-dev` to run against the Firestore in staging
+```
+
+#### Running the backend (Firestore emulator) locally
+
+```bash
+cd functions
+yarn serve
+```
+
+There's also a way to grab runtime configuration options from staging, though it's not strictly required to run the
+backend, this is just required for external services.
+
+```bash
+firebase functions:config:get > functions/.runtimeconfig.json
 ```
 
 Accessing Mac localhost on iPhone
