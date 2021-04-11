@@ -47,7 +47,7 @@ backend, this is just required for external services.
 firebase functions:config:get > functions/.runtimeconfig.json
 ```
 
-Accessing Mac localhost on iPhone
+#### Accessing Mac localhost on iPhone
 
 1. Connect iPhone to Mac via USB, make sure it's on the same Wifi network
 2. Find Mac IP Address (System Preferences, Wifi)
@@ -66,17 +66,17 @@ yarn deploy -P prod
 
 ## Deploying app
 
-Dev
+### Staging (manual)
+Commits to master automatically deploy via Netlify. App will be at https://story-staging.netlify.app/signup
 
+To push to staging manually:
 ```
 PUBLIC_URL=https://speakeasy-92b16.web.app/ yarn build
 firebase deploy --only hosting
 ```
 
-Prod
-
-Commits to master automatically deploy via Netlify.
-
+### Prod
+GitHub releases automatically deploy via Netlify.
 
 ## Bios
 
@@ -87,3 +87,10 @@ audio file won't play properly in Safari.
 ```
 gsutil setmeta -h "Content-type: audio/mpeg" gs://speakeasy-prod.appspot.com/bios/*
 ```
+
+### Test phone numbers
+Sometimes you need to test making new user accounts. In either staging or production, or in development with Twilio 
+- Add a "phone number for testing" from this page:
+  https://console.firebase.google.com/u/0/project/speakeasy-92b16/authentication/providers
+- Use a number from https://fakenumber.org/ so we don't accidentally text a real number.
+
