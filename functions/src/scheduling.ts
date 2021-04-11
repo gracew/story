@@ -47,7 +47,8 @@ async function getOptInLikelihood() {
             }
             count[doc.id]++;
 
-            if (doc.get("tue") || doc.get("wed") || doc.get("thu")) {
+            const available = doc.get("available");
+            if (available && available.length > 0) {
                 if (!(doc.id in optIns)) {
                     optIns[doc.id] = 0;
                 }
