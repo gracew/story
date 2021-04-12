@@ -6,6 +6,8 @@ import StoryButtonContainer from "../components/StoryButtonContainer";
 import { FUN_FACTS_DESCRIPTION } from "../profile/Profile";
 import "./Onboarding.css";
 import OnboardingStep from "./OnboardingStep";
+import {isEqual} from "lodash";
+import CenteredSpin from "../components/CenteredSpin";
 
 export enum OnboardingType {
   FREE_TEXT,
@@ -18,10 +20,15 @@ export enum OnboardingType {
   LOCATION,
 }
 
+function getExistingValue(existingUser: Record<string, any>, step: OnboardingMetadata) {
+  return step.getValue ? step.getValue(existingUser) : existingUser[step.id];
+}
+
 export interface OnboardingMetadata {
   id: string;
   label: string;
   type: OnboardingType;
+  getValue?(user: Record<string, any>): string | undefined;
   placeholder?: string;
   description?: string;
   options?: string[];
@@ -57,12 +64,28 @@ const steps: OnboardingMetadata[] = [
     label: "I am looking for these types of connections...",
     type: OnboardingType.MULTIPLE_CHOICE,
     options: ["Serious dating", "Casual dating", "Open to either"],
+    getValue(user: Record<string, any>): string | undefined {
+      return user.connectionType?.value;
+    }
   },
   {
     id: "genderPreference",
     label: "I am interested in...",
     type: OnboardingType.MULTIPLE_CHOICE,
     options: ["Men", "Women", "Everyone"],
+    getValue(user: Record<string, any>): string | undefined {
+      // XXX: opposite of value in functions/app.ts
+      if (isEqual(user.genderPreference, ["Men"])) {
+        return "Men";
+      }
+      if (isEqual(user.genderPreference, ["Women"])) {
+        return "Women";
+      }
+      if (isEqual(user.genderPreference, ["Men", "Women"])) {
+        return "Everyone";
+      }
+      return "";
+    }
   },
   {
     id: "location",
@@ -96,18 +119,34 @@ const steps: OnboardingMetadata[] = [
 ]
 
 function Onboarding() {
-  // @ts-ignore
   const { step } = useParams();
   const history = useHistory();
+  const [existingUser, setExistingUser] = useState<Record<string, any> | undefined | null>(undefined);
   const [userId, setUserId] = useState<string>();
   const [phone, setPhone] = useState<string>();
-  const [data, setData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, any>>({});
   const [complete, setComplete] = useState<Record<string, any>>({});
   const [stepIndex, setStepIndex] = useState(step || 0);
   const [submitting, setSubmitting] = useState(false);
 
   const urlParams = new URLSearchParams(window.location.search);
   const referrer = urlParams.get("r");
+
+  if (existingUser === undefined) {
+    (async () => {
+      const res = await firebase.functions().httpsCallable("onboardInit")();
+      setExistingUser(res.data);
+    })().catch(console.error)
+  }
+
+  useEffect(() => {
+    if (!existingUser) {
+      return;
+    }
+    const existingValueByStepId = Object.fromEntries(
+      steps.map(step => [step.id, getExistingValue(existingUser, step)]));
+    setFormData(formData => ({...formData, ...existingValueByStepId}));
+  }, [existingUser]);
 
   useEffect(() => {
     if (userId) {
@@ -122,7 +161,7 @@ function Onboarding() {
 
   async function onUpdate(update: any, updateComplete?: boolean) {
     const stepId = steps[stepIndex].id;
-    setData({ ...data, [stepId]: update });
+    setFormData({ ...formData, [stepId]: update });
     setComplete({ ...complete, [stepId]: updateComplete });
   }
 
@@ -139,7 +178,7 @@ function Onboarding() {
     const stepId = steps[stepIndex].id;
     firebase.analytics().logEvent(`onboarding_${stepId}_next`);
 
-    const res = await firebase.functions().httpsCallable("onboardUser")({ [stepId]: data[stepId], referrer })
+    const res = await firebase.functions().httpsCallable("onboardUser")({ [stepId]: formData[stepId], referrer })
     setUserId(res.data.id);
     setPhone(res.data.phone);
 
@@ -152,10 +191,18 @@ function Onboarding() {
     setSubmitting(false);
   }
 
-  function incomplete() {
+  function isThisStepIncomplete() {
     const stepId = steps[stepIndex].id;
-    const value = data[stepId];
+    const value = formData[stepId];
     return complete[stepId] === false || value === undefined || value === "";
+  }
+
+  if (existingUser === undefined) {
+    return <CenteredSpin />;
+  }
+
+  if (existingUser?.onboardingComplete) {
+    history.push("/profile");
   }
 
   return (
@@ -163,7 +210,7 @@ function Onboarding() {
       <OnboardingStep
         step={steps[stepIndex]}
         update={onUpdate}
-        value={data[steps[stepIndex].id]}
+        value={formData[steps[stepIndex].id]}
       />
       <StoryButtonContainer>
         {stepIndex > 0 && <StoryButton
@@ -177,7 +224,7 @@ function Onboarding() {
           className="onboarding-step-next"
           type="primary"
           onClick={onNext}
-          disabled={incomplete()}
+          disabled={isThisStepIncomplete()}
           loading={submitting}
         >
           Next
