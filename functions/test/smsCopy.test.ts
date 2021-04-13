@@ -67,7 +67,7 @@ it("matchNotification correctly formats half past dates", async () => {
 
 it("matchNotification for a single match - no fun facts for user", async () => {
     const user1 = user("Anna");
-    const user2 = user("Grace", "funFacts");
+    const user2 = user("Grace", { funFacts: "funFacts" });
     const m = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
     const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
     expect(res).toHaveLength(1);
@@ -75,7 +75,7 @@ it("matchNotification for a single match - no fun facts for user", async () => {
 });
 
 it("matchNotification for a single match - no fun facts for match", async () => {
-    const user1 = user("Anna", "funFacts");
+    const user1 = user("Anna", { funFacts: "funFacts" });
     const user2 = user("Grace");
     const m = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
     const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
@@ -84,8 +84,8 @@ it("matchNotification for a single match - no fun facts for match", async () => 
 });
 
 it("matchNotification for a single match - fun facts for both", async () => {
-    const user1 = user("Anna", "funFacts");
-    const user2 = user("Grace", "funFactsGrace");
+    const user1 = user("Anna", { funFacts: "funFacts" });
+    const user2 = user("Grace", { funFacts: "funFactsGrace" });
     const m = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
     const res = matchNotification(userId1, [m], { [userId1]: user1, [userId2]: user2 })
     expect(res).toHaveLength(2);
@@ -108,8 +108,8 @@ it("matchNotification for two matches", async () => {
 
 it("matchNotification for two matches - no fun facts for user", async () => {
     const user1 = user("Anna");
-    const user2 = user("Grace", "funFacts");
-    const user3 = user("Rachael", "funFacts");
+    const user2 = user("Grace", { funFacts: "funFacts" });
+    const user3 = user("Rachael", { funFacts: "funFacts" });
     const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
     const matchUser3 = match(userId1, userId3, "2020-09-24T20:00:00-07:00");
     const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
@@ -118,9 +118,9 @@ it("matchNotification for two matches - no fun facts for user", async () => {
 });
 
 it("matchNotification for two matches - fun facts", async () => {
-    const user1 = user("Anna", "funFacts");
+    const user1 = user("Anna", { funFacts: "funFacts" });
     const user2 = user("Grace");
-    const user3 = user("Rachael", "funFactsRachael");
+    const user3 = user("Rachael", { funFacts: "funFactsRachael" });
     const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
     const matchUser3 = match(userId1, userId3, "2020-09-24T20:00:00-07:00");
     const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
@@ -130,9 +130,9 @@ it("matchNotification for two matches - fun facts", async () => {
 });
 
 it("matchNotification for two matches - same location", async () => {
-    const user1 = user("Anna", undefined, "location", true);
-    const user2 = user("Grace", undefined, "New York City", true);
-    const user3 = user("Rachael", undefined, "New York City", true);
+    const user1 = user("Anna", { location: "location", locationFlexibility: true });
+    const user2 = user("Grace", { location: "New York City", locationFlexibility: true });
+    const user3 = user("Rachael", { location: "New York City", locationFlexibility: true });
     const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
     const matchUser3 = match(userId1, userId3, "2020-09-24T20:00:00-07:00");
     const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
@@ -141,9 +141,9 @@ it("matchNotification for two matches - same location", async () => {
 });
 
 it("matchNotification for two matches - others not flexible", async () => {
-    const user1 = user("Anna", undefined, "New York City", true);
-    const user2 = user("Grace", undefined, "New York City", false);
-    const user3 = user("Rachael", undefined, "New York City", false);
+    const user1 = user("Anna", { location: "location", locationFlexibility: true });
+    const user2 = user("Grace", { location: "New York City", locationFlexibility: false });
+    const user3 = user("Rachael", { location: "New York City", locationFlexibility: false });
     const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
     const matchUser3 = match(userId1, userId3, "2020-09-24T20:00:00-07:00");
     const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
@@ -152,9 +152,9 @@ it("matchNotification for two matches - others not flexible", async () => {
 });
 
 it("matchNotification for two matches - diff location", async () => {
-    const user1 = user("Anna", undefined, "location", true);
-    const user2 = user("Grace", undefined, "New York City", true);
-    const user3 = user("Rachael", undefined, "San Francisco Bay Area", true);
+    const user1 = user("Anna", { location: "location", locationFlexibility: true });
+    const user2 = user("Grace", { location: "New York City", locationFlexibility: true });
+    const user3 = user("Rachael", { location: "San Francisco Bay Area", locationFlexibility: true });
     const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
     const matchUser3 = match(userId1, userId3, "2020-09-24T20:00:00-07:00");
     const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })

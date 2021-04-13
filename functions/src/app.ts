@@ -84,16 +84,6 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
         default:
           console.error(new Error("unknown pronouns: " + value));
       }
-    } else if (field === "genderPreference") {
-      if (value === "Men") {
-        update.genderPreference = ["Men"];
-      }
-      if (value === "Women") {
-        update.genderPreference = ["Women"];
-      }
-      if (value === "Everyone") {
-        update.genderPreference = ["Men", "Women"];
-      }
     } else if (field === "location") {
       const tz = timezone(value);
       if (tz) {
@@ -230,7 +220,7 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
       value: locationFlexibility ? "Yes" : "No",
     },
     genderPreference: {
-      value: genderPreference.length === 1 ? genderPreference[0] : "Everyone",
+      value: genderPreference,
     },
     funFacts: {
       value: funFacts,
@@ -275,15 +265,7 @@ export const savePreferences = functions.https.onCall(async (data, context) => {
     mainPrefs.locationFlexibility = locationFlexibility.value === "Yes";
   }
   if (genderPreference !== undefined) {
-    if (genderPreference.value === "Men") {
-      mainPrefs.genderPreference = ["Men"];
-    }
-    if (genderPreference.value === "Women") {
-      mainPrefs.genderPreference = ["Women"];
-    }
-    if (genderPreference.value === "Everyone") {
-      mainPrefs.genderPreference = ["Men", "Women"];
-    }
+    mainPrefs.genderPreference = genderPreference.value;
   }
   if (funFacts !== undefined) {
     mainPrefs.funFacts = funFacts.value;

@@ -1,5 +1,6 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
+import { IUser } from "./firestore";
 import moment = require("moment");
 
 /** Used in each round to determine which users should be included (based on number of potential matches). */
@@ -80,12 +81,9 @@ export const bipartiteMatches = functions.https.onRequest(
 
 
 function formatUser(d: any) {
-    // convert wants to Gender Field options
     const o = d.data();
-    const genderPreference = o.genderPreference.map((want: any) => want === "Men" ? "Male" : "Female");
     return {
         ...o,
-        genderPreference,
         matchMax: o.matchMax || defaultMatchMax(o.gender, o.age),
         matchMin: o.matchMin || defaultMatchMin(o.gender, o.age),
     };
@@ -179,27 +177,38 @@ function defaultMatchMin(gender: string, age: number) {
     return gender === "Female" ? age - 2 : age - 4
 }
 
-function areUsersCompatible(user: any, match: any, prevMatches: Record<string, string[]>, blocklist: Record<string, string[]>) {
+export function checkGenderPreference(user: IUser, match: IUser) {
+    switch (user.genderPreference) {
+        case "Everyone":
+            return true;
+        case "Men":
+            return match.gender === "Male";
+        case "Women":
+            return match.gender === "Female";
+        default:
+            return false;
+    }
+}
+
+function areUsersCompatible(user: IUser, match: IUser, prevMatches: Record<string, string[]>, blocklist: Record<string, string[]>) {
     // ensure user isn't matching with self
     if (user.id === match.id) {
         return false;
     }
 
     // check if match meets user's age criteria
-    if (match.age > (parseInt(user.matchMax + 1)) || match.age < (parseInt(user.matchMin) - 1)) {
+    if (match.age > (user.matchMax + 1) || match.age < (user.matchMin - 1)) {
         return false;
     }
 
     // check if user meets match's age criteria
-    if (user.age > (parseInt(match.matchMax + 1)) || user.age < (parseInt(match.matchMin) - 1)) {
+    if (user.age > (match.matchMax + 1) || user.age < (match.matchMin) - 1) {
         return false;
     }
 
     // check gender
-    if (!user.genderPreference.includes(match.gender) || !match.genderPreference.includes(user.gender)) {
-        if (!(user.gender === "Other" && match.genderPreference.length > 1 || match.gender === "Other" && user.genderPreference.length > 1)) {
-            return false;
-        }
+    if (!checkGenderPreference(user, match) || !checkGenderPreference(match, user)) {
+        return false;
     }
 
     // if users are in different locations, check if both are flexible. defaults to true if flexibility is unknown

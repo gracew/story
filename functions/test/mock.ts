@@ -15,21 +15,20 @@ export const firestore = {
     createSchedulingRecords: jest.fn(),
 };
 
-export function user(firstName: string, funFacts?: string, location?: string, locationFlexibility?: boolean): IUser {
+export function user(firstName: string, other?: Partial<IUser>): IUser {
     return {
         id: uuid.v4(),
         firstName,
         gender: "Female",
-        genderPreference: [],
+        genderPreference: "Women",
         age: 30,
         matchMin: 20,
         matchMax: 40,
         phone: uuid.v4(),
         beta: true,
-        funFacts,
-        location: location || "San Francisco Bay Area",
+        location: "San Francisco Bay Area",
         timezone: "PT",
-        locationFlexibility,
+        ...other,
     }
 }
 
