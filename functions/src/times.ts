@@ -90,12 +90,25 @@ function timeOptions(tz: Timezone, matchTz: Timezone) {
     // PT
     case (tz === Timezone.PT && matchTz === Timezone.PT):
       return [18, 19, 20];
+    case (tz === Timezone.PT && matchTz === Timezone.MT):
+      return [18, 19, 20];
     case (tz === Timezone.PT && matchTz === Timezone.CT):
       return [18];
     case (tz === Timezone.PT && matchTz === Timezone.ET):
       return [18];
+    // MT
+    case (tz === Timezone.MT && matchTz === Timezone.PT):
+      return [19, 20, 21];
+    case (tz === Timezone.MT && matchTz === Timezone.MT):
+      return [19, 20, 21];
+    case (tz === Timezone.MT && matchTz === Timezone.CT):
+      return [19];
+    case (tz === Timezone.MT && matchTz === Timezone.ET):
+      return [19];
     // CT
     case (tz === Timezone.CT && matchTz === Timezone.PT):
+      return [20];
+    case (tz === Timezone.CT && matchTz === Timezone.MT):
       return [20];
     case (tz === Timezone.CT && matchTz === Timezone.CT):
       return [18, 19, 20];
@@ -103,6 +116,8 @@ function timeOptions(tz: Timezone, matchTz: Timezone) {
       return [18, 19, 20];
     // ET
     case (tz === Timezone.ET && matchTz === Timezone.PT):
+      return [21];
+    case (tz === Timezone.ET && matchTz === Timezone.MT):
       return [21];
     case (tz === Timezone.ET && matchTz === Timezone.CT):
       return [19, 20, 21];

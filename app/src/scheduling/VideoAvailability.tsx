@@ -13,6 +13,7 @@ import VideoAvailabilitySubmitted from "./VideoAvailabilitySubmitted";
 
 export enum Timezone {
   PT = "PT",
+  MT = "MT",
   CT = "CT",
   ET = "ET",
 }
@@ -25,6 +26,8 @@ function formatTimezone(tz: Timezone) {
   switch (tz) {
     case Timezone.PT:
       return "Pacific Time";
+    case Timezone.MT:
+      return "Mountain Time";
     case Timezone.CT:
       return "Central Time";
     case Timezone.ET:

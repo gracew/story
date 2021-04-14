@@ -76,6 +76,10 @@ export const sendAvailabilityReminderCT = functions.pubsub
     .schedule("every sunday 18:00")
     .onRun(async () => reminderHelper("CT"));
 
+export const sendAvailabilityReminderMT = functions.pubsub
+    .schedule("every sunday 19:00")
+    .onRun(async () => reminderHelper("MT"));
+
 export const sendAvailabilityReminderPT = functions.pubsub
     .schedule("every sunday 20:00")
     .onRun(async () => reminderHelper("PT"));
