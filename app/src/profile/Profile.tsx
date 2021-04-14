@@ -4,7 +4,7 @@ import { Button, Divider } from "antd";
 import firebase from "firebase";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { Redirect, useHistory, useParams } from "react-router-dom";
 import * as uuid from "uuid";
 import CenteredSpin from "../components/CenteredSpin";
 import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPreference";
@@ -200,6 +200,10 @@ function Profile() {
 
   if (!userPrefs) {
     return <CenteredSpin />
+  }
+
+  if (userPrefs.onboardingComplete === false) {
+    return <Redirect to={{ pathname: "/signup" }} />
   }
 
   if (selectedPref) {
