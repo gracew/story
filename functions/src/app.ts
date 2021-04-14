@@ -23,7 +23,7 @@ const REQUIRED_ONBOARDING_FIELDS = [
 ];
 
 // just checks for existence of fields - doesn't validate values
-function onboardingComplete(data: Record<string, any>) {
+function checkOnboardingComplete(data: Record<string, any>) {
   return REQUIRED_ONBOARDING_FIELDS.every(k => data[k] !== undefined);
 }
 
@@ -98,7 +98,7 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
 
   if (Object.keys(update).length > 0) {
     const allData = { ...user, ...update };
-    update.onboardingComplete = onboardingComplete(allData);
+    update.onboardingComplete = checkOnboardingComplete(allData);
     await admin.firestore().collection("users").doc(user.id).update(update);
     if (update.onboardingComplete) {
       await notifyNewSignup(allData);
