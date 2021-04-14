@@ -95,13 +95,13 @@ it("matchNotification for a single match - fun facts for both", async () => {
 Happy chatting!`)
 });
 
-it("matchNotification for two matches", async () => {
+it("matchNotification for two matches - sorts by match time", async () => {
     const user1 = user("Anna");
     const user2 = user("Grace");
     const user3 = user("Rachael");
     const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
     const matchUser3 = match(userId1, userId3, "2020-09-24T20:00:00-07:00");
-    const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
+    const res = matchNotification(userId1, [matchUser3, matchUser2], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
     expect(res).toHaveLength(1);
     expect(res[0]).toContain(expectedTwoMatches);
 });
