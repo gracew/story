@@ -9,10 +9,14 @@ admin
   .firestore()
   .collection("users")
   .get()
-  .then(res => {
-    const batch = admin.firestore().batch();
-    for (const doc of res.docs) {
+  .then(async res => {
+    let batch = admin.firestore().batch();
+    for (var i = 0; i < res.docs.length; i++) {
+      const doc = res.docs[i];
       const genderPreference = doc.get("genderPreference");
+      if (!genderPreference || genderPreference.length === 0) {
+        continue;
+      }
       const update = {};
       if (genderPreference.length > 1) {
         update.genderPreference = "Everyone";
@@ -23,7 +27,11 @@ admin
           update.genderPreference = "Women";
         }
       }
-      batch.update(update);
+      batch.update(doc.ref, update);
+      if (i % 400 === 0) {
+        await batch.commit();
+        batch = admin.firestore().batch();
+      }
     }
     return batch.commit();
   });
