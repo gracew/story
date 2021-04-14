@@ -6,7 +6,7 @@ export interface IUser {
     firstName: string;
     phone: string;
     gender: string;
-    genderPreference: string[];
+    genderPreference: string;
     age: number | string;
     matchMin: number;
     matchMax: number;
