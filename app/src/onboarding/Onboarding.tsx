@@ -6,7 +6,6 @@ import StoryButtonContainer from "../components/StoryButtonContainer";
 import { FUN_FACTS_DESCRIPTION } from "../profile/Profile";
 import "./Onboarding.css";
 import OnboardingStep from "./OnboardingStep";
-import {isEqual} from "lodash";
 import CenteredSpin from "../components/CenteredSpin";
 
 export enum OnboardingType {
@@ -73,19 +72,6 @@ const steps: OnboardingMetadata[] = [
     label: "I am interested in...",
     type: OnboardingType.MULTIPLE_CHOICE,
     options: ["Men", "Women", "Everyone"],
-    getValue(user: Record<string, any>): string | undefined {
-      // XXX: opposite of value in functions/app.ts
-      if (isEqual(user.genderPreference, ["Men"])) {
-        return "Men";
-      }
-      if (isEqual(user.genderPreference, ["Women"])) {
-        return "Women";
-      }
-      if (isEqual(user.genderPreference, ["Men", "Women"])) {
-        return "Everyone";
-      }
-      return "";
-    }
   },
   {
     id: "location",
@@ -121,7 +107,7 @@ const steps: OnboardingMetadata[] = [
 function Onboarding() {
   const { step } = useParams();
   const history = useHistory();
-  const [existingUser, setExistingUser] = useState<Record<string, any> | undefined | null>(undefined);
+  const [existingUser, setExistingUser] = useState<Record<string, any> | null>();
   const [userId, setUserId] = useState<string>();
   const [phone, setPhone] = useState<string>();
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -132,12 +118,12 @@ function Onboarding() {
   const urlParams = new URLSearchParams(window.location.search);
   const referrer = urlParams.get("r");
 
-  if (existingUser === undefined) {
+  useEffect(() => {
     (async () => {
       const res = await firebase.functions().httpsCallable("onboardInit")();
       setExistingUser(res.data);
     })().catch(console.error)
-  }
+  }, [])
 
   useEffect(() => {
     if (!existingUser) {
