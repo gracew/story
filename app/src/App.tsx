@@ -63,14 +63,10 @@ function App() {
         </Route>
         <div className="App">
           <Switch>
-            <Route path="/profile" exact>
+            <PrivateRoute path={["/profile/:userId", "/profile"]}>
               <Header showLogout={true} />
               <Profile />
-            </Route>
-            <Route path="/profile/:userId">
-              <Header showLogout={true} />
-              <Profile />
-            </Route>
+            </PrivateRoute>
             <Route path="/u/:userId">
               <Header />
               <PublicProfile />

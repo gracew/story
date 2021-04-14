@@ -16,7 +16,9 @@ export interface IUser {
     funFacts?: string;
     status?: string;
     photo?: string;
-    beta: boolean;
+    beta?: boolean;
+    /** A value of undefined is equivalent to true (these are users who signed up through typeform). */
+    onboardingComplete?: boolean;
 }
 export interface IMatch {
     id: string;

@@ -4,7 +4,7 @@ import { Button, Divider } from "antd";
 import firebase from "firebase";
 import "firebase/storage";
 import React, { useEffect, useState } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { Redirect, useHistory, useParams } from "react-router-dom";
 import * as uuid from "uuid";
 import CenteredSpin from "../components/CenteredSpin";
 import EditPreference, { EditPreferenceProps, PreferenceType } from "./EditPreference";
@@ -126,8 +126,6 @@ const prefs: Record<string, any> = {
 }
 
 function Profile() {
-  const [userLoading, setUserLoading] = useState(true);
-  const [userPhone, setUserPhone] = useState<string | null>();
   const [selectedPref, setSelectedPref] = useState<string>();
   const [userPrefs, setUserPrefs] = useState<Record<string, any>>();
   const [photoUrl, setPhotoUrl] = useState<string>();
@@ -139,26 +137,24 @@ function Profile() {
   const userPrefsPhoto = userPrefs?.photo;
 
   useEffect(() => {
-    if (userPhone) {
-      firebase
-        .functions()
-        .httpsCallable("getPreferences")({ userId })
-        .then((res) => {
-          setUserPrefs(res.data);
-          FullStory.identify(res.data.id, {
-            displayName: res.data.firstName,
-          });
-        })
-        .catch((err) => {
-          if (err.code === "not-found") {
-            // the user logged in, but we don't have an entry for them, so redirect to signup
-            history.push("/signup")
-          } else {
-            throw err;
-          }
-        })
-    }
-  }, [userLoading, userPhone, userId, history]);
+    firebase
+      .functions()
+      .httpsCallable("getPreferences")({ userId })
+      .then((res) => {
+        setUserPrefs(res.data);
+        FullStory.identify(res.data.id, {
+          displayName: res.data.firstName,
+        });
+      })
+      .catch((err) => {
+        if (err.code === "not-found") {
+          // the user logged in, but we don't have an entry for them, so redirect to signup
+          history.push("/signup")
+        } else {
+          throw err;
+        }
+      })
+  }, [userId, history]);
 
   useEffect(() => {
     if (userPrefsPhoto) {
@@ -169,16 +165,6 @@ function Profile() {
         .then((url) => setPhotoUrl(url));
     }
   }, [userPrefsPhoto]);
-
-  firebase.auth().onAuthStateChanged(function (user) {
-    setUserLoading(false);
-    if (!user) {
-      // the user navigated directly to this page without logging in or having a previous session
-      history.push("/login")
-    } else {
-      setUserPhone(user.phoneNumber);
-    }
-  });
 
   function formatAgeRange() {
     const min = userPrefs!.matchMin;
@@ -212,8 +198,12 @@ function Profile() {
     setPhotoUploading(false);
   }
 
-  if (userLoading || !userPrefs) {
+  if (!userPrefs) {
     return <CenteredSpin />
+  }
+
+  if (userPrefs.onboardingComplete === false) {
+    return <Redirect to={{ pathname: "/signup" }} />
   }
 
   if (selectedPref) {
