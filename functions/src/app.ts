@@ -187,6 +187,7 @@ async function getUser(data: any, context: CallableContext) {
 export const getPreferences = functions.https.onCall(async (data, context) => {
   const {
     id,
+    onboardingComplete,
     beta,
     firstName,
     gender,
@@ -206,6 +207,7 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
     .get();
   return {
     id,
+    onboardingComplete,
     beta,
     firstName,
     photo,
