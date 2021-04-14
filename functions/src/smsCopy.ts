@@ -30,6 +30,7 @@ export function matchNotification(userId: string, matches: IMatch[], usersById: 
         return [];
     }
 
+    matches.sort((a, b) => a.created_at.toDate().getTime() - b.created_at.toDate().getTime());
     const tz = timezone(user);
     const formattedTime = moment(matches[0].created_at.toDate()).tz(tz).format("h:mma z");
     if (matches.length === 1) {
