@@ -141,7 +141,7 @@ it("matchNotification for two matches - same location", async () => {
 });
 
 it("matchNotification for two matches - others not flexible", async () => {
-    const user1 = user("Anna", { location: "location", locationFlexibility: true });
+    const user1 = user("Anna", { location: "New York City", locationFlexibility: true });
     const user2 = user("Grace", { location: "New York City", locationFlexibility: false });
     const user3 = user("Rachael", { location: "New York City", locationFlexibility: false });
     const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");

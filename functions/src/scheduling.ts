@@ -202,7 +202,7 @@ function areUsersCompatible(user: IUser, match: IUser, prevMatches: Record<strin
     }
 
     // check if user meets match's age criteria
-    if (user.age > (match.matchMax + 1) || user.age < (match.matchMin) - 1) {
+    if (user.age > (match.matchMax + 1) || user.age < (match.matchMin - 1)) {
         return false;
     }
 
