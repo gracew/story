@@ -12,6 +12,7 @@ import Preference from "./Preference";
 import "./Profile.css";
 import ProfileCard from "./ProfileCard";
 import ReferralCard from "./ReferralCard";
+import {getPreferences, NotFound} from "../apiClient";
 
 export const LOCATIONS =
   [
@@ -137,23 +138,17 @@ function Profile() {
   const userPrefsPhoto = userPrefs?.photo;
 
   useEffect(() => {
-    firebase
-      .functions()
-      .httpsCallable("getPreferences")({ userId })
-      .then((res) => {
-        setUserPrefs(res.data);
-        FullStory.identify(res.data.id, {
-          displayName: res.data.firstName,
+    getPreferences(userId).then(maybeUser => {
+      if (maybeUser === NotFound) {
+        history.push("/signup");
+      } else {
+        setUserPrefs(maybeUser);
+        FullStory.identify(maybeUser.id, {
+          displayName: maybeUser.firstName,
         });
-      })
-      .catch((err) => {
-        if (err.code === "not-found") {
-          // the user logged in, but we don't have an entry for them, so redirect to signup
-          history.push("/signup")
-        } else {
-          throw err;
-        }
-      })
+
+      }
+    })
   }, [userId, history]);
 
   useEffect(() => {
