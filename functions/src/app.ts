@@ -8,8 +8,6 @@ import { welcome } from "./smsCopy";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
 import { sendSms } from "./twilio";
 
-const firestore = new Firestore();
-
 // required fields
 const REQUIRED_ONBOARDING_FIELDS = [
   "whereDidYouHearAboutUs",
@@ -51,14 +49,6 @@ async function getOrCreateUser(phone: string) {
   }
   return userResult.docs[0].data();
 }
-
-export const onboardInit = functions.https.onCall(async (data, context) => {
-  const loggedInUser = await getLoggedInUser(context);
-  if (!loggedInUser) {
-    return null;
-  }
-  return await firestore.getUserWithPrefs(loggedInUser.id);
-});
 
 export const onboardUser = functions.https.onCall(async (data, context) => {
   if (!context.auth || !context.auth.token.phone_number) {
@@ -179,20 +169,14 @@ export const getPublicProfile = functions.https.onCall(async (data, context) => 
   };
 });
 
-async function getLoggedInUser(context: CallableContext) {
-  if (!context.auth || !context.auth.token.phone_number) {
-    return null;
-  }
-  return firestore.getUserByPhone(context.auth.token.phone_number);
-}
-
 async function getUser(data: any, context: CallableContext) {
   if (!context.auth || !context.auth.token.phone_number) {
     throw new functions.https.HttpsError("unauthenticated", "authentication required");
   }
+  const firestore = new Firestore();
   const userPromise = data.userId && context.auth.uid === "EfR3VzvvQHVAE1DbtQbCE546Q1F3"
     ? firestore.getUser(data.userId)
-    : getLoggedInUser(context);
+    : firestore.getUserByPhone(context.auth.token.phone_number);
   const user = await userPromise;
   if (!user) {
     throw new functions.https.HttpsError("not-found", "unknown user");
@@ -323,6 +307,7 @@ function timezone(location: string) {
 
 export const getVideoAvailability = functions.https.onCall(async (data, context) => {
   const user = await getUser(data, context);
+  const firestore = new Firestore();
   const match = await firestore.getMatch(data.matchId);
   if (!match) {
     throw new functions.https.HttpsError("not-found", "unknown match");

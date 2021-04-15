@@ -7,6 +7,7 @@ import { FUN_FACTS_DESCRIPTION } from "../profile/Profile";
 import "./Onboarding.css";
 import OnboardingStep from "./OnboardingStep";
 import CenteredSpin from "../components/CenteredSpin";
+import {getPreferences, NotFound} from "../apiClient";
 
 export enum OnboardingType {
   FREE_TEXT,
@@ -19,8 +20,8 @@ export enum OnboardingType {
   LOCATION,
 }
 
-function getExistingValue(existingUser: Record<string, any>, step: OnboardingMetadata) {
-  return step.getValue ? step.getValue(existingUser) : existingUser[step.id];
+function getExistingValue(userPrefs: Record<string, any>, step: OnboardingMetadata) {
+  return step.getValue ? step.getValue(userPrefs) : userPrefs[step.id];
 }
 
 export interface OnboardingMetadata {
@@ -107,7 +108,7 @@ const steps: OnboardingMetadata[] = [
 function Onboarding() {
   const { step } = useParams();
   const history = useHistory();
-  const [existingUser, setExistingUser] = useState<Record<string, any> | null>();
+  const [userPrefs, setUserPrefs] = useState<Record<string, any>>();
   const [userId, setUserId] = useState<string>();
   const [phone, setPhone] = useState<string>();
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -120,19 +121,21 @@ function Onboarding() {
 
   useEffect(() => {
     (async () => {
-      const res = await firebase.functions().httpsCallable("onboardInit")();
-      setExistingUser(res.data);
+      const fetched = await getPreferences();
+      if (fetched !== NotFound) {
+        setUserPrefs(fetched);
+      }
     })().catch(console.error)
   }, [])
 
   useEffect(() => {
-    if (!existingUser) {
+    if (!userPrefs) {
       return;
     }
     const existingValueByStepId = Object.fromEntries(
-      steps.map(step => [step.id, getExistingValue(existingUser, step)]));
+      steps.map(step => [step.id, getExistingValue(userPrefs, step)]));
     setFormData(formData => ({...formData, ...existingValueByStepId}));
-  }, [existingUser]);
+  }, [userPrefs]);
 
   useEffect(() => {
     if (userId) {
@@ -183,11 +186,9 @@ function Onboarding() {
     return complete[stepId] === false || value === undefined || value === "";
   }
 
-  if (existingUser === undefined) {
+  if (!userPrefs) {
     return <CenteredSpin />;
-  }
-
-  if (existingUser?.onboardingComplete) {
+  } else if (userPrefs.onboardingComplete) {
     history.push("/profile");
   }
 

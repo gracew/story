@@ -55,20 +55,13 @@ export interface IMatch {
 }
 
 export class Firestore {
-  // TODO: this should be FireStore.FirebaseStore, but don't know how to get the mocks to typecheck
-    _firestore: any;
-
-    constructor() {
-        this._firestore = admin.firestore();
-    }
-
     public async getUser(id: string): Promise<IUser | undefined> {
-        const user = await this._firestore.collection("users").doc(id).get();
+        const user = await admin.firestore().collection("users").doc(id).get();
         return user.data() as IUser | undefined;
     }
 
     public async getUserByPhone(phone: string): Promise<IUser | undefined> {
-        const users = await this._firestore.collection("users");
+        const users = await admin.firestore().collection("users");
         const user = await users.where("phone", "==", phone).get();
         if (user.empty) {
             return;
@@ -76,15 +69,8 @@ export class Firestore {
         return user.docs[0].data() as IUser;
     }
 
-    public async getUserWithPrefs(id: string): Promise<Record<string, any>> {
-        const [user, prefs] = await this._firestore.getAll(
-          this._docRef("users", id),
-          this._docRef("preferences", id));
-        return {...user.data(), ...prefs.data()};
-    }
-
     public async getMatch(id: string): Promise<IMatch | undefined> {
-        const match = await this._firestore.collection("matches").doc(id).get();
+        const match = await admin.firestore().collection("matches").doc(id).get();
         return match.data() as IMatch | undefined;
     }
 
@@ -146,9 +132,5 @@ export class Firestore {
             batch.create(admin.firestore().collection("scheduling").doc(week).collection("users").doc(userId), data);
         })
         return batch.commit();
-    }
-
-    _docRef(collectionName: string, id: string): FirebaseFirestore.DocumentReference {
-        return this._firestore.collection(collectionName).doc(id);
     }
 }

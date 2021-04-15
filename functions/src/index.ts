@@ -1,12 +1,11 @@
 import * as firestore from "@google-cloud/firestore";
 import * as admin from "firebase-admin";
-admin.initializeApp();
 import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import * as os from "os";
 import * as path from "path";
-import { getPreferences, getPublicProfile, getVideoAvailability, onboardInit, onboardUser, savePreferences, saveVideoAvailability } from "./app";
+import { getPreferences, getPublicProfile, getVideoAvailability, onboardUser, savePreferences, saveVideoAvailability } from "./app";
 import { addUserToCall, call1MinWarning, call5MinWarning, callUser, conferenceStatusWebhook, createSmsChat, handleFlakes, issueCalls, issueRecalls, markJoined, notifyIncomingTextHelper, revealRequest, revealRequestVideo, saveReveal, sendReminderTexts, sendVideoLink, warnSmsChatExpiration } from "./calls";
 import { createMatches, createSchedulingRecords, processBulkSmsCsv, sendAvailabilityReminderCT, sendAvailabilityReminderET, sendAvailabilityReminderMT, sendAvailabilityReminderPT, sendAvailabilityTexts, sendMatchNotificationTexts } from "./csv";
 import { analyzeCollection, cancelMatch, createMatch } from "./retool";
@@ -14,6 +13,7 @@ import { bipartiteMatches, potentialMatches, remainingMatches } from "./scheduli
 import { client, sendSms } from "./twilio";
 import { registerUser, saveAvailability } from "./typeform";
 
+admin.initializeApp();
 
 export {
   addUserToCall,
@@ -37,7 +37,6 @@ export {
   issueCalls,
   issueRecalls,
   markJoined,
-  onboardInit,
   onboardUser,
   registerUser,
   revealRequest,
