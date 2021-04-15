@@ -199,6 +199,12 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
     genderPreference,
     funFacts,
     photo,
+    // for onboarding
+    whereDidYouHearAboutUs,
+    birthdate,
+    pronouns,
+    interests,
+    social,
   } = await getUser(data, context)
   const prefs = await admin
     .firestore()
@@ -215,6 +221,11 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
     age,
     matchMin,
     matchMax,
+    whereDidYouHearAboutUs,
+    birthdate,
+    pronouns,
+    interests,
+    social,
     location: {
       value: location,
     },

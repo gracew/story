@@ -1,6 +1,12 @@
 import * as admin from "firebase-admin";
 import moment = require("moment-timezone");
 
+export interface ICalendarDate {
+    year: number,
+    month: number,
+    day: number,
+}
+
 export interface IUser {
     id: string;
     firstName: string;
@@ -17,9 +23,16 @@ export interface IUser {
     status?: string;
     photo?: string;
     beta?: boolean;
+    // fields from onboarding
+    whereDidYouHearAboutUs?: string,
+    birthdate?: ICalendarDate,
+    pronouns?: string,
+    interests?: string,
+    social?: string,
     /** A value of undefined is equivalent to true (these are users who signed up through typeform). */
     onboardingComplete?: boolean;
 }
+
 export interface IMatch {
     id: string;
     user_a_id: string;
