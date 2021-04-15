@@ -5,7 +5,7 @@ import { IMatch, IUser } from "./firestore";
 export function welcome(user: IUser) {
   return `Hi ${user.firstName}, thanks for joining Story Dating! I'm Grace and I founded Story because I believe that magic happens when people ✨ like you ✨ choose talking over swiping. You're currently on the waitlist, but I'll text you as soon as I have some matches for you. In the meantime, text any questions to me here or reply with "stop" if you ever decide to pause using Story Dating.
 
-Every friend that you recruit bumps you up higher on the waitlist, so share this link with 1 friend now: https://storydating.com/r?r=${user.id}`;
+Every friend that you recruit bumps you higher on the waitlist, so share this link with 1 friend now: https://storydating.com/r?r=${user.id}`;
 }
 
 export async function availability(user: IUser) {
