@@ -2,7 +2,7 @@ import * as test from "firebase-functions-test";
 // WARNING: this must come first or else imported modules may not see this config value on load
 test().mockConfig({ twilio: { auth_token: "token" } });
 import * as uuid from "uuid";
-import { IMatch } from "../src/firestore";
+import { IMatch, IUser } from "../src/firestore";
 import { callStudio, getNextDays, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
 import { firestore, match, user } from "./mock";
 
@@ -18,15 +18,18 @@ jest.mock("twilio", () => {
 });
 
 
-const user1 = user(uuid.v4());
-const user2 = user(uuid.v4());
-const user3 = user(uuid.v4());
+let user1: IUser;
+let user2: IUser;
+let user3: IUser;
 let m1: IMatch;
 let m2: IMatch;
 const today = "Wednesday";
 const nextWeek = "Friday, Saturday, Sunday";
 
 beforeEach(() => {
+    user1 = user(uuid.v4());
+    user2 = user(uuid.v4());
+    user3 = user(uuid.v4());
     m1 = match(user1.id, user2.id, "2020-09-23T20:00:00-04:00"); // Wed
     m2 = match(user3.id, user2.id, "2020-09-24T20:00:00-04:00"); // Thu
 
@@ -89,6 +92,34 @@ it("callStudio", async () => {
             video: false,
         }
     });
+});
+
+it("callStudio - userA photo", async () => {
+    user1.photo = "photoUrl";
+    firestore.getUsersForMatches.mockReturnValue({ [user1.id]: user1, [user2.id]: user2 });
+    await callStudio("reveal_request", m1, firestore, false, "Wednesday");
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+    expect(mockCreate.mock.calls[0][0].parameters.photo).toEqual("other_no_photo");
+    expect(mockCreate.mock.calls[1][0].parameters.photo).toEqual("self_no_photo");
+});
+
+it("callStudio - userB photo", async () => {
+    user2.photo = "photoUrl";
+    firestore.getUsersForMatches.mockReturnValue({ [user1.id]: user1, [user2.id]: user2 });
+    await callStudio("reveal_request", m1, firestore, false, "Wednesday");
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+    expect(mockCreate.mock.calls[0][0].parameters.photo).toEqual("self_no_photo");
+    expect(mockCreate.mock.calls[1][0].parameters.photo).toEqual("other_no_photo");
+});
+
+it("callStudio - both photo", async () => {
+    user1.photo = "photoUrl";
+    user2.photo = "photoUrl";
+    firestore.getUsersForMatches.mockReturnValue({ [user1.id]: user1, [user2.id]: user2 });
+    await callStudio("reveal_request", m1, firestore, false, "Wednesday");
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+    expect(mockCreate.mock.calls[0][0].parameters.photo).toEqual("both_photo");
+    expect(mockCreate.mock.calls[1][0].parameters.photo).toEqual("both_photo");
 });
 
 it("saveReveal Y, other pending", async () => {
