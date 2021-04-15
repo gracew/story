@@ -73,11 +73,17 @@ const steps: OnboardingMetadata[] = [
     label: "I am interested in...",
     type: OnboardingType.MULTIPLE_CHOICE,
     options: ["Men", "Women", "Everyone"],
+    getValue(user: Record<string, any>): string | undefined {
+      return user.genderPreference?.value;
+    }
   },
   {
     id: "location",
     label: "I live in...",
     type: OnboardingType.LOCATION,
+    getValue(user: Record<string, any>): string | undefined {
+      return user.location?.value;
+    }
   },
   {
     id: "interests",
@@ -96,6 +102,9 @@ const steps: OnboardingMetadata[] = [
     label: "What are 3 fun facts about you?",
     type: OnboardingType.FREE_TEXT,
     description: FUN_FACTS_DESCRIPTION,
+    getValue(user: Record<string, any>): string | undefined {
+      return user.funFacts?.value;
+    }
   },
   {
     id: "social",
@@ -108,7 +117,7 @@ const steps: OnboardingMetadata[] = [
 function Onboarding() {
   const { step } = useParams();
   const history = useHistory();
-  const [userPrefs, setUserPrefs] = useState<Record<string, any>>();
+  const [maybeUserPrefs, setMaybeUserPrefs] = useState<Record<string, any> | typeof NotFound>();
   const [userId, setUserId] = useState<string>();
   const [phone, setPhone] = useState<string>();
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -121,21 +130,19 @@ function Onboarding() {
 
   useEffect(() => {
     (async () => {
-      const fetched = await getPreferences();
-      if (fetched !== NotFound) {
-        setUserPrefs(fetched);
-      }
+      setMaybeUserPrefs(await getPreferences());
     })().catch(console.error)
   }, [])
 
   useEffect(() => {
-    if (!userPrefs) {
+    if (!maybeUserPrefs || maybeUserPrefs === NotFound) {
       return;
     }
+    const userPrefs = maybeUserPrefs;
     const existingValueByStepId = Object.fromEntries(
       steps.map(step => [step.id, getExistingValue(userPrefs, step)]));
     setFormData(formData => ({...formData, ...existingValueByStepId}));
-  }, [userPrefs]);
+  }, [maybeUserPrefs]);
 
   useEffect(() => {
     if (userId) {
@@ -186,9 +193,11 @@ function Onboarding() {
     return complete[stepId] === false || value === undefined || value === "";
   }
 
-  if (!userPrefs) {
+  if (!maybeUserPrefs) {
     return <CenteredSpin />;
-  } else if (userPrefs.onboardingComplete) {
+  }
+
+  if (maybeUserPrefs !== NotFound && maybeUserPrefs.onboardingComplete) {
     history.push("/profile");
   }
 

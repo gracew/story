@@ -14,4 +14,3 @@ export async function getPreferences(userId?: string): Promise<Record<string, an
     }
   }
 }
-
