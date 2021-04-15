@@ -1,5 +1,4 @@
 import { UserOutlined } from "@ant-design/icons";
-import { Image } from "antd";
 import React, { FunctionComponent } from "react";
 import "./ProfileCard.css";
 
@@ -16,9 +15,8 @@ const ProfileCard: FunctionComponent<ProfileCardProps> = (props) => {
     <div className="profile-card">
       <div className="profile-card-top">
         <div className="profile-photo-container">
-          {props.photoUrl && <Image
-            src={props.photoUrl}
-            preview={{ mask: "" }}
+          {props.photoUrl && <div
+            style={{backgroundImage: `url(${props.photoUrl})`}}
             className="profile-photo"
           />}
           {!props.uploading && !props.photoUrl && <UserOutlined className="profile-photo-placeholder" />}
