@@ -27,7 +27,6 @@ export interface IUser {
     whereDidYouHearAboutUs?: string,
     birthdate?: ICalendarDate,
     pronouns?: string,
-    connectionType?: string,
     interests?: string,
     social?: string,
     /** A value of undefined is equivalent to true (these are users who signed up through typeform). */

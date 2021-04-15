@@ -203,7 +203,6 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
     whereDidYouHearAboutUs,
     birthdate,
     pronouns,
-    connectionType,
     interests,
     social,
   } = await getUser(data, context)
@@ -225,7 +224,6 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
     whereDidYouHearAboutUs,
     birthdate,
     pronouns,
-    connectionType,
     interests,
     social,
     location: {

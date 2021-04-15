@@ -131,7 +131,7 @@ function Onboarding() {
   useEffect(() => {
     (async () => {
       setMaybeUserPrefs(await getPreferences());
-    })().catch(console.error)
+    })();
   }, [])
 
   useEffect(() => {
