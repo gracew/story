@@ -3,10 +3,8 @@ import * as functions from "firebase-functions";
 import { CallableContext } from "firebase-functions/lib/providers/https";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
-import { Firestore, IUser } from "./firestore";
-import { welcome } from "./smsCopy";
+import { Firestore } from "./firestore";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
-import { sendSms } from "./twilio";
 
 // required fields
 const REQUIRED_ONBOARDING_FIELDS = [
@@ -104,10 +102,10 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
       await notifyNewSignup(allData);
       if (user.phone.startsWith("+1")) {
         // US or Canada
-        await sendSms({
+        /*await sendSms({
           body: welcome(user as IUser),
           to: user.phone,
-        });
+        });*/
       }
     }
   }
