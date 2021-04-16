@@ -128,6 +128,7 @@ def main(week):
         user_b_id = idx_to_id[y]
         matched_ids[user_a_id] += 1
         matched_ids[user_b_id] += 1
+        av = find_availability(possible_matches, user_a_id, user_b_id)
         out_w.writerow([names[user_a_id], names[user_b_id], user_a_id, user_b_id, json.dumps(av)])
 
     print("allowed matches: %d" %  final)
