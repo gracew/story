@@ -54,6 +54,9 @@ export const sendAvailabilityTexts = functions.pubsub
             .where("interactions.requested", "==", false)
             .get();
         const userRefs = availability.docs.map(doc => admin.firestore().collection("users").doc(doc.id));
+        if (userRefs.length === 0) {
+            return;
+        }
         const users = await admin.firestore().getAll(...userRefs);
         const batch = admin.firestore().batch();
         availability.docs.forEach(doc => batch.update(doc.ref, { "interactions.requested": true }))
@@ -94,6 +97,9 @@ async function reminderHelper(timezone: string) {
         .where("interactions.reminded", "==", false)
         .get();
     const userRefs = availability.docs.map(a => admin.firestore().collection("users").doc(a.id));
+    if (userRefs.length === 0) {
+        return;
+    }
     const users = await admin.firestore().getAll(...userRefs);
     const usersTimezone = users.filter(u => u.get("timezone") === timezone);
 
