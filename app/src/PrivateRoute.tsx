@@ -12,7 +12,6 @@ const PrivateRoute: FunctionComponent<RouteProps> = (props) => {
     setUserLoading(false);
   });
 
-
   function childNode() {
     if (userLoading) {
       return <CenteredSpin />;
@@ -20,7 +19,6 @@ const PrivateRoute: FunctionComponent<RouteProps> = (props) => {
     if (firebase.auth().currentUser) {
       return props.children;
     }
-    console.log(location.pathname);
     if (location.pathname === "/signup" || location.pathname === "/join") {
       firebase.analytics().logEvent(`signup_view`);
     }
