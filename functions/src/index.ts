@@ -10,6 +10,7 @@ import { addUserToCall, call1MinWarning, call5MinWarning, callUser, conferenceSt
 import { createMatches, createSchedulingRecords, processBulkSmsCsv, sendAvailabilityReminderCT, sendAvailabilityReminderET, sendAvailabilityReminderMT, sendAvailabilityReminderPT, sendAvailabilityTexts, sendMatchNotificationTexts } from "./csv";
 import { analyzeCollection, cancelMatch, createMatch } from "./retool";
 import { bipartiteMatches, potentialMatches, remainingMatches } from "./scheduling";
+import { prompts } from "./smsCopy";
 import { client, sendSms } from "./twilio";
 import { registerUser, saveAvailability } from "./typeform";
 
@@ -152,3 +153,22 @@ Body: ${message.body}`
     response.end();
   }
 );
+
+export const copyWeeklyTemplate = functions.pubsub
+  .schedule("every sunday 1:00")
+  .onRun(async (context) => {
+    const week = moment().startOf("week").format("YYYY-MM-DD");
+    const defaultTemplate = await admin.firestore().collection("smsCopy").doc("default").get();
+    const prompt = prompts[Math.floor(Math.random() * prompts.length)];
+    const data = {
+      ...defaultTemplate.data(),
+      reminder: [
+        `Hi FIRST_NAME! Just a reminder that you'll be speaking with MATCH_NAME in an hour. Here's one idea to get the conversation started: "${prompt}"`
+      ],
+      reminderNoPhoto: [
+        "Hi FIRST_NAME! Just a reminder that you'll be speaking with MATCH_NAME in an hour. We'll swap photos after the call, so make sure to add yours at https://storydating.com/login",
+        `Here's one idea to get the conversation started: "${prompt}"`,
+      ],
+    }
+    await admin.firestore().collection("smsCopy").doc(week).set(data);
+  });
