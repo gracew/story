@@ -1,5 +1,6 @@
 import { CopyOutlined } from "@ant-design/icons";
 import { Button } from "antd";
+import firebase from "firebase";
 import "firebase/remote-config";
 import React from "react";
 import balloons from '../assets/balloons.svg';
@@ -22,6 +23,7 @@ function ReferralCard(props: ReferralCardProps) {
   const link = "https://story.dating/r?r=" + props.referrerId;
 
   function copyLink() {
+    firebase.analytics().logEvent(`referral_copy`);
     return navigator.clipboard.writeText(link);
   }
 
@@ -46,18 +48,34 @@ function ReferralCard(props: ReferralCardProps) {
             Copy the link above to share or share via any of the platforms below.
           </div>
           <div className="social-buttons">
-            <a href={"fb-messenger://share?link=" + link}>
+            <Button
+              type="link"
+              href={"fb-messenger://share?link=" + link}
+              onClick={() => firebase.analytics().logEvent(`referral_messenger`)}
+            >
               <img src={socials} alt="messenger" />
-            </a>
-            <a href={"whatsapp://send?text=Hey, I have an invite to Story Dating and want you to join. It's a voice-first dating experience that focuses on talking, not texting. Here's the link! " + link}>
+            </Button>
+            <Button
+              type="link"
+              href={"whatsapp://send?text=Hey, I have an invite to Story Dating and want you to join. It's a voice-first dating experience that focuses on talking, not texting. Here's the link! " + link}
+              onClick={() => firebase.analytics().logEvent(`referral_whatsapp`)}
+            >
               <img src={socials1} alt="whatsapp" />
-            </a>
-            <a href={"twitter://post?message=I found out about Story Dating recently - it's a voice-first dating experience that focuses on talking, not texting. Use my invite link if you're looking for a different way to date! " + link}>
+            </Button>
+            <Button
+              type="link"
+              href={"twitter://post?message=I found out about Story Dating recently - it's a voice-first dating experience that focuses on talking, not texting. Use my invite link if you're looking for a different way to date! " + link}
+              onClick={() => firebase.analytics().logEvent(`referral_twitter`)}
+            >
               <img src={socials2} alt="twitter" />
-            </a>
-            <a href={"sms:&body=Hey, I have an invite to Story Dating and want you to join. It's a voice-first dating experience that focuses on talking, not texting. Here's the link! " + link}>
+            </Button>
+            <Button
+              type="link"
+              href={"sms:&body=Hey, I have an invite to Story Dating and want you to join. It's a voice-first dating experience that focuses on talking, not texting. Here's the link! " + link}
+              onClick={() => firebase.analytics().logEvent(`referral_sms`)}
+            >
               <img src={socials3} alt="sms" />
-            </a>
+            </Button>
           </div>
         </div>}
     </div>

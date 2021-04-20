@@ -48,3 +48,8 @@
   display: flex;
   justify-content: space-between;
 }
+
+.social-buttons .ant-btn {
+  height: 100%;
+  padding: 0;
+}
