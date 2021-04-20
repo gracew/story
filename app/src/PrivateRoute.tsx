@@ -12,16 +12,26 @@ const PrivateRoute: FunctionComponent<RouteProps> = (props) => {
     setUserLoading(false);
   });
 
-  const redirectProps = {
-    pathname: "/login",
-    search: window.location.search,
-    state: { redirect: location.pathname },
+  function childNode() {
+    if (userLoading) {
+      return <CenteredSpin />;
+    }
+    if (firebase.auth().currentUser) {
+      return props.children;
+    }
+    if (location.pathname === "/signup" || location.pathname === "/join") {
+      firebase.analytics().logEvent(`signup_view`);
+    }
+
+    const redirectProps = {
+      pathname: "/login",
+      search: window.location.search,
+      state: { redirect: location.pathname },
+    }
+    return <Redirect to={redirectProps} />;
   }
-  return <Route path={props.path} render={props2 => userLoading
-    ? <CenteredSpin />
-    : firebase.auth().currentUser
-      ? props.children
-      : <Redirect to={redirectProps} />} />;
+
+  return <Route path={props.path} render={props2 => childNode()} />;
 }
 
 export default PrivateRoute;
