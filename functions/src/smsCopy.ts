@@ -3,7 +3,7 @@ import * as moment from "moment-timezone";
 import { IMatch, IUser } from "./firestore";
 
 export function welcome(user: IUser) {
-  return `Hi ${user.firstName}, thanks for joining Story Dating! I'm Grace and I founded Story because I believe that magic happens when people ✨ like you ✨ choose talking over swiping. You're currently on the waitlist, but I'll text you as soon as I have some matches for you. In the meantime, text any questions to me here or reply with "stop" if you ever decide to pause using Story Dating.
+    return `Hi ${user.firstName}, thanks for joining Story Dating! I'm Grace and I founded Story because I believe that magic happens when people ✨ like you ✨ choose talking over swiping. You're currently on the waitlist, but I'll text you as soon as I have some matches for you. In the meantime, text any questions to me here or reply with "stop" if you ever decide to pause using Story Dating.
 
 Every friend that you recruit bumps you higher on the waitlist, so share this link with 1 friend now: https://storydating.com/r?r=${user.id}`;
 }
@@ -159,3 +159,13 @@ export function chatIntro(userA: IUser, userB: IUser) {
 }
 
 export const chatExpiration = "This chat will expire at midnight! If you would like to keep chatting, we suggest swapping numbers :)";
+
+export const prompts = [
+    "What's the most obscure subject that you know a lot about?",
+    "What's the longest you've ever gone without using your phone?",
+    "What’s your most used emoji? What do you think that says about your personality?",
+    "What do you spend more money on than most people?",
+    "What’s something you are looking forward to in the next month?",
+    "Where do you go when you need some inspiration?",
+    "What's your favorite item of clothing? Why?"
+]
