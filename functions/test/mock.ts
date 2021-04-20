@@ -4,6 +4,7 @@ import * as uuid from "uuid";
 import { IMatch, IUser } from "../src/firestore";
 
 export const firestore = {
+    upcomingMatchesForUser: jest.fn(),
     getUser: jest.fn(),
     createMatch: jest.fn(),
     getUsersForMatches: jest.fn(),

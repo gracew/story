@@ -53,7 +53,7 @@ export interface IMatch {
         warned1Min?: boolean;
         revealRequested?: boolean;
     },
-    mode?: string;
+    mode?: "video" | "phone";
 
     // used for phone matches
     twilioSid?: string;
@@ -87,9 +87,11 @@ export class Firestore {
         return match.data() as IMatch | undefined;
     }
 
-    public createMatch(match: Partial<IMatch>) {
-        const ref = admin.firestore().collection("matches").doc()
-        return ref.set({ ...match, id: ref.id });
+    public async createMatch(match: Omit<IMatch, "id">): Promise<IMatch> {
+        const ref = admin.firestore().collection("matches").doc();
+        const completeMatch = { ...match, id: ref.id };
+        await ref.set(completeMatch);
+        return completeMatch;
     }
 
     public updateMatch(id: string, update: Partial<IMatch>) {
@@ -109,15 +111,20 @@ export class Firestore {
         return match.empty ? undefined : match.docs[0].data() as IMatch;
     }
 
-    public async nextMatchForUser(id: string): Promise<IMatch | undefined> {
-        const latestMatchOther = await admin.firestore().collection("matches")
-            .where("user_ids", "array-contains", id)
+    // ordered by meeting time, ascended, where all matches have a meeting time after now.
+    public async upcomingMatchesForUser(userId: string): Promise<IMatch[]> {
+        const querySnapshot = await admin.firestore().collection("matches")
+          .where("user_ids", "array-contains", userId)
             .where("canceled", "==", false)
+          // created_at is actually their meeting time, not the time the record was created
             .where("created_at", ">=", new Date())
             .orderBy("created_at", "asc")
-            .limit(1)
             .get();
-        return latestMatchOther.empty ? undefined : latestMatchOther.docs[0].data() as IMatch;
+        return querySnapshot.docs.map(snap => snap.data() as IMatch);
+    }
+
+    public async nextMatchForUser(userId: string): Promise<IMatch | undefined> {
+        return (await this.upcomingMatchesForUser(userId))[0];
     }
 
     public async getUsersForMatches(matches: IMatch[]): Promise<Record<string, IUser>> {

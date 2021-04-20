@@ -5,6 +5,10 @@ import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import { Firestore } from "./firestore";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
+import {GetUpcomingMatches} from "../../api/responses";
+import {listUpcomingMatchViewsForUser} from "./matches";
+
+const firestore = new Firestore();
 
 // required fields
 const REQUIRED_ONBOARDING_FIELDS = [
@@ -167,12 +171,16 @@ export const getPublicProfile = functions.https.onCall(async (data, context) => 
   };
 });
 
-async function getUser(data: any, context: CallableContext) {
+// either returns the logged in user, or allows a special admin user to retrieve information on any user they want
+// via `userId` request data parameter.
+//
+// throws an API error if there's no user logged in
+async function requireLoggedInUser(data: any, context: CallableContext) {
   if (!context.auth || !context.auth.token.phone_number) {
     throw new functions.https.HttpsError("unauthenticated", "authentication required");
   }
-  const firestore = new Firestore();
-  const userPromise = data.userId && context.auth.uid === "EfR3VzvvQHVAE1DbtQbCE546Q1F3"
+  // TODO: do we still need this? i didn't find a user with this ID in either prod or staging
+  const userPromise = data?.userId && context.auth.uid === "EfR3VzvvQHVAE1DbtQbCE546Q1F3"
     ? firestore.getUser(data.userId)
     : firestore.getUserByPhone(context.auth.token.phone_number);
   const user = await userPromise;
@@ -203,7 +211,7 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
     pronouns,
     interests,
     social,
-  } = await getUser(data, context)
+  } = await requireLoggedInUser(data, context)
   const prefs = await admin
     .firestore()
     .collection("preferences")
@@ -241,7 +249,7 @@ export const getPreferences = functions.https.onCall(async (data, context) => {
 });
 
 export const savePreferences = functions.https.onCall(async (data, context) => {
-  const user = await getUser(data, context);
+  const user = await requireLoggedInUser(data, context);
 
   const {
     photo,
@@ -314,9 +322,24 @@ function timezone(location: string) {
   return map[location];
 }
 
+export const getUpcomingMatches = functions.https.onCall(async (data, context): Promise<GetUpcomingMatches> => {
+  const user = await requireLoggedInUser(data, context);
+  const matchViews = await listUpcomingMatchViewsForUser(user);
+  return {
+    upcomingMatches: matchViews.map(matchView => {
+      return {
+        firstName: matchView.firstName,
+        photo: matchView.photo,
+        funFacts: matchView.funFacts,
+        meetingTime: matchView.meetingTime.toJSON(),
+        mode: matchView.mode,
+      };
+    }),
+  };
+});
+
 export const getVideoAvailability = functions.https.onCall(async (data, context) => {
-  const user = await getUser(data, context);
-  const firestore = new Firestore();
+  const user = await requireLoggedInUser(data, context);
   const match = await firestore.getMatch(data.matchId);
   if (!match) {
     throw new functions.https.HttpsError("not-found", "unknown match");
@@ -342,7 +365,7 @@ export const getVideoAvailability = functions.https.onCall(async (data, context)
 });
 
 export const saveVideoAvailability = functions.https.onCall(async (data, context) => {
-  const user = await getUser(data, context);
+  const user = await requireLoggedInUser(data, context);
   if (!data.matchId) {
     throw new functions.https.HttpsError("invalid-argument", "match id required");
   }

@@ -139,7 +139,9 @@ export const createMatches = functions.storage
 
         const contents = fs.readFileSync(tempFilePath).toString();
         const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "time"] })
-        await Promise.all(rows.map(data => createMatchFirestore(data, new Firestore())));
+        await Promise.all(rows.map(data => {
+            createMatchFirestore(data as unknown as CreateMatchFirestoreParams, new Firestore())
+        }));
     });
 
 
@@ -183,7 +185,21 @@ export const sendMatchNotificationTexts = functions.pubsub
         )
     });
 
-export async function createMatchFirestore(data: any, firestore: Firestore) {
+export interface CreateMatchFirestoreParams {
+    userAId: string,
+    userBId: string,
+    time: string,
+    canceled?: boolean,
+    mode?: "phone" | "video"
+}
+
+// TODO: validate that the time is one of the times that we can have match meetings?
+function parseTime(s: string): admin.firestore.Timestamp {
+    const secs = Math.trunc(new Date(s).getTime() / 1000);
+    return new admin.firestore.Timestamp(secs, 0);
+}
+
+export async function createMatchFirestore(data: CreateMatchFirestoreParams, firestore: Firestore): Promise<IMatch | undefined> {
     const userA = await firestore.getUser(data.userAId);
     const userB = await firestore.getUser(data.userBId);
 
@@ -200,7 +216,7 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
         user_b_id: data.userBId,
         user_ids: [data.userAId, data.userBId],
         joined: {},
-        created_at: new admin.firestore.Timestamp(new Date(data.time).getTime() / 1000, 0),
+        created_at: parseTime(data.time),
         canceled: data.canceled || false,
         interactions: {
             notified: false,
@@ -214,6 +230,5 @@ export async function createMatchFirestore(data: any, firestore: Firestore) {
         },
         mode: data.mode || "phone",
     };
-    await firestore.createMatch(match);
-    return match;
+    return await firestore.createMatch(match);
 }

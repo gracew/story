@@ -45,6 +45,9 @@ function App() {
   if (process.env.NODE_ENV === "development" && !process.env.REACT_APP_STAGING_DEV) {
     firebase.functions().useEmulator("localhost", 5001);
     firebase.auth().useEmulator("http://localhost:9099");
+    // @ts-ignore -- this is really handy for debugging, since we can access window.firebase from
+    // the browser console
+    window.firebase = firebase;
   }
   firebase.remoteConfig().fetchAndActivate();
   firebase.analytics();

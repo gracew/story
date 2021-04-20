@@ -7,3 +7,6 @@ typings/
 node_modules/
 
 .runtimeconfig.json
+
+# local development data
+.localdata
