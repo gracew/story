@@ -364,9 +364,9 @@ export const saveVideoAvailability = functions.https.onCall(async (data, context
   if (match && Object.keys(match.videoAvailability!).length === 2) {
     const otherUserId = match.user_a_id === user.id ? match.user_b_id : match.user_a_id;
     const otherUser = await firestore.getUser(otherUserId);
-    const maybeCommon = await videoNextStep(user, otherUser!, match, sendSms);
+    const maybeCommon = await videoNextStep(user, otherUser!, match);
     if (maybeCommon) {
-      // create match
+      // create new match in database
       await createMatchFirestore({
         userAId: user.id,
         userBId: otherUserId,
@@ -378,16 +378,16 @@ export const saveVideoAvailability = functions.https.onCall(async (data, context
   return {};
 });
 
-export async function videoNextStep(userA: IUser, userB: IUser, match: IMatch, sendSmsFn: (opts: any) => Promise<any>) {
+export async function videoNextStep(userA: IUser, userB: IUser, match: IMatch) {
   const common = firstCommonAvailability(match.videoAvailability![match.user_a_id].selectedTimes, match.videoAvailability![match.user_b_id].selectedTimes);
   if (common) {
-    // notify of the video call and create new match in database
+    // notify of the video call and return common time
     await Promise.all([
-      sendSmsFn({
+      sendSms({
         body: videoMatchNotification(userA, userB, common),
         to: userA.phone,
       }),
-      sendSmsFn({
+      sendSms({
         body: videoMatchNotification(userB, userA, common),
         to: userB.phone,
       }),
@@ -398,11 +398,11 @@ export async function videoNextStep(userA: IUser, userB: IUser, match: IMatch, s
   if (swapNumbers(match.videoAvailability!)) {
     // send texts to both users
     await Promise.all([
-      sendSmsFn({
+      sendSms({
         body: videoFallbackSwapNumbers(userA, userB),
         to: userA.phone,
       }),
-      sendSmsFn({
+      sendSms({
         body: videoFallbackSwapNumbers(userB, userA),
         to: userB.phone,
       }),
@@ -412,11 +412,11 @@ export async function videoNextStep(userA: IUser, userB: IUser, match: IMatch, s
 
   // connect in text chat
   await Promise.all([
-    sendSmsFn({
+    sendSms({
       body: videoFallbackTextChat(userA, userB),
       to: userA.phone,
     }),
-    sendSmsFn({
+    sendSms({
       body: videoFallbackTextChat(userB, userA),
       to: userB.phone,
     }),
