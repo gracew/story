@@ -359,50 +359,67 @@ export const saveVideoAvailability = functions.https.onCall(async (data, context
     .doc(data.matchId)
     .update(`videoAvailability.${user.id}`, { selectedTimes: data.selectedTimes, swapNumbers: data.swapNumbers });
 
-  const firestore = new Firestore();
-  const match = await firestore.getMatch(data.matchId);
-  if (match && Object.keys(match.videoAvailability!).length === 2) {
+  // check if we have already notified the users of the next step. this is to prevent additional texts if someone 
+  // submits the availability form again
+  const match = await admin.firestore().runTransaction(async txn => {
+    const matchRef = admin.firestore().collection("matches").doc(data.matchId);
+    const matchDoc = await txn.get(matchRef);
+    const match = matchDoc.data() as IMatch;
+    if (!match || !match.videoAvailability || Object.keys(match.videoAvailability).length !== 2) {
+      return;
+    }
+    if (match.interactions.nextStepHandled === true) {
+      console.info("already handled next step for match: " + match.id)
+      return;
+    }
+    await txn.update(matchRef, "interactions.nextStepHandled", true);
+    return match;
+  });
+  if (match) {
     const otherUserId = match.user_a_id === user.id ? match.user_b_id : match.user_a_id;
+    const firestore = new Firestore();
     const otherUser = await firestore.getUser(otherUserId);
-    const maybeCommon = await videoNextStep(user, otherUser!, match);
-    if (maybeCommon) {
+    const maybeNext = await videoNextStep(user, otherUser!, match, sendSms);
+    if (maybeNext) {
       // create new match in database
-      await createMatchFirestore({
-        userAId: user.id,
-        userBId: otherUserId,
-        time: maybeCommon,
-        mode: "video",
-      }, firestore);
+      await createMatchFirestore(maybeNext, firestore);
     }
   }
   return {};
 });
 
-export async function videoNextStep(userA: IUser, userB: IUser, match: IMatch) {
-  const common = firstCommonAvailability(match.videoAvailability![match.user_a_id].selectedTimes, match.videoAvailability![match.user_b_id].selectedTimes);
+export async function videoNextStep(userA: IUser, userB: IUser, match: IMatch, sendSmsFn: (opts: any) => Promise<any>) {
+  const availabilityA = match.videoAvailability![match.user_a_id];
+  const availabilityB = match.videoAvailability![match.user_b_id];
+  const common = firstCommonAvailability(availabilityA.selectedTimes, availabilityB.selectedTimes);
   if (common) {
     // notify of the video call and return common time
     await Promise.all([
-      sendSms({
+      sendSmsFn({
         body: videoMatchNotification(userA, userB, common),
         to: userA.phone,
       }),
-      sendSms({
+      sendSmsFn({
         body: videoMatchNotification(userB, userA, common),
         to: userB.phone,
       }),
     ]);
-    return common;
+    return {
+      userAId: userA.id,
+      userBId: userB.id,
+      time: common,
+      mode: "video",
+    };
   }
 
-  if (swapNumbers(match.videoAvailability!)) {
+  if (availabilityA.swapNumbers && availabilityB.swapNumbers) {
     // send texts to both users
     await Promise.all([
-      sendSms({
+      sendSmsFn({
         body: videoFallbackSwapNumbers(userA, userB),
         to: userA.phone,
       }),
-      sendSms({
+      sendSmsFn({
         body: videoFallbackSwapNumbers(userB, userA),
         to: userB.phone,
       }),
@@ -412,21 +429,17 @@ export async function videoNextStep(userA: IUser, userB: IUser, match: IMatch) {
 
   // connect in text chat
   await Promise.all([
-    sendSms({
+    sendSmsFn({
       body: videoFallbackTextChat(userA, userB),
       to: userA.phone,
     }),
-    sendSms({
+    sendSmsFn({
       body: videoFallbackTextChat(userB, userA),
       to: userB.phone,
     }),
   ]);
   await createSmsChatHelper(userA, userB, match);
   return;
-}
-
-export function swapNumbers(videoAvailability: Record<string, any>) {
-  return Object.values(videoAvailability).reduce((acc, av) => av.swapNumbers && acc, true);
 }
 
 export function firstCommonAvailability(a1: string[], a2: string[]) {
