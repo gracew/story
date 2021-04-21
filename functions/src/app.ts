@@ -361,7 +361,7 @@ export const saveVideoAvailability = functions.https.onCall(async (data, context
 
   // check if we have already notified the users of the next step. this is to prevent additional texts if someone 
   // submits the availability form again
-  const match = await admin.firestore().runTransaction(async txn => {
+  const maybeMatch = await admin.firestore().runTransaction(async txn => {
     const matchRef = admin.firestore().collection("matches").doc(data.matchId);
     const matchDoc = await txn.get(matchRef);
     const match = matchDoc.data() as IMatch;
@@ -375,11 +375,11 @@ export const saveVideoAvailability = functions.https.onCall(async (data, context
     await txn.update(matchRef, "interactions.nextStepHandled", true);
     return match;
   });
-  if (match) {
-    const otherUserId = match.user_a_id === user.id ? match.user_b_id : match.user_a_id;
+  if (maybeMatch) {
+    const otherUserId = maybeMatch.user_a_id === user.id ? maybeMatch.user_b_id : maybeMatch.user_a_id;
     const firestore = new Firestore();
     const otherUser = await firestore.getUser(otherUserId);
-    const maybeNext = await videoNextStep(user, otherUser!, match, sendSms);
+    const maybeNext = await videoNextStep(user, otherUser!, maybeMatch, sendSms);
     if (maybeNext) {
       // create new match in database
       await createMatchFirestore(maybeNext, firestore);
