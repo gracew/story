@@ -3,8 +3,12 @@ import * as functions from "firebase-functions";
 import { CallableContext } from "firebase-functions/lib/providers/https";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
-import { Firestore } from "./firestore";
+import { createSmsChatHelper } from "./calls";
+import { createMatchFirestore } from "./csv";
+import { Firestore, IMatch, IUser } from "./firestore";
+import { videoFallbackSwapNumbers, videoFallbackTextChat, videoMatchNotification } from "./smsCopy";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
+import { sendSms } from "./twilio";
 
 // required fields
 const REQUIRED_ONBOARDING_FIELDS = [
@@ -354,5 +358,83 @@ export const saveVideoAvailability = functions.https.onCall(async (data, context
     .collection("matches")
     .doc(data.matchId)
     .update(`videoAvailability.${user.id}`, { selectedTimes: data.selectedTimes, swapNumbers: data.swapNumbers });
+
+  const firestore = new Firestore();
+  const match = await firestore.getMatch(data.matchId);
+  if (match && Object.keys(match.videoAvailability!).length === 2) {
+    const otherUserId = match.user_a_id === user.id ? match.user_b_id : match.user_a_id;
+    const otherUser = await firestore.getUser(otherUserId);
+    const maybeCommon = await videoNextStep(user, otherUser!, match, sendSms);
+    if (maybeCommon) {
+      // create match
+      await createMatchFirestore({
+        userAId: user.id,
+        userBId: otherUserId,
+        time: maybeCommon,
+        mode: "video",
+      }, firestore);
+    }
+  }
   return {};
 });
+
+export async function videoNextStep(userA: IUser, userB: IUser, match: IMatch, sendSmsFn: (opts: any) => Promise<any>) {
+  const common = firstCommonAvailability(match.videoAvailability![match.user_a_id].selectedTimes, match.videoAvailability![match.user_b_id].selectedTimes);
+  if (common) {
+    // notify of the video call and create new match in database
+    await Promise.all([
+      sendSmsFn({
+        body: videoMatchNotification(userA, userB, common),
+        to: userA.phone,
+      }),
+      sendSmsFn({
+        body: videoMatchNotification(userB, userA, common),
+        to: userB.phone,
+      }),
+    ]);
+    return common;
+  }
+
+  if (swapNumbers(match.videoAvailability!)) {
+    // send texts to both users
+    await Promise.all([
+      sendSmsFn({
+        body: videoFallbackSwapNumbers(userA, userB),
+        to: userA.phone,
+      }),
+      sendSmsFn({
+        body: videoFallbackSwapNumbers(userB, userA),
+        to: userB.phone,
+      }),
+    ]);
+    return;
+  }
+
+  // connect in text chat
+  await Promise.all([
+    sendSmsFn({
+      body: videoFallbackTextChat(userA, userB),
+      to: userA.phone,
+    }),
+    sendSmsFn({
+      body: videoFallbackTextChat(userB, userA),
+      to: userB.phone,
+    }),
+  ]);
+  await createSmsChatHelper(userA, userB, match);
+  return;
+}
+
+export function swapNumbers(videoAvailability: Record<string, any>) {
+  return Object.values(videoAvailability).reduce((acc, av) => av.swapNumbers && acc, true);
+}
+
+export function firstCommonAvailability(a1: string[], a2: string[]) {
+  if (a1.length === 0 || a2.length === 0) {
+    return undefined;
+  }
+  const set = new Set(a1.map(s => new Date(s).getTime()));
+  const common = a2.filter(s => set.has(new Date(s).getTime()));
+  common.sort((a, b) => a < b ? -1 : 1);
+  return common[0]; // this returns undefined if common has length 0
+}
