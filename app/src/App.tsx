@@ -16,6 +16,7 @@ import PublicProfile from "./profile/PublicProfile";
 import VideoAvailability from "./scheduling/VideoAvailability";
 import Terms from "./Terms";
 import VideoRedirect from "./VideoRedirect";
+import Matches from "./matches/Matches";
 
 const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://storydating.com")
   ? {
@@ -74,6 +75,10 @@ function App() {
               <Header />
               <PublicProfile />
             </Route>
+            <PrivateRoute path={["/m", "/matches"]}>
+              <Header showLogout={true} />
+              <Matches />
+            </PrivateRoute>
             <PrivateRoute path="/m/:matchId">
               <Header showLogout={true} />
               <VideoAvailability />
