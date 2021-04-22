@@ -98,13 +98,9 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
     await firestore.saveUser(user);
     if (!wasOnboardingComplete && user.onboardingComplete) {
       await notifyNewSignup(user);
+      // US and Canada
       if (user.phone.startsWith("+1")) {
-        // TODO: temporarily disabled due to #T-67 doesn't happen anymore, we can turn this back on
-        //       after verifying this doesn't happen anymore
-        /*await sendSms({
-          body: welcome(user as IUser),
-          to: user.phone,
-        });*/
+        await sendSms({body: welcome(user as IUser), to: user.phone});
       }
     }
   }
