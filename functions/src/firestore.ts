@@ -79,9 +79,8 @@ export interface IMatch {
 }
 
 export class Firestore {
-    public async saveUser(user: IUser | IPreOnboardedUser, updates: Partial<IUser>): Promise<IUser | IPreOnboardedUser> {
-        await admin.firestore().collection("users").doc(user.id).update(updates);
-        return {...user, ...updates};
+    public async saveUser(user: IUser | IPreOnboardedUser): Promise<void> {
+        await admin.firestore().collection("users").doc(user.id).update(user);
     }
 
     public async setPreferences(userId: string, prefs: IPreferences): Promise<void> {

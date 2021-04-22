@@ -3,7 +3,7 @@ import * as functions from "firebase-functions";
 import { CallableContext } from "firebase-functions/lib/providers/https";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
-import {Firestore, IPreferences, IPreOnboardedUser, IUser} from "./firestore";
+import {Firestore, IPreferences, IUser} from "./firestore";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
 import { isEmpty } from "lodash";
 
@@ -22,9 +22,8 @@ const REQUIRED_ONBOARDING_FIELDS = [
 ] as const;
 
 // just checks for existence of fields - doesn't validate values
-function checkOnboardingComplete(user: IPreOnboardedUser, updates: Partial<IUser>) {
-  const allAttrs = { ...user, ...updates };
-  return REQUIRED_ONBOARDING_FIELDS.every(k => allAttrs[k] !== undefined);
+function checkOnboardingComplete(user: Partial<IUser>) {
+  return REQUIRED_ONBOARDING_FIELDS.every(k => user[k] !== undefined);
 }
 
 function parseOnboardingForm(data: Record<string, any>): [Partial<IUser> | undefined, Partial<IPreferences> | undefined] {
@@ -93,10 +92,12 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
 
   const [userUpdate, preferencesUpdate] = parseOnboardingForm(data);
   if (userUpdate) {
-    userUpdate.onboardingComplete = checkOnboardingComplete(user, userUpdate);
-    const newUser = await firestore.saveUser(user, userUpdate);
-    if (!user.onboardingComplete && newUser.onboardingComplete) {
-      await notifyNewSignup(newUser);
+    const wasOnboardingComplete = user.onboardingComplete;
+    Object.assign(user, userUpdate);
+    user.onboardingComplete = checkOnboardingComplete(user);
+    await firestore.saveUser(user);
+    if (!wasOnboardingComplete && user.onboardingComplete) {
+      await notifyNewSignup(user);
       if (user.phone.startsWith("+1")) {
         // TODO: temporarily disabled due to #T-67 doesn't happen anymore, we can turn this back on
         //       after verifying this doesn't happen anymore
