@@ -108,7 +108,7 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
     }
   }
   if (preferencesUpdate) {
-    await firestore.createPreferences(user.id, preferencesUpdate);
+    await firestore.setPreferences(user.id, preferencesUpdate);
   }
   return { id: user.id, phone: user.phone };
 });

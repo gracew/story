@@ -84,8 +84,7 @@ export class Firestore {
         return {...user, ...updates};
     }
 
-    // TODO: missing type for preferences
-    public async createPreferences(userId: string, prefs: IPreferences): Promise<void> {
+    public async setPreferences(userId: string, prefs: IPreferences): Promise<void> {
         await admin.firestore().collection("preferences").doc(userId).set(prefs);
     }
 
