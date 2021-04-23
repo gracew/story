@@ -35,8 +35,7 @@ export interface IUser {
     pronouns?: string,
     interests?: string,
     social?: string,
-    /** A value of undefined is equivalent to true (these are users who signed up through typeform). */
-    onboardingComplete?: boolean;
+    onboardingComplete: boolean;
 }
 
 // TODO: incomplete

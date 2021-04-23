@@ -6,6 +6,8 @@ import fetch from "node-fetch";
 import {Firestore, IPreferences, IUser} from "./firestore";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
 import { isEmpty } from "lodash";
+import {sendSms} from "./twilio";
+import {welcome} from "./smsCopy";
 
 // required fields
 const REQUIRED_ONBOARDING_FIELDS = [

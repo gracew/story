@@ -13,7 +13,7 @@ admin
     let batch = admin.firestore().batch();
     for (var i = 0; i < res.docs.length; i++) {
       const doc = res.docs[i];
-      const genderPreference = doc.get("onboardingComplete");
+      const onboardingComplete = doc.get("onboardingComplete");
       if (onboardingComplete !== undefined) {
         continue;
       }
