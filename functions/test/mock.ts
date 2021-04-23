@@ -21,6 +21,7 @@ export const firestore = {
 export function user(firstName: string, other?: Partial<IUser>): IUser {
     return {
         id: uuid.v4(),
+        onboardingComplete: true,
         firstName,
         gender: "Female",
         genderPreference: "Women",
