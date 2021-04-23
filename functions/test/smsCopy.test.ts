@@ -1,5 +1,5 @@
 import * as uuid from "uuid";
-import { matchNotification, videoLink } from "../src/smsCopy";
+import { matchNotification, videoLink, videoMatchNotification } from "../src/smsCopy";
 import { match, user } from "./mock";
 
 const userId1 = uuid.v4();
@@ -171,6 +171,12 @@ it("matchNotification for two matches, different times", async () => {
     const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
     expect(res).toHaveLength(1);
     expect(res[0]).toContain("At 8:00pm PDT Wednesday you'll be chatting with Grace and at 8:30pm PDT Thursday you'll be chatting with Rachael.")
+});
+
+it("videoMatchNotification", async () => {
+    const user1 = user("Sandra", { timezone: "MT" });
+    const user2 = user("Grace");
+    expect(videoMatchNotification(user1, user2, "2021-04-22T20:00:00-07:00")).toContain("Hi Sandra, you'll be speaking again with Grace over video at 9:00pm MDT on Thursday");
 });
 
 it("videoLink", async () => {

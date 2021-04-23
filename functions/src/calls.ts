@@ -569,10 +569,16 @@ export const createSmsChat = functions.https.onRequest(async (request, response)
   const userA = usersById[match.user_a_id];
   const userB = usersById[match.user_b_id];
 
+  await createSmsChatHelper(userA, userB, match);
+
+  response.end();
+});
+
+export async function createSmsChatHelper(userA: IUser, userB: IUser, match: IMatch) {
   const session = await client.proxy
     .services("KS58cecadd35af39c56a4cae81837a89f3")
     .sessions
-    .create({ uniqueName: request.body.matchId });
+    .create({ uniqueName: match.id });
   const participants =
     client.proxy
       .services("KS58cecadd35af39c56a4cae81837a89f3")
@@ -586,8 +592,7 @@ export const createSmsChat = functions.https.onRequest(async (request, response)
     participants(participantA.sid).messageInteractions.create({ body: chatIntro(userA, userB) }),
     participants(participantB.sid).messageInteractions.create({ body: chatIntro(userB, userA) })
   ])
-  response.end();
-});
+}
 
 export const warnSmsChatExpiration = functions.https.onRequest(async (request, response) => {
   const participants = await client.proxy
