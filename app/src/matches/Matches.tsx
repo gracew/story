@@ -4,10 +4,11 @@ import {getUpcomingMatches, UpcomingMatch} from "../apiClient";
 import CenteredSpin from "../components/CenteredSpin";
 import {Pagination} from "antd";
 
+// TODO: WIP
 export default function Matches(): JSX.Element {
   const history = useHistory();
   const [upcomingMatches, setUpcomingMatches] = useState<UpcomingMatch[]>();
-  const [pageIndex, setPageIndex] = useState<number>(0);
+  // const [pageIndex, setPageIndex] = useState<number>(0);
 
   useEffect(() => {
     (async () => {
