@@ -1,10 +1,10 @@
 import * as test from "firebase-functions-test";
-// WARNING: this must come first or else imported modules may not see this config value on load
-test().mockConfig({ twilio: { auth_token: "token" } });
 import * as uuid from "uuid";
 import { IMatch, IUser } from "../src/firestore";
 import { callStudio, getNextDays, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
 import { firestore, match, user } from "./mock";
+// WARNING: this must come first or else imported modules may not see this config value on load
+test().mockConfig({ twilio: { auth_token: "token" } });
 
 const mockCreate = jest.fn();
 jest.mock("twilio", () => {
@@ -67,7 +67,7 @@ it("callStudio", async () => {
             matchId: m1.id,
             firstName: user1.firstName,
             matchName: user2.firstName,
-            matchPhone: user2.phone.substring(2),
+            matchPhone: user2.phone,
             matchUserId: user2.id,
             photo: "self_no_photo",
             nextDays: nextWeek,
@@ -83,7 +83,7 @@ it("callStudio", async () => {
             matchId: m1.id,
             firstName: user2.firstName,
             matchName: user1.firstName,
-            matchPhone: user1.phone.substring(2),
+            matchPhone: user1.phone,
             matchUserId: user1.id,
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
@@ -153,7 +153,7 @@ it("saveReveal Y, other Y next match", async () => {
             userId: user2.id,
             firstName: user2.firstName,
             matchName: user1.firstName,
-            matchPhone: user1.phone.substring(2),
+            matchPhone: user1.phone,
             matchUserId: user1.id,
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
@@ -186,7 +186,7 @@ it("saveReveal N, other Y next match", async () => {
             userId: user2.id,
             firstName: user2.firstName,
             matchName: user1.firstName,
-            matchPhone: user1.phone.substring(2),
+            matchPhone: user1.phone,
             matchUserId: user1.id,
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",

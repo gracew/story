@@ -115,7 +115,7 @@ export function videoMatchNotification(userA: IUser, userB: IUser, matchTime: st
 }
 
 export function videoFallbackSwapNumbers(userA: IUser, userB: IUser) {
-    return `Hi ${userA.firstName}, we weren't able to schedule a video call for you and ${userB.firstName}, but they also wanted to swap numbers! Here's their number: ${userB.phone.substring(2)}`;
+    return `Hi ${userA.firstName}, we weren't able to schedule a video call for you and ${userB.firstName}, but they also wanted to swap numbers! Here's their number: ${userB.phone}`;
 }
 
 export function videoFallbackTextChat(userA: IUser, userB: IUser) {
