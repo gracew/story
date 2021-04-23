@@ -5,7 +5,7 @@ import * as moment from "moment-timezone";
 import * as neatCsv from 'neat-csv';
 import * as os from "os";
 import * as path from "path";
-import { Firestore, IMatch, IUser } from "./firestore";
+import { CreateMatchInput, Firestore, IMatch, IUser } from "./firestore";
 import { availability as availabilityCopy, matchNotification, optInReminder } from "./smsCopy";
 import { sendSms } from './twilio';
 
@@ -139,7 +139,7 @@ export const createMatches = functions.storage
 
         const contents = fs.readFileSync(tempFilePath).toString();
         const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "time"] })
-        await Promise.all(rows.map(data => createMatchFirestore(data as unknown as CreateMatchInput, new Firestore())));
+        await Promise.all(rows.map(data => new Firestore().createMatch(data as unknown as CreateMatchInput)));
     });
 
 
@@ -182,45 +182,3 @@ export const sendMatchNotificationTexts = functions.pubsub
             })
         )
     });
-
-interface CreateMatchInput {
-    userAId: string;
-    userBId: string;
-    time: string;
-    canceled?: boolean;
-    mode?: string;
-}
-export async function createMatchFirestore(data: CreateMatchInput, firestore: Firestore) {
-    const userA = await firestore.getUser(data.userAId);
-    const userB = await firestore.getUser(data.userBId);
-
-    if (!userA) {
-        console.error(new Error("unknown user id " + data.userAId));
-        return;
-    }
-    if (!userB) {
-        console.error(new Error("unknown user id " + data.userBId));
-        return;
-    }
-    const match = {
-        user_a_id: data.userAId,
-        user_b_id: data.userBId,
-        user_ids: [data.userAId, data.userBId],
-        joined: {},
-        created_at: new admin.firestore.Timestamp(new Date(data.time).getTime() / 1000, 0),
-        canceled: data.canceled || false,
-        interactions: {
-            notified: false,
-            reminded: false,
-            called: false,
-            recalled: false,
-            flakesHandled: false,
-            warned5Min: false,
-            warned1Min: false,
-            revealRequested: false,
-        },
-        mode: data.mode || "phone",
-    };
-    await firestore.createMatch(match);
-    return match;
-}

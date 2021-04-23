@@ -40,7 +40,7 @@ export interface IUser {
 
 // TODO: incomplete
 export interface IPreferences {
-    connectionType?: {value: string}
+    connectionType?: { value: string }
 }
 
 export interface IMatch {
@@ -53,6 +53,7 @@ export interface IMatch {
     joined?: Record<string, boolean>,
     created_at: admin.firestore.Timestamp;
     canceled?: boolean;
+    rescheduled?: boolean;
     interactions: {
         notified?: boolean;
         reminded?: boolean;
@@ -63,7 +64,7 @@ export interface IMatch {
         warned1Min?: boolean;
         revealRequested?: boolean;
         // if both respond Y to the phone call, have we notified both users of the next step
-        nextStepHandled?: boolean;  
+        nextStepHandled?: boolean;
     },
     mode?: string;
 
@@ -77,6 +78,31 @@ export interface IMatch {
     videoLink?: string;
     videoPasscode?: string;
     videoAvailability?: Record<string, any>;
+}
+
+interface ISchedulingRecord {
+    interactions: {
+        reminded: boolean;
+        requested: boolean;
+        responded: boolean;
+    }
+
+    // the following fields are set if interactions.responded = true
+    available?: admin.firestore.Timestamp[],
+    matches?: number;
+    skip?: boolean;
+}
+
+export function timestamp(isoDate: string) {
+    return new admin.firestore.Timestamp(new Date(isoDate).getTime() / 1000, 0);
+}
+
+export interface CreateMatchInput {
+    userAId: string;
+    userBId: string;
+    time: string;
+    canceled?: boolean;
+    mode?: string;
 }
 
 export class Firestore {
@@ -127,13 +153,48 @@ export class Firestore {
         return match.data() as IMatch | undefined;
     }
 
-    public createMatch(match: Partial<IMatch>) {
-        const ref = admin.firestore().collection("matches").doc()
-        return ref.set({ ...match, id: ref.id });
+    public async createMatch(data: CreateMatchInput) {
+        const userA = await this.getUser(data.userAId);
+        const userB = await this.getUser(data.userBId);
+
+        if (!userA) {
+            console.error(new Error("unknown user id " + data.userAId));
+            return;
+        }
+        if (!userB) {
+            console.error(new Error("unknown user id " + data.userBId));
+            return;
+        }
+        const match = {
+            user_a_id: data.userAId,
+            user_b_id: data.userBId,
+            user_ids: [data.userAId, data.userBId],
+            joined: {},
+            created_at: timestamp(data.time),
+            canceled: data.canceled || false,
+            interactions: {
+                notified: false,
+                reminded: false,
+                called: false,
+                recalled: false,
+                flakesHandled: false,
+                warned5Min: false,
+                warned1Min: false,
+                revealRequested: false,
+            },
+            mode: data.mode || "phone",
+        };
+        const ref = admin.firestore().collection("matches").doc();
+        await ref.set({ ...match, id: ref.id });
+        return match;
     }
 
     public updateMatch(id: string, update: Partial<IMatch>) {
         return admin.firestore().collection("matches").doc(id).update(update);
+    }
+
+    public cancelMatch(id: string) {
+        return admin.firestore().collection("matches").doc(id).update("canceled", true);
     }
 
     public async currentMatchForUser(id: string): Promise<IMatch | undefined> {
@@ -185,5 +246,14 @@ export class Firestore {
             batch.create(admin.firestore().collection("scheduling").doc(week).collection("users").doc(userId), data);
         })
         return batch.commit();
+    }
+
+    public async getSchedulingRecords(week: string, userIds: string[]): Promise<Record<string, ISchedulingRecord>> {
+        if  (userIds.length === 0) {
+            return {};
+        }
+        const userRefs = userIds.map(id => admin.firestore().collection("scheduling").doc(week).collection("users").doc(id));
+        const res = await admin.firestore().getAll(...userRefs);
+        return Object.assign({}, ...res.map(doc => ({ [doc.id]: doc.data() })))
     }
 }
