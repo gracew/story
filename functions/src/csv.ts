@@ -5,7 +5,7 @@ import * as moment from "moment-timezone";
 import * as neatCsv from 'neat-csv';
 import * as os from "os";
 import * as path from "path";
-import { Firestore, IMatch, IUser } from "./firestore";
+import { CreateMatchInput, Firestore, IMatch, IUser } from "./firestore";
 import { availability as availabilityCopy, matchNotification, optInReminder } from "./smsCopy";
 import { sendSms } from './twilio';
 
@@ -139,7 +139,7 @@ export const createMatches = functions.storage
 
         const contents = fs.readFileSync(tempFilePath).toString();
         const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "time"] })
-        await Promise.all(rows.map(data => createMatchFirestore(data as unknown as CreateMatchInput, new Firestore())));
+        await Promise.all(rows.map(data => new Firestore().createMatch(data as unknown as CreateMatchInput)));
     });
 
 

@@ -97,7 +97,7 @@ export function timestamp(isoDate: string) {
     return new admin.firestore.Timestamp(new Date(isoDate).getTime() / 1000, 0);
 }
 
-interface CreateMatchInput {
+export interface CreateMatchInput {
     userAId: string;
     userBId: string;
     time: string;
@@ -248,7 +248,7 @@ export class Firestore {
         return batch.commit();
     }
 
-    public async getAvailability(week: string, userIds: string[]): Promise<Record<string, ISchedulingRecord>> {
+    public async getSchedulingRecords(week: string, userIds: string[]): Promise<Record<string, ISchedulingRecord>> {
         if  (userIds.length === 0) {
             return {};
         }
