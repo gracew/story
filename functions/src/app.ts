@@ -91,7 +91,7 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
 
   // if they already completed onboarding, they have no business doing anything onboarding. bail out
   if (user.onboardingComplete) {
-      return;
+    return;
   }
 
   const [userUpdate, preferencesUpdate] = parseOnboardingForm(data);
@@ -104,7 +104,7 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
       await notifyNewSignup(user);
       // US and Canada
       if (user.phone.startsWith("+1")) {
-        await sendSms({body: welcome(user as IUser), to: user.phone});
+        await sendSms({ body: welcome(user as IUser), to: user.phone });
       }
     }
   }
@@ -356,7 +356,11 @@ export const saveVideoAvailability = functions.https.onCall(async (data, context
     const matchRef = admin.firestore().collection("matches").doc(data.matchId);
     const matchDoc = await txn.get(matchRef);
     const match = matchDoc.data() as IMatch;
-    if (!match || !match.videoAvailability || Object.keys(match.videoAvailability).length !== 2) {
+    if (!match || !match.videoAvailability) {
+      console.error(new Error("unexpected state: expected match to exist" + data.matchId));
+      return;
+    }
+    if (Object.keys(match.videoAvailability).length !== 2) {
       return;
     }
     if (match.interactions.nextStepHandled === true) {
