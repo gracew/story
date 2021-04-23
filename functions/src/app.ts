@@ -1,12 +1,17 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { CallableContext } from "firebase-functions/lib/providers/https";
+import { isEmpty } from "lodash";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
-import { Firestore } from "./firestore";
+import { createSmsChatHelper } from "./calls";
+import {createMatchFirestore, CreateMatchParams} from "./csv";
+import { Firestore, IMatch, IPreferences, IUser } from "./firestore";
+import { videoFallbackSwapNumbers, videoFallbackTextChat, videoMatchNotification, welcome } from "./smsCopy";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
 import {GetUpcomingMatches} from "../../api/responses";
 import {listUpcomingMatchViewsForUser} from "./matches";
+import { sendSms } from "./twilio";
 
 const firestore = new Firestore();
 
@@ -22,66 +27,38 @@ const REQUIRED_ONBOARDING_FIELDS = [
   "photo",
   "funFacts",
   "social",
-];
+] as const;
 
 // just checks for existence of fields - doesn't validate values
-function checkOnboardingComplete(data: Record<string, any>) {
-  return REQUIRED_ONBOARDING_FIELDS.every(k => data[k] !== undefined);
+function checkOnboardingComplete(user: Partial<IUser>) {
+  return REQUIRED_ONBOARDING_FIELDS.every(k => user[k] !== undefined);
 }
 
-async function getOrCreateUser(phone: string) {
-  const userResult = await admin
-    .firestore()
-    .collection("users")
-    .where("phone", "==", phone)
-    .get();
-  if (userResult.empty) {
-    // create record
-    const doc = admin.firestore().collection("users").doc();
-    const data = {
-      id: doc.id,
-      phone,
-      registeredAt: admin.firestore.FieldValue.serverTimestamp(),
-      eligible: true,
-      status: "waitlist",
-      locationFlexibility: true,
-    };
-    await doc.create(data);
-    return data;
-  }
-  return userResult.docs[0].data();
-}
-
-export const onboardUser = functions.https.onCall(async (data, context) => {
-  if (!context.auth || !context.auth.token.phone_number) {
-    throw new functions.https.HttpsError("unauthenticated", "authentication required");
-  }
-
-  const user = await getOrCreateUser(context.auth.token.phone_number);
-
-  const update: Record<string, any> = {};
+function parseOnboardingForm(data: Record<string, any>): [Partial<IUser> | undefined, Partial<IPreferences> | undefined] {
+  const userUpdate: Record<string, any> = {};
+  const preferencesUpdate: Partial<IPreferences> = {};
   REQUIRED_ONBOARDING_FIELDS.forEach(field => {
     const value = data[field];
     if (value === undefined) {
       return;
     }
 
-    update[field] = value;
+    userUpdate[field] = value;
     if (field === "birthdate") {
       // also calculate age
       const formatted = `${value.year}-${value.month}-${value.day}`;
-      update.age = moment().diff(formatted, "years");
+      userUpdate.age = moment().diff(formatted, "years");
     } else if (field === "pronouns") {
       // also set gender
       switch (value) {
         case "He/him":
-          update.gender = "Male";
+          userUpdate.gender = "Male";
           break;
         case "She/her":
-          update.gender = "Female";
+          userUpdate.gender = "Female";
           break;
         case "They/them":
-          update.gender = "Non-binary";
+          userUpdate.gender = "Non-binary";
           break;
         default:
           console.error(new Error("unknown pronouns: " + value));
@@ -89,37 +66,54 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
     } else if (field === "location") {
       const tz = timezone(value);
       if (tz) {
-        update.timezone = tz;
+        userUpdate.timezone = tz;
       }
     }
-  })
+  });
 
   if (data.referrer !== undefined) {
-    update.referrer = data.referrer;
-  }
-
-  if (Object.keys(update).length > 0) {
-    const allData = { ...user, ...update };
-    update.onboardingComplete = checkOnboardingComplete(allData);
-    await admin.firestore().collection("users").doc(user.id).update(update);
-    if (update.onboardingComplete) {
-      await notifyNewSignup(allData);
-      if (user.phone.startsWith("+1")) {
-        // US or Canada
-        /*await sendSms({
-          body: welcome(user as IUser),
-          to: user.phone,
-        });*/
-      }
-    }
+    userUpdate.referrer = data.referrer;
   }
 
   if (data.connectionType !== undefined) {
-    await admin.firestore().collection("preferences").doc(user.id).set({
-      connectionType: { value: data.connectionType }
-    });
+    preferencesUpdate.connectionType = { value: data.connectionType };
   }
 
+  return [
+    isEmpty(userUpdate) ? undefined : userUpdate,
+    isEmpty(preferencesUpdate) ? undefined : preferencesUpdate
+  ];
+}
+
+export const onboardUser = functions.https.onCall(async (data, context) => {
+  if (!context.auth || !context.auth.token.phone_number) {
+    throw new functions.https.HttpsError("unauthenticated", "authentication required");
+  }
+
+  const user = await firestore.getOrCreateUser(context.auth.token.phone_number);
+
+  // if they already completed onboarding, they have no business doing anything onboarding. bail out
+  if (user.onboardingComplete) {
+    return;
+  }
+
+  const [userUpdate, preferencesUpdate] = parseOnboardingForm(data);
+  if (userUpdate) {
+    const wasOnboardingComplete = user.onboardingComplete;
+    Object.assign(user, userUpdate);
+    user.onboardingComplete = checkOnboardingComplete(user);
+    await firestore.saveUser(user);
+    if (!wasOnboardingComplete && user.onboardingComplete) {
+      await notifyNewSignup(user);
+      // US and Canada
+      if (user.phone.startsWith("+1")) {
+        await sendSms({ body: welcome(user as IUser), to: user.phone });
+      }
+    }
+  }
+  if (preferencesUpdate) {
+    await firestore.setPreferences(user.id, preferencesUpdate);
+  }
   return { id: user.id, phone: user.phone };
 });
 
@@ -377,5 +371,99 @@ export const saveVideoAvailability = functions.https.onCall(async (data, context
     .collection("matches")
     .doc(data.matchId)
     .update(`videoAvailability.${user.id}`, { selectedTimes: data.selectedTimes, swapNumbers: data.swapNumbers });
+
+  // check if we have already notified the users of the next step. this is to prevent additional texts if someone 
+  // submits the availability form again
+  const maybeMatch = await admin.firestore().runTransaction(async txn => {
+    const matchRef = admin.firestore().collection("matches").doc(data.matchId);
+    const matchDoc = await txn.get(matchRef);
+    const match = matchDoc.data() as IMatch;
+    if (!match || !match.videoAvailability) {
+      console.error(new Error(`unexpected state: expected match ${data.matchId} to exist`));
+      return;
+    }
+    if (Object.keys(match.videoAvailability).length !== 2) {
+      return;
+    }
+    if (match.interactions.nextStepHandled === true) {
+      console.info("already handled next step for match: " + match.id)
+      return;
+    }
+    await txn.update(matchRef, "interactions.nextStepHandled", true);
+    return match;
+  });
+  if (maybeMatch) {
+    const otherUserId = maybeMatch.user_a_id === user.id ? maybeMatch.user_b_id : maybeMatch.user_a_id;
+    const otherUser = await firestore.getUser(otherUserId);
+    const maybeNext = await videoNextStep(user, otherUser!, maybeMatch, sendSms);
+    if (maybeNext) {
+      // create new match in database
+      await createMatchFirestore(maybeNext, firestore);
+    }
+  }
   return {};
 });
+
+export async function videoNextStep(userA: IUser, userB: IUser, match: IMatch, sendSmsFn: (opts: any) => Promise<any>): Promise<CreateMatchParams | void> {
+  const availabilityA = match.videoAvailability![match.user_a_id];
+  const availabilityB = match.videoAvailability![match.user_b_id];
+  const common = firstCommonAvailability(availabilityA.selectedTimes, availabilityB.selectedTimes);
+  if (common) {
+    // notify of the video call and return common time
+    await Promise.all([
+      sendSmsFn({
+        body: videoMatchNotification(userA, userB, common),
+        to: userA.phone,
+      }),
+      sendSmsFn({
+        body: videoMatchNotification(userB, userA, common),
+        to: userB.phone,
+      }),
+    ]);
+    return {
+      userAId: userA.id,
+      userBId: userB.id,
+      time: common,
+      mode: "video",
+    };
+  }
+
+  if (availabilityA.swapNumbers && availabilityB.swapNumbers) {
+    // send texts to both users
+    await Promise.all([
+      sendSmsFn({
+        body: videoFallbackSwapNumbers(userA, userB),
+        to: userA.phone,
+      }),
+      sendSmsFn({
+        body: videoFallbackSwapNumbers(userB, userA),
+        to: userB.phone,
+      }),
+    ]);
+    return;
+  }
+
+  // connect in text chat
+  await Promise.all([
+    sendSmsFn({
+      body: videoFallbackTextChat(userA, userB),
+      to: userA.phone,
+    }),
+    sendSmsFn({
+      body: videoFallbackTextChat(userB, userA),
+      to: userB.phone,
+    }),
+  ]);
+  await createSmsChatHelper(userA, userB, match);
+  return;
+}
+
+export function firstCommonAvailability(a1: string[], a2: string[]) {
+  if (a1.length === 0 || a2.length === 0) {
+    return undefined;
+  }
+  const set = new Set(a1.map(s => new Date(s).getTime()));
+  const common = a2.filter(s => set.has(new Date(s).getTime()));
+  common.sort((a, b) => a < b ? -1 : 1);
+  return common[0]; // this returns undefined if common has length 0
+}

@@ -1,12 +1,12 @@
 
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import {createMatchFirestore, CreateMatchFirestoreParams} from "./csv";
+import {createMatchFirestore, CreateMatchParams} from "./csv";
 import { Firestore } from "./firestore";
 import { analyzeCollection as analyzeCollectionHelper } from "./validateMatches2";
 
 export const createMatch = functions.https.onRequest(
-  async ({body}: {body: CreateMatchFirestoreParams}, response) => {
+  async ({body}: {body: CreateMatchParams}, response) => {
     const match = await createMatchFirestore(body, new Firestore());
     response.send(match);
   }

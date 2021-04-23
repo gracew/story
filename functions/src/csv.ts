@@ -140,7 +140,7 @@ export const createMatches = functions.storage
         const contents = fs.readFileSync(tempFilePath).toString();
         const rows = await neatCsv(contents, { headers: ["userAId", "userBId", "time"] })
         await Promise.all(rows.map(data => {
-            createMatchFirestore(data as unknown as CreateMatchFirestoreParams, new Firestore())
+            return createMatchFirestore(data as unknown as CreateMatchParams, new Firestore());
         }));
     });
 
@@ -185,7 +185,7 @@ export const sendMatchNotificationTexts = functions.pubsub
         )
     });
 
-export interface CreateMatchFirestoreParams {
+export interface CreateMatchParams {
     userAId: string,
     userBId: string,
     time: string,
@@ -199,7 +199,7 @@ function parseTime(s: string): admin.firestore.Timestamp {
     return new admin.firestore.Timestamp(secs, 0);
 }
 
-export async function createMatchFirestore(data: CreateMatchFirestoreParams, firestore: Firestore): Promise<IMatch | undefined> {
+export async function createMatchFirestore(data: CreateMatchParams, firestore: Firestore): Promise<IMatch | undefined> {
     const userA = await firestore.getUser(data.userAId);
     const userB = await firestore.getUser(data.userBId);
 

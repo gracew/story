@@ -108,6 +108,20 @@ Here's how it works: both nights you'll receive a phone call connecting you with
     }
 }
 
+export function videoMatchNotification(userA: IUser, userB: IUser, matchTime: string) {
+    const tz = timezone(userA);
+    const matchMoment = moment(matchTime).tz(tz);
+    return `Hi ${userA.firstName}, you'll be speaking again with ${userB.firstName} over video at ${matchMoment.format("h:mma z")} on ${matchMoment.format("dddd")}. We'll send you a reminder and video link earlier that day!`
+}
+
+export function videoFallbackSwapNumbers(userA: IUser, userB: IUser) {
+    return `Hi ${userA.firstName}, we weren't able to schedule a video call for you and ${userB.firstName}, but they also wanted to swap numbers! Here's their number: ${userB.phone}`;
+}
+
+export function videoFallbackTextChat(userA: IUser, userB: IUser) {
+    return `Hi ${userA.firstName}, we weren't able to schedule a video call for you and ${userB.firstName}, so we'll connect you in a text chat in just a minute :)`;
+}
+
 function location(match: IUser) {
     const the = match.location === "San Francisco Bay Area" ? "the " : "";
     return ` from ${the}${match.location}`
