@@ -72,7 +72,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
             matchUserId: userB.id,
             matchName: userB.firstName,
             matchPhone: userB.phone,
-            ...(await nextMatchNameAndDate(nextMatchesByUserId, userAId, firestore)),
+            ...(await nextMatchNameAndDate(userAId, firestore, nextMatchesByUserId[userAId])),
             nextDays,
             video,
         }
@@ -91,7 +91,7 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
             matchUserId: userA.id,
             matchName: userA.firstName,
             matchPhone: userA.phone,
-            ...(await nextMatchNameAndDate(nextMatchesByUserId, userBId, firestore)),
+            ...(await nextMatchNameAndDate(userBId, firestore, nextMatchesByUserId[userBId])),
             nextDays,
             video,
         }
@@ -138,8 +138,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
     }
     const nextMatchRevealing = await firestore.nextMatchForUser(revealingUser.id);
     const nextMatchOther = await firestore.nextMatchForUser(otherUser.id)
-    const otherNextMatch = await nextMatchNameAndDate(
-        { [otherUser.id]: nextMatchOther }, otherUser.id, firestore);
+    const otherNextMatch = await nextMatchNameAndDate(otherUser.id, firestore,  nextMatchOther);
 
     const otherData = {
         userId: otherUser.id,
@@ -220,10 +219,14 @@ function parseUserReveal(reveal: string) {
     return undefined;
 }
 
-async function nextMatchNameAndDate(matchesByUserId: Record<string, IMatch | undefined>, userId: string, firestore: Firestore) {
-    const nextMatch = matchesByUserId[userId];
+export interface NextMatchNameDate {
+    nextMatchName: string;
+    nextMatchDate: string;
+}
+
+export async function nextMatchNameAndDate(userId: string, firestore: Firestore, nextMatch?: IMatch) {
     if (!nextMatch) {
-        return {};
+        return undefined;
     }
     const nextMatchUserId = nextMatch.user_a_id === userId ? nextMatch.user_b_id : nextMatch.user_a_id;
     const nextMatchUser = await firestore.getUser(nextMatchUserId);

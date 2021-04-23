@@ -5,11 +5,11 @@ import { isEmpty } from "lodash";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import { createSmsChatHelper } from "./calls";
-import { createMatchFirestore } from "./csv";
-import { Firestore, IMatch, IPreferences, IUser } from "./firestore";
-import { videoFallbackSwapNumbers, videoFallbackTextChat, videoMatchNotification, welcome } from "./smsCopy";
+import { Firestore, IMatch, IPreferences, IUser, timestamp } from "./firestore";
+import { findCommonAvailability } from "./scheduling";
+import { cancelNotification, rescheduleNotification, videoFallbackSwapNumbers, videoFallbackTextChat, videoMatchNotification, welcome } from "./smsCopy";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
-import { sendSms } from "./twilio";
+import { nextMatchNameAndDate, sendSms } from "./twilio";
 
 // required fields
 const REQUIRED_ONBOARDING_FIELDS = [
@@ -377,7 +377,7 @@ export const saveVideoAvailability = functions.https.onCall(async (data, context
     const maybeNext = await videoNextStep(user, otherUser!, maybeMatch, sendSms);
     if (maybeNext) {
       // create new match in database
-      await createMatchFirestore(maybeNext, firestore);
+      await firestore.createMatch(maybeNext);
     }
   }
   return {};
@@ -446,3 +446,95 @@ export function firstCommonAvailability(a1: string[], a2: string[]) {
   common.sort((a, b) => a < b ? -1 : 1);
   return common[0]; // this returns undefined if common has length 0
 }
+
+async function checkUserIsInMatch(firestore: Firestore, userId: string, matchId: string) {
+  const match = await firestore.getMatch(matchId);
+  if (!match) {
+    throw new functions.https.HttpsError("invalid-argument", "unknown match id");
+  }
+  if (!match.user_ids.includes(userId)) {
+    throw new functions.https.HttpsError("permission-denied", "unauthorized to cancel match");
+  }
+  return match;
+}
+
+export const getCommonAvailability = functions.https.onCall(async (data, context) => {
+  const user = await getUser(data, context);
+  if (!data.matchId) {
+    throw new functions.https.HttpsError("invalid-argument", "match id required");
+  }
+
+  const firestore = new Firestore();
+  const match = await checkUserIsInMatch(firestore, user.id, data.matchId);
+  const week = moment().startOf("week").format("YYYY-MM-DD");
+  const availability = await firestore.getAvailability(week, match.user_ids);
+  const common = findCommonAvailability(availability[match.user_a_id].available, availability[match.user_b_id].available);
+  const now = moment().toDate().getTime();
+  return common.filter(date => date.getTime() > now);
+});
+
+export const rescheduleMatch = functions.https.onCall(async (data, context) => {
+  const user = await getUser(data, context);
+  if (!data.matchId) {
+    throw new functions.https.HttpsError("invalid-argument", "match id required");
+  }
+
+  const firestore = new Firestore();
+  const match = await checkUserIsInMatch(firestore, user.id, data.matchId);
+  const otherUserId = match.user_a_id === user.id ? match.user_b_id : match.user_a_id;
+  const otherUser = await firestore.getUser(otherUserId);
+  if (!otherUser) {
+    throw new functions.https.HttpsError("internal", "match references unknown user id " + otherUserId);
+  }
+
+  await Promise.all([
+    // update time and set rescheduled flag
+    firestore.updateMatch(match.id, {
+      created_at: timestamp(data.newTime),
+      rescheduled: true,
+    }),
+    // notify the other user
+    sendSms({
+      body: rescheduleNotification(
+        otherUser,
+        user,
+        match,
+        moment,
+        data.newTime,
+      ),
+      to: otherUser.phone,
+    })
+  ])
+  return {};
+});
+
+export const cancelMatch = functions.https.onCall(async (data, context) => {
+  const user = await getUser(data, context);
+  if (!data.matchId) {
+    throw new functions.https.HttpsError("invalid-argument", "match id required");
+  }
+
+  const firestore = new Firestore();
+  const match = await checkUserIsInMatch(firestore, user.id, data.matchId);
+  await firestore.cancelMatch(match.id);
+
+  // notify the cancelee
+  const canceleeId = match.user_a_id === user.id ? match.user_b_id : match.user_a_id;
+  const cancelee = await firestore.getUser(canceleeId);
+  if (!cancelee) {
+    throw new functions.https.HttpsError("internal", "match references unknown user id " + canceleeId);
+  }
+
+  const canceleeNextMatch = await firestore.nextMatchForUser(canceleeId);
+  await sendSms({
+    body: cancelNotification(
+      cancelee,
+      user,
+      match,
+      moment,
+      await nextMatchNameAndDate(canceleeId, firestore, canceleeNextMatch),
+    ),
+    to: cancelee.phone,
+  });
+  return {};
+});

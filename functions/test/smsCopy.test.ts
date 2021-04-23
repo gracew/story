@@ -1,6 +1,9 @@
+import * as moment from "moment-timezone";
 import * as uuid from "uuid";
-import { matchNotification, videoLink, videoMatchNotification } from "../src/smsCopy";
+import { cancelNotification, matchNotification, rescheduleNotification, videoLink, videoMatchNotification } from "../src/smsCopy";
 import { match, user } from "./mock";
+
+const getTimestamp = () => moment("2021-04-22T12:00:00-04:00");
 
 const userId1 = uuid.v4();
 const userId2 = uuid.v4();
@@ -189,4 +192,49 @@ it("videoLink", async () => {
     });
     expect(videoLink(userA, m)).toContain("https://storydating.com/v/videoId/a. In case you need it, the passcode is videoPasscode.");
     expect(videoLink(userB, m)).toContain("https://storydating.com/v/videoId/b. In case you need it, the passcode is videoPasscode.");
+});
+
+it("rescheduleNotification", async () => {
+    const userA = user("userA");
+    const userB = user("userB");
+    const m = match(userA.id, userB.id, "2021-04-23T20:00:00-07:00");
+    const notification = rescheduleNotification(userA, userB, m, getTimestamp, "2021-04-23T21:00:00-07:00");
+    expect(notification).toContain("Hi userA, userB let us know something came up for 8:00pm PDT Friday")
+    expect(notification).toContain("9:00pm PDT Friday")
+});
+
+it("rescheduleNotification - tonight", async () => {
+    const userA = user("userA");
+    const userB = user("userB");
+    const m = match(userA.id, userB.id, "2021-04-22T20:00:00-07:00");
+    const notification = rescheduleNotification(userA, userB, m, getTimestamp, "2021-04-23T21:00:00-07:00");
+    expect(notification).toContain("Hi userA, userB let us know something came up for 8:00pm PDT tonight")
+    expect(notification).toContain("9:00pm PDT Friday")
+});
+
+it("cancelNotification", async () => {
+    const userA = user("userA");
+    const userB = user("userB");
+    const m = match(userA.id, userB.id, "2021-04-23T20:00:00-07:00");
+    const notification = cancelNotification(userA, userB, m, getTimestamp);
+    expect(notification).toContain("Hi userA, unfortunately userB let us know they can no longer make Friday's")
+    expect(notification).toContain("We'll be back in touch next week with another match")
+});
+
+it("cancelNotification - tonight", async () => {
+    const userA = user("userA");
+    const userB = user("userB");
+    const m = match(userA.id, userB.id, "2021-04-22T20:00:00-07:00");
+    const notification = cancelNotification(userA, userB, m, getTimestamp);
+    expect(notification).toContain("Hi userA, unfortunately userB let us know they can no longer make tonight's")
+    expect(notification).toContain("We'll be back in touch next week with another match")
+});
+
+it("cancelNotification - next match", async () => {
+    const userA = user("userA");
+    const userB = user("userB");
+    const m = match(userA.id, userB.id, "2021-04-23T20:00:00-07:00");
+    const notification = cancelNotification(userA, userB, m, getTimestamp, { nextMatchName: "userC", nextMatchDate: "Saturday"});
+    expect(notification).toContain("Hi userA, unfortunately userB let us know they can no longer make Friday's")
+    expect(notification).toContain("speak with userC on Saturday")
 });

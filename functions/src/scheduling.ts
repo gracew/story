@@ -154,7 +154,7 @@ async function potentialMatchesHelper(week: string) {
     return pairs;
 }
 
-function findCommonAvailability(a1?: admin.firestore.Timestamp[], a2?: admin.firestore.Timestamp[]) {
+export function findCommonAvailability(a1?: admin.firestore.Timestamp[], a2?: admin.firestore.Timestamp[]) {
     if (!a1 || !a2) {
         return [];
     }
