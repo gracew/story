@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import * as moment from "moment-timezone";
 import { IMatch, IUser } from "./firestore";
+import { NextMatchNameDate } from "./twilio";
 
 export function welcome(user: IUser) {
     return `Hi ${user.firstName}, thanks for joining Story Dating! I'm Grace and I founded Story because I believe that magic happens when people ✨ like you ✨ choose talking over swiping. You're currently on the waitlist, but I'll text you as soon as I have some matches for you. In the meantime, text any questions to me here or reply with "stop" if you ever decide to pause using Story Dating.
@@ -34,13 +35,13 @@ export function matchNotification(userId: string, matches: IMatch[], usersById: 
 
     matches.sort((a, b) => a.created_at.toDate().getTime() - b.created_at.toDate().getTime());
     const tz = timezone(user);
-    const formattedTime = moment(matches[0].created_at.toDate()).tz(tz).format("h:mma z");
+    const formattedTime = formatTime(matches[0].created_at.toDate(), tz);
     if (matches.length === 1) {
         const match = matches[0];
         const matchUserId = match.user_a_id === userId ? match.user_b_id : match.user_a_id;
         const matchUser = usersById[matchUserId];
         const texts = [
-            `Hi ${user.firstName}, you've got a match! On ${day(match)} you'll be chatting with ${matchUser.firstName}${location(matchUser)}.
+            `Hi ${user.firstName}, you've got a match! On ${day(match.created_at.toDate(), tz)} you'll be chatting with ${matchUser.firstName}${location(matchUser)}.
 
 Here's how it works: at ${formattedTime}, you'll receive a phone call connecting you with your match. ${phoneSwapText}`
         ];
@@ -62,19 +63,21 @@ Happy chatting! 🙌`
         const matchUser2Id = match2.user_a_id === userId ? match2.user_b_id : match2.user_a_id;
         const match2User = usersById[matchUser2Id];
         const match2Location = location(match2User);
-        const formattedTime2 = moment(matches[1].created_at.toDate()).tz(tz).format("h:mma z");
+        const formattedTime2 = formatTime(matches[1].created_at.toDate(), tz);
 
         const texts = [];
+        const day1 =  day(match1.created_at.toDate(), tz);
+        const day2 =  day(match2.created_at.toDate(), tz);
         if (formattedTime === formattedTime2) {
             if (match1Location !== match2Location) {
                 texts.push(
-                    `Hi ${user.firstName}, we have two matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName}${match1Location} and on ${day(match2)} you'll be chatting with ${match2User.firstName}${match2Location}.
+                    `Hi ${user.firstName}, we have two matches for you! On ${day1} you'll be chatting with ${match1User.firstName}${match1Location} and on ${day2} you'll be chatting with ${match2User.firstName}${match2Location}.
 
 Here's how it works: at ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
                 );
             } else {
                 texts.push(
-                    `Hi ${user.firstName}, we have two matches for you! On ${day(match1)} you'll be chatting with ${match1User.firstName} and on ${day(match2)} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
+                    `Hi ${user.firstName}, we have two matches for you! On ${day1} you'll be chatting with ${match1User.firstName} and on ${day2} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
 
 Here's how it works: at ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
                 );
@@ -82,13 +85,13 @@ Here's how it works: at ${formattedTime} both nights you'll receive a phone call
         } else {
             if (match1Location !== match2Location) {
                 texts.push(
-                    `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName}${match1Location} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}${match2Location}.
+                    `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName}${match1Location} and at ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}${match2Location}.
 
 Here's how it works: both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
                 );
             } else {
                 texts.push(
-                    `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day(match1)} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day(match2)} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
+                    `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
 
 Here's how it works: both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
                 );
@@ -110,8 +113,7 @@ Here's how it works: both nights you'll receive a phone call connecting you with
 
 export function videoMatchNotification(userA: IUser, userB: IUser, matchTime: string) {
     const tz = timezone(userA);
-    const matchMoment = moment(matchTime).tz(tz);
-    return `Hi ${userA.firstName}, you'll be speaking again with ${userB.firstName} over video at ${matchMoment.format("h:mma z")} on ${matchMoment.format("dddd")}. We'll send you a reminder and video link earlier that day!`
+    return `Hi ${userA.firstName}, you'll be speaking again with ${userB.firstName} over video at ${formatTime(matchTime, tz)} on ${day(matchTime, tz)}. We'll send you a reminder and video link earlier that day!`
 }
 
 export function videoFallbackSwapNumbers(userA: IUser, userB: IUser) {
@@ -137,11 +139,6 @@ function timezone(user: IUser) {
     }
     // TODO(gracew): should probably not return this by default
     return "America/Los_Angeles";
-}
-
-function day(match: IMatch) {
-    const matchTime = moment(match.created_at.toDate()).tz("America/Los_Angeles")
-    return matchTime.format("dddd");
 }
 
 export function videoReminder(userA: IUser, userB: IUser) {
@@ -183,3 +180,46 @@ export const prompts = [
     "Where do you go when you need some inspiration?",
     "What's your favorite item of clothing? Why?"
 ]
+
+export function rescheduleNotification(
+    userA: IUser,
+    userB: IUser,
+    match: IMatch,
+    getTimestamp: () => moment.Moment,
+    newTime: string,
+) {
+    const tz = timezone(userA);
+    const oldDay = tonightOrDay(match.created_at.toDate(), tz, getTimestamp);
+    const newDay = tonightOrDay(newTime, tz, getTimestamp);
+    return `Hi ${userA.firstName}, ${userB.firstName} let us know something came up for ${formatTime(match.created_at.toDate(), tz)} ${oldDay}. It looks like you are both available at ${formatTime(newTime, tz)} ${newDay}, so we've rescheduled your call for then. If that no longer works for you just give us a text!`;
+}
+
+export function cancelNotification(
+    cancelee: IUser,
+    canceler: IUser,
+    match: IMatch,
+    getTimestamp: () => moment.Moment,
+    canceleeNextMatch?: NextMatchNameDate,
+) {
+    const formattedDay = tonightOrDay(match.created_at.toDate(), timezone(cancelee), getTimestamp);
+    const nextCopy = canceleeNextMatch
+        ? `You're still scheduled to speak with ${canceleeNextMatch.nextMatchName} on ${canceleeNextMatch.nextMatchDate}.`
+        : "We'll be back in touch next week with another match!";
+
+    return `Hi ${cancelee.firstName}, unfortunately ${canceler.firstName} let us know they can no longer make ${formattedDay}'s date, so you won't be receiving a call from us. ${nextCopy}`;
+}
+
+function formatTime(matchTime: string | Date, tz: string) {
+    return moment(matchTime).tz(tz).format("h:mma z");
+}
+
+function day(matchTime: string | Date, tz: string) {
+    return moment(matchTime).tz(tz).format("dddd");
+}
+
+function tonightOrDay(matchTime: string | Date, tz: string, getTimestamp: () => moment.Moment) {
+    const todayDate = getTimestamp().tz(tz).format("YYYY-MM-DD");
+    const matchMoment = moment(matchTime).tz(tz);
+    const matchDate = matchMoment.format("YYYY-MM-DD");
+    return todayDate === matchDate ? "tonight" : matchMoment.format("dddd");
+}
