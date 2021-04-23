@@ -7,6 +7,12 @@ export interface ICalendarDate {
     day: number,
 }
 
+// TODO: i think we can unify IUser and IPreOnboarded user, keeping this the way it is for now for
+// type safety and clarity
+export type IPreOnboardedUser = Pick<
+    IUser,
+    "id" | "phone" | "status" | "locationFlexibility" | "onboardingComplete">;
+
 export interface IUser {
     id: string;
     firstName: string;
@@ -29,8 +35,12 @@ export interface IUser {
     pronouns?: string,
     interests?: string,
     social?: string,
-    /** A value of undefined is equivalent to true (these are users who signed up through typeform). */
-    onboardingComplete?: boolean;
+    onboardingComplete: boolean;
+}
+
+// TODO: incomplete
+export interface IPreferences {
+    connectionType?: {value: string}
 }
 
 export interface IMatch {
@@ -68,6 +78,34 @@ export interface IMatch {
 }
 
 export class Firestore {
+    public async saveUser(user: IUser | IPreOnboardedUser): Promise<void> {
+        await admin.firestore().collection("users").doc(user.id).update(user);
+    }
+
+    public async setPreferences(userId: string, prefs: IPreferences): Promise<void> {
+        await admin.firestore().collection("preferences").doc(userId).set(prefs);
+    }
+
+    public async getOrCreateUser(phone: string): Promise<IPreOnboardedUser> {
+        const existingUser = await this.getUserByPhone(phone);
+        if (existingUser) {
+            return existingUser;
+        }
+        // create record
+        const doc = admin.firestore().collection("users").doc();
+        const data = {
+            id: doc.id,
+            phone,
+            registeredAt: admin.firestore.FieldValue.serverTimestamp(),
+            eligible: true,
+            status: "waitlist",
+            onboardingComplete: false,
+            locationFlexibility: true,
+        };
+        await doc.create(data);
+        return data;
+    }
+
     public async getUser(id: string): Promise<IUser | undefined> {
         const user = await admin.firestore().collection("users").doc(id).get();
         return user.data() as IUser | undefined;
