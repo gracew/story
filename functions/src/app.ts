@@ -357,7 +357,7 @@ export const saveVideoAvailability = functions.https.onCall(async (data, context
     const matchDoc = await txn.get(matchRef);
     const match = matchDoc.data() as IMatch;
     if (!match || !match.videoAvailability) {
-      console.error(new Error("unexpected state: expected match to exist" + data.matchId));
+      console.error(new Error(`unexpected state: expected match ${data.matchId} to exist`));
       return;
     }
     if (Object.keys(match.videoAvailability).length !== 2) {
