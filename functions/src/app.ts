@@ -1,12 +1,13 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { CallableContext } from "firebase-functions/lib/providers/https";
+import { isEmpty } from "lodash";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import { createSmsChatHelper } from "./calls";
 import { createMatchFirestore } from "./csv";
-import { Firestore, IMatch, IUser } from "./firestore";
-import { videoFallbackSwapNumbers, videoFallbackTextChat, videoMatchNotification } from "./smsCopy";
+import { Firestore, IMatch, IPreferences, IUser } from "./firestore";
+import { videoFallbackSwapNumbers, videoFallbackTextChat, videoMatchNotification, welcome } from "./smsCopy";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
 import { sendSms } from "./twilio";
 
@@ -22,66 +23,38 @@ const REQUIRED_ONBOARDING_FIELDS = [
   "photo",
   "funFacts",
   "social",
-];
+] as const;
 
 // just checks for existence of fields - doesn't validate values
-function checkOnboardingComplete(data: Record<string, any>) {
-  return REQUIRED_ONBOARDING_FIELDS.every(k => data[k] !== undefined);
+function checkOnboardingComplete(user: Partial<IUser>) {
+  return REQUIRED_ONBOARDING_FIELDS.every(k => user[k] !== undefined);
 }
 
-async function getOrCreateUser(phone: string) {
-  const userResult = await admin
-    .firestore()
-    .collection("users")
-    .where("phone", "==", phone)
-    .get();
-  if (userResult.empty) {
-    // create record
-    const doc = admin.firestore().collection("users").doc();
-    const data = {
-      id: doc.id,
-      phone,
-      registeredAt: admin.firestore.FieldValue.serverTimestamp(),
-      eligible: true,
-      status: "waitlist",
-      locationFlexibility: true,
-    };
-    await doc.create(data);
-    return data;
-  }
-  return userResult.docs[0].data();
-}
-
-export const onboardUser = functions.https.onCall(async (data, context) => {
-  if (!context.auth || !context.auth.token.phone_number) {
-    throw new functions.https.HttpsError("unauthenticated", "authentication required");
-  }
-
-  const user = await getOrCreateUser(context.auth.token.phone_number);
-
-  const update: Record<string, any> = {};
+function parseOnboardingForm(data: Record<string, any>): [Partial<IUser> | undefined, Partial<IPreferences> | undefined] {
+  const userUpdate: Record<string, any> = {};
+  const preferencesUpdate: Partial<IPreferences> = {};
   REQUIRED_ONBOARDING_FIELDS.forEach(field => {
     const value = data[field];
     if (value === undefined) {
       return;
     }
 
-    update[field] = value;
+    userUpdate[field] = value;
     if (field === "birthdate") {
       // also calculate age
       const formatted = `${value.year}-${value.month}-${value.day}`;
-      update.age = moment().diff(formatted, "years");
+      userUpdate.age = moment().diff(formatted, "years");
     } else if (field === "pronouns") {
       // also set gender
       switch (value) {
         case "He/him":
-          update.gender = "Male";
+          userUpdate.gender = "Male";
           break;
         case "She/her":
-          update.gender = "Female";
+          userUpdate.gender = "Female";
           break;
         case "They/them":
-          update.gender = "Non-binary";
+          userUpdate.gender = "Non-binary";
           break;
         default:
           console.error(new Error("unknown pronouns: " + value));
@@ -89,37 +62,55 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
     } else if (field === "location") {
       const tz = timezone(value);
       if (tz) {
-        update.timezone = tz;
+        userUpdate.timezone = tz;
       }
     }
-  })
+  });
 
   if (data.referrer !== undefined) {
-    update.referrer = data.referrer;
-  }
-
-  if (Object.keys(update).length > 0) {
-    const allData = { ...user, ...update };
-    update.onboardingComplete = checkOnboardingComplete(allData);
-    await admin.firestore().collection("users").doc(user.id).update(update);
-    if (update.onboardingComplete) {
-      await notifyNewSignup(allData);
-      if (user.phone.startsWith("+1")) {
-        // US or Canada
-        /*await sendSms({
-          body: welcome(user as IUser),
-          to: user.phone,
-        });*/
-      }
-    }
+    userUpdate.referrer = data.referrer;
   }
 
   if (data.connectionType !== undefined) {
-    await admin.firestore().collection("preferences").doc(user.id).set({
-      connectionType: { value: data.connectionType }
-    });
+    preferencesUpdate.connectionType = { value: data.connectionType };
   }
 
+  return [
+    isEmpty(userUpdate) ? undefined : userUpdate,
+    isEmpty(preferencesUpdate) ? undefined : preferencesUpdate
+  ];
+}
+
+export const onboardUser = functions.https.onCall(async (data, context) => {
+  if (!context.auth || !context.auth.token.phone_number) {
+    throw new functions.https.HttpsError("unauthenticated", "authentication required");
+  }
+
+  const firestore = new Firestore();
+  const user = await firestore.getOrCreateUser(context.auth.token.phone_number);
+
+  // if they already completed onboarding, they have no business doing anything onboarding. bail out
+  if (user.onboardingComplete) {
+      return;
+  }
+
+  const [userUpdate, preferencesUpdate] = parseOnboardingForm(data);
+  if (userUpdate) {
+    const wasOnboardingComplete = user.onboardingComplete;
+    Object.assign(user, userUpdate);
+    user.onboardingComplete = checkOnboardingComplete(user);
+    await firestore.saveUser(user);
+    if (!wasOnboardingComplete && user.onboardingComplete) {
+      await notifyNewSignup(user);
+      // US and Canada
+      if (user.phone.startsWith("+1")) {
+        await sendSms({body: welcome(user as IUser), to: user.phone});
+      }
+    }
+  }
+  if (preferencesUpdate) {
+    await firestore.setPreferences(user.id, preferencesUpdate);
+  }
   return { id: user.id, phone: user.phone };
 });
 
