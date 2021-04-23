@@ -201,12 +201,12 @@ export function cancelNotification(
     getTimestamp: () => moment.Moment,
     canceleeNextMatch?: NextMatchNameDate,
 ) {
-    const day = tonightOrDay(match.created_at.toDate(), timezone(cancelee), getTimestamp);
+    const formattedDay = tonightOrDay(match.created_at.toDate(), timezone(cancelee), getTimestamp);
     const nextCopy = canceleeNextMatch
-        ? `You're still scheduled to speak with ${canceleeNextMatch.nextMatchName} on ${canceleeNextMatch.nextMatchDate}`
+        ? `You're still scheduled to speak with ${canceleeNextMatch.nextMatchName} on ${canceleeNextMatch.nextMatchDate}.`
         : "We'll be back in touch next week with another match!";
 
-    return `Hi ${cancelee.firstName}, unfortunately ${canceler.firstName} let us know they can no longer make ${day}'s date, so you won't be receiving a call from us. ${nextCopy}`;
+    return `Hi ${cancelee.firstName}, unfortunately ${canceler.firstName} let us know they can no longer make ${formattedDay}'s date, so you won't be receiving a call from us. ${nextCopy}`;
 }
 
 function formatTime(matchTime: string | Date, tz: string) {

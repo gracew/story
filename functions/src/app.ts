@@ -453,7 +453,7 @@ async function checkUserIsInMatch(firestore: Firestore, userId: string, matchId:
     throw new functions.https.HttpsError("invalid-argument", "unknown match id");
   }
   if (!match.user_ids.includes(userId)) {
-    throw new functions.https.HttpsError("permission-denied", "unauthorized to cancel match");
+    throw new functions.https.HttpsError("permission-denied", "unauthorized to modify match");
   }
   return match;
 }
