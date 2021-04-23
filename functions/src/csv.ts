@@ -149,9 +149,8 @@ async function reminderHelper(timezone: string) {
  * Creates a match for each row in a CSV. The CSV should be in the format:
  * userAId,userBId,callDate (MM-DD-YYYY),callTime (hh:mm a),timezone. There should not be a header line.
  */
-export const createMatches = functions.storage
-  .object()
-  .onFinalize(async (object) => {
+export const createMatches = functions.storage.object().onFinalize(
+  async (object): Promise<void> => {
     if (!(object.name && object.name.startsWith("matchescsv"))) {
       return;
     }
@@ -170,14 +169,18 @@ export const createMatches = functions.storage
     await Promise.all(
       rows.map((data) => {
         try {
-          new Firestore().createMatch((data as unknown) as CreateMatchInput);
+          return new Firestore().createMatch(
+            (data as unknown) as CreateMatchInput
+          );
         } catch (e) {
           // if there's an error creating one of the matches, skip it and move on
           console.error(e);
+          return;
         }
       })
     );
-  });
+  }
+);
 
 export const sendMatchNotificationTexts = functions.pubsub
   .schedule("every monday 15:00")
