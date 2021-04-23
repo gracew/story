@@ -1,6 +1,5 @@
 import * as admin from "firebase-admin";
 import moment = require("moment-timezone");
-import { CreateMatchParams } from "./csv";
 
 export interface ICalendarDate {
   year: number;
@@ -95,16 +94,16 @@ interface ISchedulingRecord {
   skip?: boolean;
 }
 
-export function timestamp(isoDate: string) {
-  return new admin.firestore.Timestamp(new Date(isoDate).getTime() / 1000, 0);
+export function toFirestoreTimestamp(d: Date) {
+  return new admin.firestore.Timestamp(d.getTime() / 1000, 0);
 }
 
 export interface CreateMatchInput {
   userAId: string;
   userBId: string;
-  time: string;
+  time: Date;
   canceled?: boolean;
-  mode?: string;
+  mode?: "video" | "phone";
 }
 
 export class Firestore {
@@ -158,23 +157,25 @@ export class Firestore {
     return match.data() as IMatch | undefined;
   }
 
-  public async createMatch(data: CreateMatchParams): Promise<IMatch> {
-    const userA = await this.getUser(data.userAId);
-    const userB = await this.getUser(data.userBId);
+  public async createMatch(params: CreateMatchInput): Promise<IMatch> {
+    const userA = await this.getUser(params.userAId);
+    const userB = await this.getUser(params.userBId);
 
     if (!userA) {
-      throw new Error("unknown user id " + data.userAId);
+      throw new Error("unknown user id " + params.userAId);
     }
     if (!userB) {
-      throw new Error("unknown user id " + data.userBId);
+      throw new Error("unknown user id " + params.userBId);
     }
+    const ref = admin.firestore().collection("matches").doc();
     const match = {
-      user_a_id: data.userAId,
-      user_b_id: data.userBId,
-      user_ids: [data.userAId, data.userBId],
+      id: ref.id,
+      user_a_id: params.userAId,
+      user_b_id: params.userBId,
+      user_ids: [params.userAId, params.userBId],
       joined: {},
-      created_at: timestamp(data.time),
-      canceled: data.canceled || false,
+      created_at: toFirestoreTimestamp(params.time),
+      canceled: params.canceled || false,
       interactions: {
         notified: false,
         reminded: false,
@@ -185,15 +186,17 @@ export class Firestore {
         warned1Min: false,
         revealRequested: false,
       },
-      mode: data.mode || "phone",
+      mode: params.mode || "phone",
     };
-    const ref = admin.firestore().collection("matches").doc();
-    await ref.set({ ...match, id: ref.id });
+    await ref.set(match);
     return match;
   }
 
-  public updateMatch(id: string, update: Partial<IMatch>) {
-    return admin.firestore().collection("matches").doc(id).update(update);
+  public async rescheduleMatch(id: string, newTime: Date) {
+    return this.updateMatch(id, {
+      rescheduled: true,
+      created_at: toFirestoreTimestamp(newTime),
+    });
   }
 
   public cancelMatch(id: string) {
@@ -300,5 +303,10 @@ export class Firestore {
     );
     const res = await admin.firestore().getAll(...userRefs);
     return Object.assign({}, ...res.map((doc) => ({ [doc.id]: doc.data() })));
+  }
+
+  // TODO: let's make this private to decouple callers from inner workings of firestore
+  public updateMatch(id: string, update: Partial<IMatch>) {
+    return admin.firestore().collection("matches").doc(id).update(update);
   }
 }

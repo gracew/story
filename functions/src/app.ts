@@ -5,10 +5,15 @@ import { isEmpty } from "lodash";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import { createSmsChatHelper } from "./calls";
-import { CreateMatchParams } from "./csv";
 import { GetUpcomingMatches } from "../../api/responses";
 import { listUpcomingMatchViewsForUser } from "./matches";
-import { Firestore, IMatch, IPreferences, IUser, timestamp } from "./firestore";
+import {
+  CreateMatchInput,
+  Firestore,
+  IMatch,
+  IPreferences,
+  IUser,
+} from "./firestore";
 import { findCommonAvailability } from "./scheduling";
 import {
   cancelNotification,
@@ -454,7 +459,7 @@ export async function videoNextStep(
   userB: IUser,
   match: IMatch,
   sendSmsFn: (opts: any) => Promise<any>
-): Promise<CreateMatchParams | void> {
+): Promise<CreateMatchInput | void> {
   const availabilityA = match.videoAvailability![match.user_a_id];
   const availabilityB = match.videoAvailability![match.user_b_id];
   const common = firstCommonAvailability(
@@ -476,7 +481,7 @@ export async function videoNextStep(
     return {
       userAId: userA.id,
       userBId: userB.id,
-      time: common,
+      time: new Date(common),
       mode: "video",
     };
   }
@@ -585,10 +590,7 @@ export const rescheduleMatch = functions.https.onCall(async (data, context) => {
 
   await Promise.all([
     // update time and set rescheduled flag
-    firestore.updateMatch(match.id, {
-      created_at: timestamp(data.newTime),
-      rescheduled: true,
-    }),
+    firestore.rescheduleMatch(match.id, new Date(data.newTime)),
     // notify the other user
     sendSms({
       body: rescheduleNotification(

@@ -5,7 +5,7 @@ import * as moment from "moment-timezone";
 import * as neatCsv from "neat-csv";
 import * as os from "os";
 import * as path from "path";
-import { Firestore, IMatch, IUser } from "./firestore";
+import { CreateMatchInput, Firestore, IMatch, IUser } from "./firestore";
 import {
   availability as availabilityCopy,
   matchNotification,
@@ -168,9 +168,14 @@ export const createMatches = functions.storage
       headers: ["userAId", "userBId", "time"],
     });
     await Promise.all(
-      rows.map((data) =>
-        new Firestore().createMatch((data as unknown) as CreateMatchInput)
-      )
+      rows.map((data) => {
+        try {
+          new Firestore().createMatch((data as unknown) as CreateMatchInput);
+        } catch (e) {
+          // if there's an error creating one of the matches, skip it and move on
+          console.error(e);
+        }
+      })
     );
   });
 
@@ -223,54 +228,3 @@ export const sendMatchNotificationTexts = functions.pubsub
       })
     );
   });
-
-export interface CreateMatchParams {
-  userAId: string;
-  userBId: string;
-  time: string;
-  canceled?: boolean;
-  mode?: "phone" | "video";
-}
-
-// TODO: validate that the time is one of the times that we can have match meetings?
-function parseTime(s: string): admin.firestore.Timestamp {
-  const secs = Math.trunc(new Date(s).getTime() / 1000);
-  return new admin.firestore.Timestamp(secs, 0);
-}
-
-export async function createMatchFirestore(
-  data: CreateMatchParams,
-  firestore: Firestore
-): Promise<IMatch | undefined> {
-  const userA = await firestore.getUser(data.userAId);
-  const userB = await firestore.getUser(data.userBId);
-
-  if (!userA) {
-    console.error(new Error("unknown user id " + data.userAId));
-    return;
-  }
-  if (!userB) {
-    console.error(new Error("unknown user id " + data.userBId));
-    return;
-  }
-  const match = {
-    user_a_id: data.userAId,
-    user_b_id: data.userBId,
-    user_ids: [data.userAId, data.userBId],
-    joined: {},
-    created_at: parseTime(data.time),
-    canceled: data.canceled || false,
-    interactions: {
-      notified: false,
-      reminded: false,
-      called: false,
-      recalled: false,
-      flakesHandled: false,
-      warned5Min: false,
-      warned1Min: false,
-      revealRequested: false,
-    },
-    mode: data.mode || "phone",
-  };
-  return await firestore.createMatch(match);
-}
