@@ -180,10 +180,12 @@ export const getPublicProfile = functions.https.onCall(
   }
 );
 
-// either returns the logged in user, or allows a special admin user to retrieve information on any user they want
-// via `userId` request data parameter.
-//
-// throws an API error if there's no user logged in
+/**
+ * Either returns the logged in user, or allows a special admin user to retrieve information on any user they want via
+ * `userId` request data parameter.
+ *
+ * Throws an API error if there's no user logged in
+ */
 async function requireLoggedInUser(data: any, context: CallableContext) {
   if (!context.auth || !context.auth.token.phone_number) {
     throw new functions.https.HttpsError(

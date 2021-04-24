@@ -1,19 +1,22 @@
-// via Date.prototype.toJSON
-type JSONDateTime = string;
-
-// corresponds to the `getUpcomingMatches` function
-export interface GetUpcomingMatches {
-  upcomingMatches: UpcomingMatch[],
+export namespace Endpoints {
+  export interface GetUpcomingMatches {
+    upcomingMatches: Resources.UpcomingMatch[];
+  }
 }
 
-export interface UpcomingMatch {
-  firstName: string,
-  // photo is undefined if they haven't been "revealed" yet... i.e., they haven't had their phone meeting yet
-  photo?: string,
-  funFacts: string,
-  meetingTime: JSONDateTime,
-  mode: MatchMode,
+export namespace Resources {
+  export interface UpcomingMatch {
+    firstName: string;
+    // photo is undefined if they haven't been "revealed" yet... i.e., they haven't had their phone meeting yet
+    photo?: string;
+    funFacts: string;
+    meetingTime: Types.JSONDateTime;
+    mode: Types.MatchMode;
+  }
 }
 
-export type MatchMode = "video" | "phone";
-
+export namespace Types {
+  // via Date.prototype.toJSON
+  export type JSONDateTime = string;
+  export type MatchMode = "video" | "phone";
+}

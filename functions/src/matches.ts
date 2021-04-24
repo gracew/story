@@ -1,4 +1,4 @@
-import {Firestore, IMatch, IUser} from "./firestore";
+import { Firestore, IMatch, IUser } from "./firestore";
 
 const firestore = new Firestore();
 
@@ -16,7 +16,6 @@ class UpcomingMatchView {
     return this.otherUser.funFacts || "";
   }
 
-  // XXX: are we supposed to use the "reveal" flags here, instead?
   get photo(): string | undefined {
     switch (this.mode) {
       case "phone":
@@ -38,18 +37,23 @@ class UpcomingMatchView {
   private otherUser: IUser;
 }
 
-export async function listUpcomingMatchViewsForUser(viewingUser: IUser): Promise<UpcomingMatchView[]> {
+export async function listUpcomingMatchViewsForUser(
+  viewingUser: IUser
+): Promise<UpcomingMatchView[]> {
   const matches = await firestore.upcomingMatchesForUser(viewingUser.id);
   const allUserById = await firestore.getUsersForMatches(matches);
   const upcomingMatches = [];
   for (const match of matches) {
-    const otherUsers = match.user_ids.filter(id => id !== viewingUser.id).map(userId => allUserById[userId]);
+    const otherUsers = match.user_ids
+      .filter((id) => id !== viewingUser.id)
+      .map((userId) => allUserById[userId]);
     if (otherUsers.length !== 1) {
-      console.error(`match ${match.id} contains ${otherUsers.length} other users, should have just been 1`);
+      console.error(
+        `match ${match.id} contains ${otherUsers.length} other users, should have just been 1`
+      );
       continue;
     }
     upcomingMatches.push(new UpcomingMatchView(match, otherUsers[0]));
   }
   return upcomingMatches;
 }
-
