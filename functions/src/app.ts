@@ -5,6 +5,7 @@ import { isEmpty } from "lodash";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import { createSmsChatHelper } from "./calls";
+import { GetUpcomingMatches } from "../../api/responses";
 import { listUpcomingMatchViewsForUser } from "./matches";
 import {
   CreateMatchInput,
@@ -24,7 +25,6 @@ import {
 } from "./smsCopy";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
 import { nextMatchNameAndDate, sendSms } from "./twilio";
-import { Endpoints } from "../../api/responses";
 
 const firestore = new Firestore();
 
@@ -330,7 +330,7 @@ function timezone(location: string) {
 }
 
 export const getUpcomingMatches = functions.https.onCall(
-  async (data, context): Promise<Endpoints.GetUpcomingMatches> => {
+  async (data, context): Promise<GetUpcomingMatches> => {
     const user = await requireLoggedInUser(data, context);
     const matchViews = await listUpcomingMatchViewsForUser(user);
     return {
