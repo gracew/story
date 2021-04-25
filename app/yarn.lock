@@ -2874,6 +2874,11 @@ anymatch@~3.1.1:
     normalize-path "^3.0.0"
     picomatch "^2.0.4"
 
+"api@file:./../api":
+  version "1.0.0"
+  dependencies:
+    myzod "^1.6.1"
+
 aproba@^1.1.1:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/aproba/-/aproba-1.2.0.tgz#6802e6264efd18c790a1b0d517f0f2627bf2c94a"
@@ -8164,6 +8169,11 @@ mute-stream@0.0.8:
   version "0.0.8"
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.8.tgz#1630c42b2251ff81e2a283de96a5497ea92e5e0d"
   integrity sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==
+
+myzod@^1.6.1:
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/myzod/-/myzod-1.6.1.tgz#9f63599caa3b03ab3d86266de65678d65dd17199"
+  integrity sha512-69Nz0/4L/54xsi89naa9B4QhratNXQOAN1eKH4H5jwhOGs5LxlyNxHvvyS6D59BQLZACoVqllhXhjsXdIJoFtA==
 
 nan@^2.12.1:
   version "2.14.0"
