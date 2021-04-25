@@ -49,7 +49,9 @@ export async function listUpcomingMatchViewsForUser(
       .map((userId) => allUserById[userId]);
     if (otherUsers.length !== 1) {
       console.error(
-        `match ${match.id} contains ${otherUsers.length} other users, should have just been 1`
+        new Error(
+          `match ${match.id} contains ${otherUsers.length} other users, should have just been 1`
+        )
       );
       continue;
     }
