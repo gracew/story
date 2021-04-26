@@ -13,6 +13,10 @@
   padding: 5px 10px 0 10px;
 }
 
+.match-reschedule {
+    width: 100%;
+}
+
 .match-time {
     margin-bottom: 10px;
     font-size: 15px;

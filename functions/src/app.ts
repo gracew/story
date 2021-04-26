@@ -568,7 +568,10 @@ export const getCommonAvailability = functions.https.onCall(
       availability[match.user_b_id].available
     );
     const now = moment().toDate().getTime();
-    return common.filter((date) => date.getTime() > now);
+    return {
+      tz: user.timezone,
+      commonAvailability: common.filter((date) => date.getTime() > now),
+    }
   }
 );
 

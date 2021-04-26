@@ -15,6 +15,10 @@ export namespace Responses {
 }
 
 export namespace Resources {
+  export interface CommonAvailability {
+    commonAvailability: Types.JSONDateTime[],
+    tz: string;
+  }
   export interface UpcomingMatch {
     firstName: string;
     // photo is undefined if they haven't been "revealed" yet... i.e., they haven't had their phone meeting yet
