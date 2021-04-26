@@ -2,44 +2,27 @@ import { Firestore, IMatch, IUser } from "./firestore";
 
 const firestore = new Firestore();
 
-class UpcomingMatchView {
-  constructor(match: IMatch, otherUser: IUser) {
-    this.match = match;
-    this.otherUser = otherUser;
+function createUpcomingMatchView(match: IMatch, otherUser: IUser) {
+  const mode = match.mode || "phone";
+  let photo = undefined;
+  switch (mode) {
+    case "phone":
+      photo = undefined;
+      break;
+    case "video":
+      photo = otherUser.photo;
+      break;
   }
-
-  get firstName(): string {
-    return this.otherUser.firstName;
-  }
-
-  get funFacts(): string {
-    return this.otherUser.funFacts || "";
-  }
-
-  get photo(): string | undefined {
-    switch (this.mode) {
-      case "phone":
-        return undefined;
-      case "video":
-        return this.otherUser.photo;
-    }
-  }
-
-  get mode(): "video" | "phone" {
-    return this.match.mode || "phone";
-  }
-
-  get meetingTime(): Date {
-    return this.match.created_at.toDate();
-  }
-
-  private match: IMatch;
-  private otherUser: IUser;
+  return {
+    firstName: otherUser.firstName,
+    funFacts: otherUser.funFacts || "",
+    mode,
+    photo,
+    meetingTime: match.created_at.toDate(),
+  };
 }
 
-export async function listUpcomingMatchViewsForUser(
-  viewingUser: IUser
-): Promise<UpcomingMatchView[]> {
+export async function listUpcomingMatchViewsForUser(viewingUser: IUser) {
   const matches = await firestore.upcomingMatchesForUser(viewingUser.id);
   const allUserById = await firestore.getUsersForMatches(matches);
   const upcomingMatches = [];
@@ -55,7 +38,7 @@ export async function listUpcomingMatchViewsForUser(
       );
       continue;
     }
-    upcomingMatches.push(new UpcomingMatchView(match, otherUsers[0]));
+    upcomingMatches.push(createUpcomingMatchView(match, otherUsers[0]));
   }
   return upcomingMatches;
 }
