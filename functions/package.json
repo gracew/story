@@ -3,7 +3,7 @@
   "scripts": {
     "lint": "tslint --project tsconfig.json",
     "build": "tsc",
-    "serve": "npm run build && npx firebase emulators:start",
+    "serve": "npm run build && npx firebase emulators:start --import ./.localdata --export-on-exit",
     "shell": "npm run build && npx firebase functions:shell",
     "start": "npm run shell",
     "deploy": "npx firebase deploy --only functions",
@@ -12,7 +12,7 @@
   "engines": {
     "node": "10"
   },
-  "main": "lib/src/index.js",
+  "main": "lib/functions/src/index.js",
   "dependencies": {
     "@google-cloud/firestore": "^4.9.4",
     "@sendgrid/mail": "^7.4.0",

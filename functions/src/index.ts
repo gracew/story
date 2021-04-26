@@ -5,11 +5,52 @@ import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import * as os from "os";
 import * as path from "path";
-import { cancelMatch, getPreferences, getPublicProfile, getVideoAvailability, onboardUser, savePreferences, saveVideoAvailability } from "./app";
-import { addUserToCall, call1MinWarning, call5MinWarning, callUser, conferenceStatusWebhook, createSmsChat, handleFlakes, issueCalls, issueRecalls, markJoined, notifyIncomingTextHelper, revealRequest, revealRequestVideo, saveReveal, sendReminderTexts, sendVideoLink, warnSmsChatExpiration } from "./calls";
-import { createMatches, createSchedulingRecords, processBulkSmsCsv, sendAvailabilityReminderCT, sendAvailabilityReminderET, sendAvailabilityReminderMT, sendAvailabilityReminderPT, sendAvailabilityTexts, sendMatchNotificationTexts } from "./csv";
+import {
+  cancelMatch,
+  getPreferences,
+  getPublicProfile,
+  getUpcomingMatches,
+  getVideoAvailability,
+  onboardUser,
+  savePreferences,
+  saveVideoAvailability,
+} from "./app";
+import {
+  addUserToCall,
+  call1MinWarning,
+  call5MinWarning,
+  callUser,
+  conferenceStatusWebhook,
+  createSmsChat,
+  handleFlakes,
+  issueCalls,
+  issueRecalls,
+  markJoined,
+  notifyIncomingTextHelper,
+  revealRequest,
+  revealRequestVideo,
+  saveReveal,
+  sendReminderTexts,
+  sendVideoLink,
+  warnSmsChatExpiration,
+} from "./calls";
+import {
+  createMatches,
+  createSchedulingRecords,
+  processBulkSmsCsv,
+  sendAvailabilityReminderCT,
+  sendAvailabilityReminderET,
+  sendAvailabilityReminderMT,
+  sendAvailabilityReminderPT,
+  sendAvailabilityTexts,
+  sendMatchNotificationTexts,
+} from "./csv";
 import { analyzeCollection, createMatch } from "./retool";
-import { bipartiteMatches, potentialMatches, remainingMatches } from "./scheduling";
+import {
+  bipartiteMatches,
+  potentialMatches,
+  remainingMatches,
+} from "./scheduling";
 import { prompts } from "./smsCopy";
 import { client, sendSms } from "./twilio";
 import { registerUser, saveAvailability } from "./typeform";
@@ -34,6 +75,7 @@ export {
   handleFlakes,
   getPreferences,
   getPublicProfile,
+  getUpcomingMatches,
   getVideoAvailability,
   issueCalls,
   issueRecalls,
@@ -138,7 +180,11 @@ export const smsStatusCallback = functions.https.onRequest(
       .collection("users")
       .where("phone", "==", request.body.To)
       .get();
-    const fullName = userQuery.empty ? "Unknown user" : userQuery.docs[0].get("firstName") + " " + userQuery.docs[0].get("lastName");
+    const fullName = userQuery.empty
+      ? "Unknown user"
+      : userQuery.docs[0].get("firstName") +
+        " " +
+        userQuery.docs[0].get("lastName");
     const message = await client.messages(request.body.MessageSid).fetch();
 
     await fetch(functions.config().slack.webhook_url, {
@@ -146,7 +192,7 @@ export const smsStatusCallback = functions.https.onRequest(
       body: JSON.stringify({
         text: `Status: ${status}
 To: ${fullName}
-Body: ${message.body}`
+Body: ${message.body}`,
       }),
       headers: { "Content-Type": "application/json" },
     });
@@ -158,17 +204,21 @@ export const copyWeeklyTemplate = functions.pubsub
   .schedule("every sunday 1:00")
   .onRun(async (context) => {
     const week = moment().startOf("week").format("YYYY-MM-DD");
-    const defaultTemplate = await admin.firestore().collection("smsCopy").doc("default").get();
+    const defaultTemplate = await admin
+      .firestore()
+      .collection("smsCopy")
+      .doc("default")
+      .get();
     const prompt = prompts[Math.floor(Math.random() * prompts.length)];
     const data = {
       ...defaultTemplate.data(),
       reminder: [
-        `Hi FIRST_NAME! Just a reminder that you'll be speaking with MATCH_NAME in an hour. Here's one idea to get the conversation started: "${prompt}"`
+        `Hi FIRST_NAME! Just a reminder that you'll be speaking with MATCH_NAME in an hour. Here's one idea to get the conversation started: "${prompt}"`,
       ],
       reminderNoPhoto: [
         "Hi FIRST_NAME! Just a reminder that you'll be speaking with MATCH_NAME in an hour. We'll swap photos after the call, so make sure to add yours at https://storydating.com/login",
         `Here's one idea to get the conversation started: "${prompt}"`,
       ],
-    }
+    };
     await admin.firestore().collection("smsCopy").doc(week).set(data);
   });

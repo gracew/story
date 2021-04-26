@@ -16,6 +16,7 @@ import PublicProfile from "./profile/PublicProfile";
 import VideoAvailability from "./scheduling/VideoAvailability";
 import Terms from "./Terms";
 import VideoRedirect from "./VideoRedirect";
+// import Matches from "./matches/Matches";
 
 const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://storydating.com")
   ? {
@@ -45,6 +46,9 @@ function App() {
   if (process.env.NODE_ENV === "development" && !process.env.REACT_APP_STAGING_DEV) {
     firebase.functions().useEmulator("localhost", 5001);
     firebase.auth().useEmulator("http://localhost:9099");
+    // @ts-ignore -- this is really handy for debugging, since we can access window.firebase from
+    // the browser console
+    window.firebase = firebase;
   }
   firebase.remoteConfig().fetchAndActivate();
   firebase.analytics();
@@ -71,6 +75,11 @@ function App() {
               <Header />
               <PublicProfile />
             </Route>
+            {/*TODO: this route is WIP*/}
+            {/*<PrivateRoute path={["/m", "/matches"]}>*/}
+            {/*  <Header showLogout={true} />*/}
+            {/*  <Matches />*/}
+            {/*</PrivateRoute>*/}
             <PrivateRoute path="/m/:matchId">
               <Header showLogout={true} />
               <VideoAvailability />
