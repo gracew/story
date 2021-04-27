@@ -1,5 +1,8 @@
 .st-button {
   padding: 8px;
   height: 48px;
+  /* Set minimum width to the same as the height so the buttons don't look too skinny */
+  min-width: 48px;
   font-size: 19px;
+  line-height: 0;
 }
