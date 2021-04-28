@@ -94,15 +94,12 @@ interface ISchedulingRecord {
   skip?: boolean;
 }
 
-export function toFirestoreTimestamp(d: Date) {
-  return new admin.firestore.Timestamp(d.getTime() / 1000, 0);
-}
-
 export interface CreateMatchInput {
   userAId: string;
   userBId: string;
   time: Date;
   canceled?: boolean;
+  notified?: boolean;
   mode?: "video" | "phone";
 }
 
@@ -157,6 +154,7 @@ export class Firestore {
     return match.data() as IMatch | undefined;
   }
 
+  // TODO: possibly prevent duplicates here?
   public async createMatch(params: CreateMatchInput): Promise<IMatch> {
     const userA = await this.getUser(params.userAId);
     const userB = await this.getUser(params.userBId);
@@ -174,10 +172,10 @@ export class Firestore {
       user_b_id: params.userBId,
       user_ids: [params.userAId, params.userBId],
       joined: {},
-      created_at: toFirestoreTimestamp(params.time),
+      created_at: admin.firestore.Timestamp.fromDate(params.time),
       canceled: params.canceled || false,
       interactions: {
-        notified: false,
+        notified: params.notified || false,
         reminded: false,
         called: false,
         recalled: false,
@@ -195,7 +193,7 @@ export class Firestore {
   public async rescheduleMatch(id: string, newTime: Date) {
     return this.updateMatch(id, {
       rescheduled: true,
-      created_at: toFirestoreTimestamp(newTime),
+      created_at: admin.firestore.Timestamp.fromDate(newTime),
     });
   }
 

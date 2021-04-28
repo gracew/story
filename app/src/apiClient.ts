@@ -1,5 +1,5 @@
 import firebase from "firebase";
-import { Endpoints, Resources } from "../../api/responses";
+import { Responses, Resources } from "../../api/functions";
 
 export const NotFound = Symbol("NotFound");
 
@@ -22,6 +22,6 @@ export async function getPreferences(
 
 export async function getUpcomingMatches(): Promise<Resources.UpcomingMatch[]> {
   const res = await firebase.functions().httpsCallable("getUpcomingMatches")();
-  const resp = res.data as Endpoints.GetUpcomingMatches;
+  const resp = res.data as Responses.GetUpcomingMatches;
   return resp.upcomingMatches;
 }
