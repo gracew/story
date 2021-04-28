@@ -50,7 +50,7 @@ function PhotoUpload(props: PhotoUploadProps) {
         listType="picture-card"
         showUploadList={false}
       >
-        {imageUrl ? <div className="photo-upload-photo-container"><img src={imageUrl} alt="avatar" style={{ width: '100%' }} /></div> : uploadButton}
+        {imageUrl ? <div className="photo-container"><img src={imageUrl} alt="avatar" style={{ width: '100%' }} /></div> : uploadButton}
       </Upload>
       {imageUrl && <Button className="remove-photo" onClick={onRemoveImage}><CloseOutlined /></Button>}
     </div>
