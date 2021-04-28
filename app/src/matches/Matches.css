@@ -1,0 +1,37 @@
+.matches {
+    margin-top: 30px;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
+
+.match-card-container {
+    flex: 1;
+}
+
+.match-time {
+    margin-bottom: 10px;
+    font-size: 15px;
+}
+
+.match-time .anticon {
+    margin-right: 10px;
+}
+
+.matches-slider {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.matches-slider .st-button,
+.matches-slider div {
+    margin: 0 10px;
+}
+
+.matches-slider .st-button .anticon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

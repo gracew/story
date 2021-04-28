@@ -33,7 +33,7 @@ function PublicProfile() {
   return (
     <div className="public-profile-container">
       <ProfileCard firstName={data.firstName} gender={data.gender} photoUrl={photoUrl}>
-        <p className="public-profile-fun-facts">{data.funFacts}</p>
+        <p>{data.funFacts}</p>
       </ProfileCard>
     </div>
 

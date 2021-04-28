@@ -7,6 +7,7 @@ import "./App.less";
 import Header from "./Header";
 import Login from "./Login";
 import Logout from "./Logout";
+import Matches from "./matches/Matches";
 import Onboarding from "./onboarding/Onboarding";
 import OnboardingComplete from "./onboarding/OnboardingComplete";
 import Privacy from "./Privacy";
@@ -16,7 +17,6 @@ import PublicProfile from "./profile/PublicProfile";
 import VideoAvailability from "./scheduling/VideoAvailability";
 import Terms from "./Terms";
 import VideoRedirect from "./VideoRedirect";
-import Matches from "./matches/Matches";
 // import Matches from "./matches/Matches";
 
 const firebaseConfig = process.env.PUBLIC_URL.startsWith("https://storydating.com")
@@ -76,7 +76,7 @@ function App() {
               <Header />
               <PublicProfile />
             </Route>
-            <PrivateRoute path={["/m", "/matches"]}>
+            <PrivateRoute path={["/m", "/matches"]} exact>
               <Header showLogout={true} />
               <Matches />
             </PrivateRoute>

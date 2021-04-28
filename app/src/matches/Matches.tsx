@@ -1,50 +1,62 @@
 import { LeftOutlined, PhoneOutlined, RightOutlined, VideoCameraOutlined } from "@ant-design/icons";
+import firebase from "firebase";
 import moment from "moment-timezone";
 import React, { useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
 import { Resources } from "../../../api/responses";
 import { getUpcomingMatches } from "../apiClient";
+import CenteredDiv from "../components/CenteredDiv";
 import CenteredSpin from "../components/CenteredSpin";
 import StoryButton from "../components/StoryButton";
+import ProfileCard from "../profile/ProfileCard";
+import "./Matches.css";
 
-// TODO: WIP
 export default function Matches(): JSX.Element {
-  const history = useHistory();
   const [upcomingMatches, setUpcomingMatches] = useState<Resources.UpcomingMatch[]>();
   const [pageIndex, setPageIndex] = useState<number>(0);
+  const [photoUrl, setPhotoUrl] = useState<string>();
 
   useEffect(() => {
     (async () => {
-     setUpcomingMatches(await getUpcomingMatches());
+      setUpcomingMatches(await getUpcomingMatches());
     })();
   }, []);
+
+  useEffect(() => {
+    if (!upcomingMatches || !upcomingMatches[pageIndex] || !upcomingMatches[pageIndex].photo) {
+      setPhotoUrl(undefined);
+      return;
+    }
+    firebase
+      .storage()
+      .ref(upcomingMatches[pageIndex].photo)
+      .getDownloadURL()
+      .then(url => { 
+        console.log(url);
+        setPhotoUrl(url) });
+  }, [upcomingMatches, pageIndex]);
 
   if (!upcomingMatches) {
     return <CenteredSpin />;
   }
   if (upcomingMatches.length === 0) {
-    history.push("/profile")
+    return <CenteredDiv>We don't have a match for you this week. We'll text you as soon as we do!</CenteredDiv>;
   }
 
   const thisMatch = upcomingMatches[pageIndex];
-  let icon;
-  switch (thisMatch.mode) {
-    case "video":
-      icon = <VideoCameraOutlined />;
-      break;
-    case "phone":
-      icon = <PhoneOutlined />;
-      break;
-  }
+  const icon = thisMatch.mode === "video" ? <VideoCameraOutlined /> : <PhoneOutlined />;
 
   return (
-    <div>
-      <h5>{thisMatch.firstName}</h5>
-      <div>{"San Hardcoded, CA"}</div>
-      {icon} &nbsp;
-      {moment(thisMatch.meetingTime).format('MMMM D YYYY [at] h:mm A')}
+    <div className="matches">
+      <div className="match-card-container">
+        <ProfileCard firstName={thisMatch.firstName} gender={thisMatch.gender} photoUrl={photoUrl}>
+          <div className="match-time">
+            {icon}{moment(thisMatch.meetingTime).format('ddd, MMM D [at] h:mm A')}
+          </div>
+          <p>{thisMatch.funFacts}</p>
+        </ProfileCard>
+      </div>
 
-      <div>
+      <div className="matches-slider">
         <StoryButton
           disabled={pageIndex < 1}
           type="primary"
@@ -69,8 +81,4 @@ export default function Matches(): JSX.Element {
       </div>
     </div>
   );
-}
-
-function toPageNo(i: number) {
-  return i + 1;
 }

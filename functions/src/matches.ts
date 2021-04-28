@@ -15,6 +15,7 @@ function createUpcomingMatchView(match: IMatch, otherUser: IUser) {
   }
   return {
     firstName: otherUser.firstName,
+    gender: otherUser.gender,
     funFacts: otherUser.funFacts || "",
     mode,
     photo,

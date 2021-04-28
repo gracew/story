@@ -29,7 +29,9 @@ const ProfileCard: FunctionComponent<ProfileCardProps> = (props) => {
           <div>{props.gender}{props.age && `, ${props.age}`}</div>
         </div>
       </div>
-      {props.children}
+      <div className="profile-card-details">
+        {props.children}
+      </div>
     </div>
   );
 }

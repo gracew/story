@@ -12,6 +12,7 @@ export namespace Resources {
     funFacts: string;
     meetingTime: Types.JSONDateTime;
     mode: Types.MatchMode;
+    gender: string;
   }
 }
 
