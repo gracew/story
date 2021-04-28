@@ -4,14 +4,14 @@ import { CallableContext } from "firebase-functions/lib/providers/https";
 import { isEmpty } from "lodash";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
-import { Endpoints } from "../../api/responses";
 import { createSmsChatHelper } from "./calls";
+import { Responses } from "../../api/functions";
 import {
   CreateMatchInput,
   Firestore,
   IMatch,
   IPreferences,
-  IUser
+  IUser,
 } from "./firestore";
 import { listUpcomingMatchViewsForUser } from "./matches";
 import { findCommonAvailability } from "./scheduling";
@@ -21,7 +21,7 @@ import {
   videoFallbackSwapNumbers,
   videoFallbackTextChat,
   videoMatchNotification,
-  welcome
+  welcome,
 } from "./smsCopy";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
 import { nextMatchNameAndDate, sendSms } from "./twilio";
@@ -330,7 +330,7 @@ function timezone(location: string) {
 }
 
 export const getUpcomingMatches = functions.https.onCall(
-  async (data, context): Promise<Endpoints.GetUpcomingMatches> => {
+  async (data, context): Promise<Responses.GetUpcomingMatches> => {
     const user = await requireLoggedInUser(data, context);
     const matchViews = await listUpcomingMatchViewsForUser(user);
     return {
