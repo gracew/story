@@ -7,6 +7,7 @@ import "./App.less";
 import Header from "./Header";
 import Login from "./Login";
 import Logout from "./Logout";
+import Matches from "./matches/Matches";
 import Onboarding from "./onboarding/Onboarding";
 import OnboardingComplete from "./onboarding/OnboardingComplete";
 import Privacy from "./Privacy";
@@ -75,11 +76,10 @@ function App() {
               <Header />
               <PublicProfile />
             </Route>
-            {/*TODO: this route is WIP*/}
-            {/*<PrivateRoute path={["/m", "/matches"]}>*/}
-            {/*  <Header showLogout={true} />*/}
-            {/*  <Matches />*/}
-            {/*</PrivateRoute>*/}
+            <PrivateRoute path={["/m", "/matches"]} exact>
+              <Header showLogout={true} />
+              <Matches />
+            </PrivateRoute>
             <PrivateRoute path="/m/:matchId">
               <Header showLogout={true} />
               <VideoAvailability />
