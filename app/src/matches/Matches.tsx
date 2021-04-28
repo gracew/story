@@ -2,7 +2,7 @@ import { LeftOutlined, PhoneOutlined, RightOutlined, VideoCameraOutlined } from 
 import firebase from "firebase";
 import moment from "moment-timezone";
 import React, { useEffect, useState } from "react";
-import { Resources } from "../../../api/responses";
+import { Resources } from "../../../api/functions";
 import { getUpcomingMatches } from "../apiClient";
 import CenteredDiv from "../components/CenteredDiv";
 import CenteredSpin from "../components/CenteredSpin";
@@ -30,9 +30,10 @@ export default function Matches(): JSX.Element {
       .storage()
       .ref(upcomingMatches[pageIndex].photo)
       .getDownloadURL()
-      .then(url => { 
+      .then(url => {
         console.log(url);
-        setPhotoUrl(url) });
+        setPhotoUrl(url)
+      });
   }, [upcomingMatches, pageIndex]);
 
   if (!upcomingMatches) {
@@ -49,10 +50,12 @@ export default function Matches(): JSX.Element {
     <div className="matches">
       <div className="match-card-container">
         <ProfileCard firstName={thisMatch.firstName} gender={thisMatch.gender} photoUrl={photoUrl}>
-          <div className="match-time">
-            {icon}{moment(thisMatch.meetingTime).format('ddd, MMM D [at] h:mm A')}
+          <div className="match-details">
+            <div className="match-time">
+              {icon}{moment(thisMatch.meetingTime).format('ddd, MMM D [at] h:mm A')}
+            </div>
+            <p>{thisMatch.funFacts}</p>
           </div>
-          <p>{thisMatch.funFacts}</p>
         </ProfileCard>
       </div>
 
