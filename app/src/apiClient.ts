@@ -1,5 +1,5 @@
 import firebase from "firebase";
-import { Responses, Resources } from "../../api/functions";
+import { Requests, Resources, Responses } from "../../api/functions";
 
 export const NotFound = Symbol("NotFound");
 
@@ -24,4 +24,9 @@ export async function getUpcomingMatches(): Promise<Resources.UpcomingMatch[]> {
   const res = await firebase.functions().httpsCallable("getUpcomingMatches")();
   const resp = res.data as Responses.GetUpcomingMatches;
   return resp.upcomingMatches;
+}
+
+export async function getCommonAvailability(req: Requests.GetCommonAvailability): Promise<Responses.GetCommonAvailability> {
+  const res = await firebase.functions().httpsCallable("getCommonAvailability")();
+  return res.data as Responses.GetCommonAvailability;
 }

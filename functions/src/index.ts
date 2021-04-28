@@ -7,13 +7,15 @@ import * as os from "os";
 import * as path from "path";
 import {
   cancelMatch,
+  getCommonAvailability,
   getPreferences,
   getPublicProfile,
   getUpcomingMatches,
   getVideoAvailability,
   onboardUser,
+  rescheduleMatch,
   savePreferences,
-  saveVideoAvailability,
+  saveVideoAvailability
 } from "./app";
 import {
   addUserToCall,
@@ -32,7 +34,7 @@ import {
   saveReveal,
   sendReminderTexts,
   sendVideoLink,
-  warnSmsChatExpiration,
+  warnSmsChatExpiration
 } from "./calls";
 import {
   createMatches,
@@ -43,13 +45,13 @@ import {
   sendAvailabilityReminderMT,
   sendAvailabilityReminderPT,
   sendAvailabilityTexts,
-  sendMatchNotificationTexts,
+  sendMatchNotificationTexts
 } from "./csv";
 import { analyzeCollection, createMatch } from "./retool";
 import {
   bipartiteMatches,
   potentialMatches,
-  remainingMatches,
+  remainingMatches
 } from "./scheduling";
 import { prompts } from "./smsCopy";
 import { client, sendSms } from "./twilio";
@@ -73,6 +75,7 @@ export {
   potentialMatches,
   remainingMatches,
   handleFlakes,
+  getCommonAvailability,
   getPreferences,
   getPublicProfile,
   getUpcomingMatches,
@@ -82,6 +85,7 @@ export {
   markJoined,
   onboardUser,
   registerUser,
+  rescheduleMatch,
   revealRequest,
   revealRequestVideo,
   saveAvailability,
