@@ -85,7 +85,12 @@ export default function Matches(): JSX.Element {
   return (
     <div className="matches">
       <div className="match-card-container">
-        <ProfileCard firstName={thisMatch.firstName} gender={thisMatch.gender} photoUrl={photoUrl}>
+        <ProfileCard
+          firstName={thisMatch.firstName}
+          gender={thisMatch.gender}
+          photoUrl={photoUrl}
+          footer={<Button className="match-reschedule" onClick={() => setModal(ModalType.RESCHEDULE)}>Reschedule</Button>}
+        >
           <div className="match-details">
             <div className="match-time">
               {thisMatch.mode === "video" ? <VideoCameraOutlined /> : <PhoneOutlined />}
@@ -93,7 +98,6 @@ export default function Matches(): JSX.Element {
             </div>
             <p>{thisMatch.funFacts}</p>
           </div>
-          <Button className="match-reschedule" onClick={() => setModal(ModalType.RESCHEDULE)}>Reschedule</Button>
         </ProfileCard>
       </div>
 
