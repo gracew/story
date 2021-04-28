@@ -30,10 +30,7 @@ export default function Matches(): JSX.Element {
       .storage()
       .ref(upcomingMatches[pageIndex].photo)
       .getDownloadURL()
-      .then(url => {
-        console.log(url);
-        setPhotoUrl(url)
-      });
+      .then(url => setPhotoUrl(url));
   }, [upcomingMatches, pageIndex]);
 
   if (!upcomingMatches) {
