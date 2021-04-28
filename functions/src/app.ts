@@ -4,16 +4,16 @@ import { CallableContext } from "firebase-functions/lib/providers/https";
 import { isEmpty } from "lodash";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
-import { createSmsChatHelper } from "./calls";
 import { Endpoints } from "../../api/responses";
-import { listUpcomingMatchViewsForUser } from "./matches";
+import { createSmsChatHelper } from "./calls";
 import {
   CreateMatchInput,
   Firestore,
   IMatch,
   IPreferences,
-  IUser,
+  IUser
 } from "./firestore";
+import { listUpcomingMatchViewsForUser } from "./matches";
 import { findCommonAvailability } from "./scheduling";
 import {
   cancelNotification,
@@ -21,7 +21,7 @@ import {
   videoFallbackSwapNumbers,
   videoFallbackTextChat,
   videoMatchNotification,
-  welcome,
+  welcome
 } from "./smsCopy";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
 import { nextMatchNameAndDate, sendSms } from "./twilio";
@@ -484,6 +484,7 @@ export async function videoNextStep(
       userAId: userA.id,
       userBId: userB.id,
       time: new Date(common),
+      notified: true,
       mode: "video",
     };
   }

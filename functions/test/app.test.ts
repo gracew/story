@@ -24,6 +24,7 @@ it("videoNextStep - match", async () => {
     userAId: userA.id,
     userBId: userB.id,
     time: new Date(time),
+    notified: true,
     mode: "video",
   });
   expect(mockSendSms).toHaveBeenCalledTimes(2);
