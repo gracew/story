@@ -1,12 +1,11 @@
-import React, {useEffect, useState} from "react";
-import {useHistory} from "react-router-dom";
-import {getUpcomingMatches} from "../apiClient";
-import CenteredSpin from "../components/CenteredSpin";
-import {Resources} from "../../../api/responses";
-import StoryButton from "../components/StoryButton";
-import {RightOutlined, LeftOutlined, VideoCameraOutlined, PhoneOutlined} from "@ant-design/icons";
+import { LeftOutlined, PhoneOutlined, RightOutlined, VideoCameraOutlined } from "@ant-design/icons";
 import moment from "moment-timezone";
-import {Photo} from "../components/Photo";
+import React, { useEffect, useState } from "react";
+import { useHistory } from "react-router-dom";
+import { Resources } from "../../../api/responses";
+import { getUpcomingMatches } from "../apiClient";
+import CenteredSpin from "../components/CenteredSpin";
+import StoryButton from "../components/StoryButton";
 
 // TODO: WIP
 export default function Matches(): JSX.Element {
@@ -41,7 +40,6 @@ export default function Matches(): JSX.Element {
   return (
     <div>
       <h5>{thisMatch.firstName}</h5>
-      <Photo photoUrl={thisMatch.photo} />
       <div>{"San Hardcoded, CA"}</div>
       {icon} &nbsp;
       {moment(thisMatch.meetingTime).format('MMMM D YYYY [at] h:mm A')}
