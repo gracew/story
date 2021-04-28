@@ -94,8 +94,9 @@ interface ISchedulingRecord {
   skip?: boolean;
 }
 
+// TODO: add test, especially for the Math.trunc... this fails if there are decimals
 export function toFirestoreTimestamp(d: Date) {
-  return new admin.firestore.Timestamp(d.getTime() / 1000, 0);
+  return new admin.firestore.Timestamp(Math.trunc(d.getTime() / 1000), 0);
 }
 
 export interface CreateMatchInput {
@@ -158,6 +159,7 @@ export class Firestore {
     return match.data() as IMatch | undefined;
   }
 
+  // TODO: possibly prevent duplicates here?
   public async createMatch(params: CreateMatchInput): Promise<IMatch> {
     const userA = await this.getUser(params.userAId);
     const userB = await this.getUser(params.userBId);

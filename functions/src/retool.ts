@@ -1,12 +1,16 @@
 import * as functions from "firebase-functions";
-import { CreateMatchInput, Firestore } from "./firestore";
+import { Firestore } from "./firestore";
 import { analyzeCollection as analyzeCollectionHelper } from "./validateMatches2";
+import { Requests } from "../../api/functions";
 
 // TODO: add a match response for API
 // possibly validate that the match time is allowed?
 export const createMatch = functions.https.onRequest(
-  async ({ body }: { body: CreateMatchInput }, response) => {
-    const match = await new Firestore().createMatch(body);
+  async ({ body }: { body: Requests.CreateMatch }, response) => {
+    const match = await new Firestore().createMatch({
+      ...body,
+      time: new Date(body.time),
+    });
     response.send(match);
   }
 );
