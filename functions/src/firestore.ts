@@ -94,11 +94,6 @@ interface ISchedulingRecord {
   skip?: boolean;
 }
 
-// TODO: add test, especially for the Math.trunc... this fails if there are decimals
-export function toFirestoreTimestamp(d: Date) {
-  return new admin.firestore.Timestamp(Math.trunc(d.getTime() / 1000), 0);
-}
-
 export interface CreateMatchInput {
   userAId: string;
   userBId: string;
@@ -177,7 +172,7 @@ export class Firestore {
       user_b_id: params.userBId,
       user_ids: [params.userAId, params.userBId],
       joined: {},
-      created_at: toFirestoreTimestamp(params.time),
+      created_at: admin.firestore.Timestamp.fromDate(params.time),
       canceled: params.canceled || false,
       interactions: {
         notified: params.notified || false,
@@ -198,7 +193,7 @@ export class Firestore {
   public async rescheduleMatch(id: string, newTime: Date) {
     return this.updateMatch(id, {
       rescheduled: true,
-      created_at: toFirestoreTimestamp(newTime),
+      created_at: admin.firestore.Timestamp.fromDate(newTime),
     });
   }
 
