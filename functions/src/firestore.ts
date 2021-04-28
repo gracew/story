@@ -103,6 +103,7 @@ export interface CreateMatchInput {
   userBId: string;
   time: Date;
   canceled?: boolean;
+  notified?: boolean;
   mode?: "video" | "phone";
 }
 
@@ -177,7 +178,7 @@ export class Firestore {
       created_at: toFirestoreTimestamp(params.time),
       canceled: params.canceled || false,
       interactions: {
-        notified: false,
+        notified: params.notified || false,
         reminded: false,
         called: false,
         recalled: false,
