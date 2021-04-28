@@ -94,14 +94,8 @@ interface ISchedulingRecord {
   skip?: boolean;
 }
 
-export function toFirestoreTimestamp(d: Date | string) {
-  let date;
-  if (typeof d === "string") {
-    date = new Date(d);
-  } else {
-    date = d;
-  }
-  return new admin.firestore.Timestamp(Math.trunc(date.getTime() / 1000), 0);
+export function toFirestoreTimestamp(d: Date) {
+  return new admin.firestore.Timestamp(d.getTime() / 1000, 0);
 }
 
 export interface CreateMatchInput {
