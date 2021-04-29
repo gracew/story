@@ -26,7 +26,18 @@ export async function getUpcomingMatches(): Promise<Resources.UpcomingMatch[]> {
   return resp.upcomingMatches;
 }
 
-export async function getCommonAvailability(req: Requests.GetCommonAvailability): Promise<Responses.GetCommonAvailability> {
-  const res = await firebase.functions().httpsCallable("getCommonAvailability")();
-  return res.data as Responses.GetCommonAvailability;
+export async function getCommonAvailability(req: Requests.GetCommonAvailability) {
+  const res = await firebase.functions().httpsCallable("getCommonAvailability")(req);
+  const resp = res.data as Responses.GetCommonAvailability;
+  return {
+    commonAvailability: resp.commonAvailability.map(s => new Date(s)),
+  };
+}
+
+export async function cancelMatch(req: Requests.CancelMatch): Promise<void> {
+  await firebase.functions().httpsCallable("cancelMatch")(req);
+}
+
+export async function rescheduleMatch(req: Requests.RescheduleMatch): Promise<void> {
+  await firebase.functions().httpsCallable("rescheduleMatch")(req);
 }

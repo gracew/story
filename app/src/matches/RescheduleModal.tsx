@@ -1,15 +1,14 @@
 import { Button, ModalProps, Radio } from "antd";
-import moment from "moment-timezone";
+import moment from "moment";
 import React, { FunctionComponent, useState } from "react";
 import StoryModal from "../components/StoryModal";
 import "./RescheduleModal.css";
 
 interface RescheduleModalProps {
   timeOptions: Date[];
-  /** e.g. America/Los_Angeles */
-  timezone: string;
   matchName: string;
 
+  rescheduleLoading: boolean;
   onReschedule: (date: Date) => void;
   onCancelMatch: () => void;
   onCancel: () => void;
@@ -21,7 +20,7 @@ const RescheduleModal: FunctionComponent<ModalProps & RescheduleModalProps> = (p
 
   const timesByDay: Record<string, Date[]> = {};
   props.timeOptions.forEach(option => {
-    const m = moment(option).tz(props.timezone);
+    const m = moment(option);
     const day = m.format("ddd");
     if (!(day in timesByDay)) {
       timesByDay[day] = [];
@@ -32,10 +31,16 @@ const RescheduleModal: FunctionComponent<ModalProps & RescheduleModalProps> = (p
   return <StoryModal {...props}
     okText="Reschedule"
     footer={[
-      <Button onClick={props.onCancelMatch}>
+      <Button key="cancel-match" onClick={props.onCancelMatch}>
         No times work
       </Button>,
-      <Button type="primary" disabled={selectedOption === undefined} onClick={() => props.onReschedule(selectedOption!)}>
+      <Button
+        key="reschedule"
+        type="primary"
+        disabled={selectedOption === undefined}
+        onClick={() => props.onReschedule(selectedOption!)}
+        loading={props.rescheduleLoading}
+      >
         Reschedule
       </Button>,
     ]}
@@ -57,8 +62,8 @@ const RescheduleModal: FunctionComponent<ModalProps & RescheduleModalProps> = (p
     }
 
     {selectedDay && <Radio.Group className="reschedule-options">
-      {timesByDay[selectedDay].map(option => {
-        const formattedOption = moment(option).tz(props.timezone).format("ha");
+      {(timesByDay[selectedDay] || []).map(option => {
+        const formattedOption = moment(option).format("ha");
         return <Radio.Button key={formattedOption} value={option} onClick={() => setSelectedOption(option)}>
           {formattedOption}
         </Radio.Button>

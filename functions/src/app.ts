@@ -336,6 +336,7 @@ export const getUpcomingMatches = functions.https.onCall(
     return {
       upcomingMatches: matchViews.map((matchView) => {
         return {
+          id: matchView.id,
           firstName: matchView.firstName,
           photo: matchView.photo,
           funFacts: matchView.funFacts,
@@ -548,7 +549,7 @@ async function checkUserIsInMatch(userId: string, matchId: string) {
 }
 
 export const getCommonAvailability = functions.https.onCall(
-  async (data, context) => {
+  async (data, context): Promise<Responses.GetCommonAvailability> => {
     const user = await requireLoggedInUser(data, context);
     if (!data.matchId) {
       throw new functions.https.HttpsError(
@@ -569,8 +570,7 @@ export const getCommonAvailability = functions.https.onCall(
     );
     const now = moment().toDate().getTime();
     return {
-      tz: user.timezone,
-      commonAvailability: common.filter((date) => date.getTime() > now),
+      commonAvailability: common.filter((date) => date.getTime() > now).map(date => date.toISOString()),
     }
   }
 );

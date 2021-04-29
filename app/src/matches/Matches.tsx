@@ -1,10 +1,10 @@
 import { LeftOutlined, PhoneOutlined, RightOutlined, VideoCameraOutlined } from "@ant-design/icons";
 import { Button, Modal } from "antd";
 import firebase from "firebase";
-import moment from "moment-timezone";
+import moment from "moment";
 import React, { useEffect, useState } from "react";
 import { Resources } from "../../../api/functions";
-import { getUpcomingMatches } from "../apiClient";
+import { cancelMatch, getCommonAvailability, getUpcomingMatches, rescheduleMatch } from "../apiClient";
 import CenteredDiv from "../components/CenteredDiv";
 import CenteredSpin from "../components/CenteredSpin";
 import StoryButton from "../components/StoryButton";
@@ -24,7 +24,8 @@ export default function Matches(): JSX.Element {
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [modal, setModal] = useState<ModalType>();
   const [commonAvailability, setCommonAvailability] = useState<Date[]>([]);
-  const timezone = "America/Los_Angeles";
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -45,13 +46,12 @@ export default function Matches(): JSX.Element {
   }, [upcomingMatches, pageIndex]);
 
   useEffect(() => {
-    // TODO: call getCommonAvailability
-    setCommonAvailability([
-      new Date("2021-04-27T19:00:00-07:00"),
-      new Date("2021-04-27T20:00:00-07:00"),
-      new Date("2021-04-28T20:00:00-07:00"),
-    ]);
-  }, []);
+    if (!upcomingMatches || !upcomingMatches[pageIndex]) {
+      return;
+    }
+    getCommonAvailability({ matchId: upcomingMatches[pageIndex].id })
+      .then(res => setCommonAvailability(res.commonAvailability));
+  }, [upcomingMatches, pageIndex]);
 
   if (!upcomingMatches) {
     return <CenteredSpin />;
@@ -61,10 +61,24 @@ export default function Matches(): JSX.Element {
   }
 
   const thisMatch = upcomingMatches[pageIndex];
-  function onReschedule(date: Date) {
-    // TODO: call rescheduleMatch
+
+  async function onReschedule(date: Date) {
+    setRescheduleLoading(true);
+    await rescheduleMatch({ matchId: thisMatch.id, newTime: date.toISOString() });
+    setRescheduleLoading(false);
+
+    // update local state
+    const newUpcomingMatches = [...upcomingMatches!];
+    newUpcomingMatches[pageIndex].meetingTime = date.toISOString();
+    newUpcomingMatches.sort((a, b) => new Date(a.meetingTime).getTime() - new Date(b.meetingTime).getTime());
+    setUpcomingMatches(newUpcomingMatches);
+    setPageIndex(0);
+
+    // close reschedule modal
     setModal(undefined);
-    const formattedTime = moment(date).tz(timezone).format("ha dddd");
+
+    // show success modal
+    const formattedTime = moment(date).format("ha dddd");
     Modal.success({
       className: "story-info-modal",
       title: "You're all set!",
@@ -72,9 +86,19 @@ export default function Matches(): JSX.Element {
     });
   }
 
-  function onCancelMatchConfirm() {
-    // TODO: call cancelMatch 
+  async function onCancelMatchConfirm() {
+    setCancelLoading(true);
+    await cancelMatch({ matchId: thisMatch.id });
+    setCancelLoading(false);
+
+    // update local state
+    setUpcomingMatches(upcomingMatches!.filter(m => m.id !== thisMatch.id));
+    setPageIndex(0);
+
+    // close cancel confirmation modal
     setModal(undefined);
+
+    // show success modal
     Modal.success({
       className: "story-info-modal",
       title: "You're all set.",
@@ -129,8 +153,8 @@ export default function Matches(): JSX.Element {
       <RescheduleModal
         visible={modal === ModalType.RESCHEDULE && commonAvailability.length > 0}
         timeOptions={commonAvailability}
-        timezone="America/Los_Angeles"
         matchName={thisMatch.firstName}
+        rescheduleLoading={rescheduleLoading}
         onReschedule={onReschedule}
         onCancelMatch={() => setModal(ModalType.CANCEL_CONFIRM)}
         onCancel={() => setModal(undefined)}
@@ -139,6 +163,7 @@ export default function Matches(): JSX.Element {
         visible={modal === ModalType.RESCHEDULE && commonAvailability.length === 0}
         okText="Yes, cancel"
         onOk={onCancelMatchConfirm}
+        okButtonProps={{ loading: cancelLoading }}
         cancelText="Keep this call"
         onCancel={() => setModal(undefined)}
       >
@@ -149,6 +174,7 @@ export default function Matches(): JSX.Element {
         visible={modal === ModalType.CANCEL_CONFIRM}
         okText="Yes, cancel"
         onOk={onCancelMatchConfirm}
+        okButtonProps={{ loading: cancelLoading }}
         cancelText="Keep this call"
         onCancel={() => setModal(undefined)}
       >

@@ -26,17 +26,16 @@ export namespace Responses {
     upcomingMatches: Resources.UpcomingMatch[];
   }
   export interface GetCommonAvailability {
-    commonAvailability: Types.JSONDateTime;
-    tz: string;
+    commonAvailability: Types.JSONDateTime[];
   }
 }
 
 export namespace Resources {
   export interface CommonAvailability {
     commonAvailability: Types.JSONDateTime[],
-    tz: string;
   }
   export interface UpcomingMatch {
+    id: string;
     firstName: string;
     // photo is undefined if they haven't been "revealed" yet... i.e., they haven't had their phone meeting yet
     photo?: string;
@@ -46,13 +45,6 @@ export namespace Resources {
     gender: string;
   }
 }
-export interface MatchApi {
-  getUpcomingMatches(): Promise<Responses.GetUpcomingMatches>;
-  getCommonAvailability(request: Requests.GetCommonAvailability): Promise<Responses.GetCommonAvailability>;
-  rescheduleMatch(request: Requests.RescheduleMatch): Promise<void>;
-  cancelMatch(request: Requests.CancelMatch): Promise<void>;
-}
-
 export namespace Types {
   // via Date.prototype.toJSON
   export type JSONDateTime = string;
