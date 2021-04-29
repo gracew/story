@@ -45,6 +45,7 @@ export namespace Resources {
     gender: string;
   }
 }
+
 export namespace Types {
   // via Date.prototype.toJSON
   export type JSONDateTime = string;
