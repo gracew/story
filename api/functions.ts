@@ -31,9 +31,6 @@ export namespace Responses {
 }
 
 export namespace Resources {
-  export interface CommonAvailability {
-    commonAvailability: Types.JSONDateTime[],
-  }
   export interface UpcomingMatch {
     id: string;
     firstName: string;
