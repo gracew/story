@@ -5,6 +5,10 @@
     justify-content: space-between;
 }
 
+.menu-button {
+    margin: 0 5px;
+}
+
 .menu-button span {
     display: flex;
     justify-content: center;
@@ -12,5 +16,5 @@
 }
 
 .menu-button span svg {
-    font-size: 20px;
+    font-size: 24px;
 }
