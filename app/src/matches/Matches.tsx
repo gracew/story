@@ -24,6 +24,7 @@ export default function Matches(): JSX.Element {
   const [photoUrl, setPhotoUrl] = useState<string>();
   const [modal, setModal] = useState<ModalType>();
   const [commonAvailability, setCommonAvailability] = useState<Date[]>([]);
+  const [commonAvailabilityLoading, setCommonAvailabilityLoading] = useState(false);
   const [rescheduleLoading, setRescheduleLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
 
@@ -45,14 +46,6 @@ export default function Matches(): JSX.Element {
       .then(url => setPhotoUrl(url));
   }, [upcomingMatches, pageIndex]);
 
-  useEffect(() => {
-    if (!upcomingMatches || !upcomingMatches[pageIndex]) {
-      return;
-    }
-    getCommonAvailability({ matchId: upcomingMatches[pageIndex].id })
-      .then(res => setCommonAvailability(res.commonAvailability));
-  }, [upcomingMatches, pageIndex]);
-
   if (!upcomingMatches) {
     return <CenteredSpin />;
   }
@@ -61,6 +54,14 @@ export default function Matches(): JSX.Element {
   }
 
   const thisMatch = upcomingMatches[pageIndex];
+
+  async function onClickReschedule() {
+    setCommonAvailabilityLoading(true);
+    const res = await getCommonAvailability({ matchId: thisMatch.id })
+    setCommonAvailability(res.commonAvailability);
+    setCommonAvailabilityLoading(false);
+    setModal(ModalType.RESCHEDULE);
+  }
 
   async function onReschedule(date: Date) {
     setRescheduleLoading(true);
@@ -113,7 +114,11 @@ export default function Matches(): JSX.Element {
           firstName={thisMatch.firstName}
           gender={thisMatch.gender}
           photoUrl={photoUrl}
-          footer={<Button className="match-reschedule" onClick={() => setModal(ModalType.RESCHEDULE)}>Reschedule</Button>}
+          footer={<Button
+            className="match-reschedule"
+            loading={commonAvailabilityLoading}
+            onClick={onClickReschedule}
+          >Reschedule</Button>}
         >
           <div className="match-details">
             <div className="match-time">
@@ -151,7 +156,7 @@ export default function Matches(): JSX.Element {
 
       {/* modals */}
       <RescheduleModal
-        visible={modal === ModalType.RESCHEDULE && commonAvailability.length > 0}
+        visible={modal === ModalType.RESCHEDULE && !commonAvailabilityLoading && commonAvailability.length > 0}
         timeOptions={commonAvailability}
         matchName={thisMatch.firstName}
         rescheduleLoading={rescheduleLoading}
@@ -160,14 +165,15 @@ export default function Matches(): JSX.Element {
         onCancel={() => setModal(undefined)}
       />
       <StoryModal
-        visible={modal === ModalType.RESCHEDULE && commonAvailability.length === 0}
+        visible={modal === ModalType.RESCHEDULE && !commonAvailabilityLoading && commonAvailability.length === 0}
         okText="Yes, cancel"
         onOk={onCancelMatchConfirm}
         okButtonProps={{ loading: cancelLoading }}
         cancelText="Keep this call"
         onCancel={() => setModal(undefined)}
       >
-        <div>Looks like you both aren't free later this week. Do you want to cancel your call with {thisMatch.firstName}?</div>
+        <p>Looks like you both aren't free later this week. Do you want to cancel your call with {thisMatch.firstName}?</p>
+        <p>Canceling will notify your match right away.</p>
       </StoryModal>
 
       <StoryModal
@@ -178,7 +184,8 @@ export default function Matches(): JSX.Element {
         cancelText="Keep this call"
         onCancel={() => setModal(undefined)}
       >
-        <div>Are you sure you want to cancel your call with {thisMatch.firstName}?</div>
+        <p>Are you sure you want to cancel your call with {thisMatch.firstName}?</p>
+        <p>Canceling will notify your match right away.</p>
       </StoryModal>
     </div>
   );
