@@ -1,0 +1,68 @@
+.story-modal .ant-modal-content,
+.story-info-modal .ant-modal-content {
+    width: 290px;
+    border-radius: 10px;
+    margin: 0 auto;
+}
+
+.story-modal .ant-modal-body,
+.story-info-modal .ant-modal-body,
+.story-info-modal .ant-modal-confirm-body .ant-modal-confirm-content {
+    font-size: 16px;
+}
+
+.story-info-modal .ant-modal-confirm-body .ant-modal-confirm-title {
+    font-size: 18px;
+}
+
+.story-modal .ant-modal-footer {
+    display: flex;
+    padding: 0;
+    border-top: none;
+}
+
+.story-modal .ant-btn,
+.story-info-modal .ant-btn {
+    height: 100%;
+    font-weight: 600;
+    flex: 1;
+    margin: 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    padding: 16px;
+}
+
+.story-modal .ant-modal-footer .ant-btn:first-child {
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.story-modal .ant-modal-footer .ant-btn:last-child {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 10px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.story-info-modal .ant-modal-body {
+    padding: 0;
+}
+
+.story-info-modal .ant-modal-confirm-body {
+    margin: 24px;
+}
+
+.story-info-modal .ant-modal-confirm-btns {
+    width: 100%;
+    display: flex;
+}
+
+.story-info-modal .ant-btn {
+    flex: 1;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}

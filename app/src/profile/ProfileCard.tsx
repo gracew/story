@@ -9,27 +9,31 @@ interface ProfileCardProps {
   age?: string | number;
   photoUrl?: string;
   uploading?: boolean;
+  footer?: React.ReactNode;
 }
 
 const ProfileCard: FunctionComponent<ProfileCardProps> = (props) => {
   // use the antd Image component to allow enlarging the photo on click
   return (
     <div className="profile-card">
-      <div className="profile-card-top">
-        <div className="profile-photo-container">
-          {props.photoUrl && <Image
-            src={props.photoUrl}
-            preview={{ mask: "" }}
-            className="profile-photo"
-          />}
-          {!props.uploading && !props.photoUrl && <UserOutlined className="profile-photo-placeholder" />}
+      <div className="profile-card-inner">
+        <div className="profile-card-top">
+          <div className="profile-photo-container">
+            {props.photoUrl && <Image
+              src={props.photoUrl}
+              preview={{ mask: "" }}
+              className="profile-photo"
+            />}
+            {!props.uploading && !props.photoUrl && <UserOutlined className="profile-photo-placeholder" />}
+          </div>
+          <div className="profile-text">
+            <h3>{props.firstName}</h3>
+            <div>{props.gender}{props.age && `, ${props.age}`}</div>
+          </div>
         </div>
-        <div className="profile-text">
-          <h3>{props.firstName}</h3>
-          <div>{props.gender}{props.age && `, ${props.age}`}</div>
-        </div>
+        {props.children}
       </div>
-      {props.children}
+      {props.footer}
     </div>
   );
 }

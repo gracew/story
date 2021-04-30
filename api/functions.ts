@@ -1,4 +1,17 @@
 export namespace Requests {
+  export interface GetCommonAvailability {
+    matchId: string;
+  }
+
+  export interface RescheduleMatch {
+    matchId: string;
+    newTime: string;
+  }
+
+  export interface CancelMatch {
+    matchId: string;
+  }
+
   export interface CreateMatch {
     userAId: string;
     userBId: string;
@@ -12,10 +25,14 @@ export namespace Responses {
   export interface GetUpcomingMatches {
     upcomingMatches: Resources.UpcomingMatch[];
   }
+  export interface GetCommonAvailability {
+    commonAvailability: Types.JSONDateTime[];
+  }
 }
 
 export namespace Resources {
   export interface UpcomingMatch {
+    id: string;
     firstName: string;
     // photo is undefined if they haven't been "revealed" yet... i.e., they haven't had their phone meeting yet
     photo?: string;

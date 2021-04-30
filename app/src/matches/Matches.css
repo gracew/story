@@ -13,6 +13,19 @@
   padding: 5px 10px 0 10px;
 }
 
+.match-reschedule {
+    width: 100%;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+    height: 100%;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    padding: 16px;
+}
+
 .match-time {
     margin-bottom: 10px;
     font-size: 15px;

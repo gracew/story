@@ -19,6 +19,7 @@ function createUpcomingMatchView(match: IMatch, otherUser: IUser) {
     funFacts: otherUser.funFacts || "",
     mode,
     photo,
+    id: match.id,
     meetingTime: match.created_at.toDate(),
   };
 }
