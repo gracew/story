@@ -11,7 +11,7 @@ export interface ICalendarDate {
 // type safety and clarity
 export type IPreOnboardedUser = Pick<
   IUser,
-  "id" | "phone" | "status" | "locationFlexibility" | "onboardingComplete"
+  "id" | "phone" | "status" | "locationFlexibility" | "onboardingComplete" | "referrer"
 >;
 
 export interface IUser {
@@ -36,6 +36,7 @@ export interface IUser {
   pronouns?: string;
   interests?: string;
   social?: string;
+  referrer?: string;
   onboardingComplete: boolean;
 }
 
