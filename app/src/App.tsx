@@ -67,33 +67,27 @@ function App() {
           <VideoRedirect />
         </Route>
         <div className="App">
+          <Header />
           <Switch>
             <PrivateRoute path={["/profile/:userId", "/profile"]}>
-              <Header showLogout={true} />
               <Profile />
             </PrivateRoute>
             <Route path="/u/:userId">
-              <Header />
               <PublicProfile />
             </Route>
             <PrivateRoute path={["/m", "/matches"]} exact>
-              <Header showLogout={true} />
               <Matches />
             </PrivateRoute>
             <PrivateRoute path="/m/:matchId">
-              <Header showLogout={true} />
               <VideoAvailability />
             </PrivateRoute>
             <Route path="/login">
-              <Header />
               <Login />
             </Route>
             <Route path="/signup/complete" >
-              <Header />
               <OnboardingComplete />
             </Route>
             <PrivateRoute path={["/signup/:step", "/signup", "/join"]} >
-              <Header />
               <Onboarding />
             </PrivateRoute>
             <Route path="/logout">

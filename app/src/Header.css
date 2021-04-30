@@ -5,13 +5,12 @@
     justify-content: space-between;
 }
 
-.logout-button {
-    width: 44px;
-    height: 44px;
-    border-radius: 22px;
-    background: #263238;
+.menu-button span {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.logout-button:hover {
-    background: #54175F;
+.menu-button span svg {
+    font-size: 20px;
 }
