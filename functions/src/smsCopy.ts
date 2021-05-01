@@ -10,7 +10,7 @@ Every friend that you recruit bumps you higher on the waitlist, so share this li
 }
 
 export function referralSignup(user: IUser, referral: IUser) {
-    return `Hi ${user.firstName}, your referral ${referral.firstName} just signed up!`;
+    return `Way to go, ${user.firstName}! 🥳 You just recruited ${referral.firstName} to Story Dating. That’s one more entry into our $100 giveaway- increase your odds by referring more friends with your custom link 🍀 https://storydating.com/r?r=${user.id}`;
 }
 
 export async function availability(user: IUser) {
