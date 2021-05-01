@@ -17,6 +17,7 @@ import { listUpcomingMatchViewsForUser } from "./matches";
 import { findCommonAvailability } from "./scheduling";
 import {
   cancelNotification,
+  referralSignup,
   rescheduleNotification,
   videoFallbackSwapNumbers,
   videoFallbackTextChat,
@@ -126,6 +127,12 @@ export const onboardUser = functions.https.onCall(async (data, context) => {
       // US and Canada
       if (user.phone.startsWith("+1")) {
         await sendSms({ body: welcome(user as IUser), to: user.phone });
+      }
+      if (user.referrer) {
+        const referrer = await firestore.getUser(user.referrer);
+        if (referrer && referrer.phone.startsWith("+1")) {
+          await sendSms({ body: referralSignup(referrer, user as IUser), to: referrer.phone });
+        }
       }
     }
   }

@@ -9,6 +9,10 @@ export function welcome(user: IUser) {
 Every friend that you recruit bumps you higher on the waitlist, so share this link with 1 friend now: https://storydating.com/r?r=${user.id}`;
 }
 
+export function referralSignup(user: IUser, referral: IUser) {
+    return `Way to go, ${user.firstName}! 🥳 You just recruited ${referral.firstName} to Story Dating. That’s one more entry into our $100 giveaway- increase your odds by referring more friends with your custom link 🍀 https://storydating.com/r?r=${user.id}`;
+}
+
 export async function availability(user: IUser) {
     const week = moment().startOf("week").format("YYYY-MM-DD");
     const smsCopy = await admin.firestore().collection("smsCopy").doc(week).get();
