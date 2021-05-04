@@ -49,7 +49,6 @@ import {
 } from "./csv";
 import { createMatch } from "./retool";
 import {
-  bipartiteMatches,
   potentialMatches,
   remainingMatches
 } from "./scheduling";
@@ -61,7 +60,6 @@ admin.initializeApp();
 
 export {
   addUserToCall,
-  bipartiteMatches,
   call1MinWarning,
   call5MinWarning,
   callUser,
