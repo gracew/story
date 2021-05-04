@@ -9,7 +9,7 @@ import { CreateMatchInput, Firestore, IMatch, IUser } from "./firestore";
 import {
   availability as availabilityCopy,
   matchNotification,
-  optInReminder,
+  optInReminder
 } from "./smsCopy";
 import { sendSms } from "./twilio";
 
@@ -168,10 +168,12 @@ export const createMatches = functions.storage.object().onFinalize(
     });
     await Promise.all(
       rows.map((data) => {
+        const dataWithDate = {
+          ...data,
+          time: new Date(data.time),
+        } as CreateMatchInput;
         try {
-          return new Firestore().createMatch(
-            (data as unknown) as CreateMatchInput
-          );
+          return new Firestore().createMatch(dataWithDate);
         } catch (e) {
           // if there's an error creating one of the matches, skip it and move on
           console.error(e);
