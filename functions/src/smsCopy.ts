@@ -45,9 +45,9 @@ export function matchNotification(userId: string, matches: IMatch[], usersById: 
         const matchUserId = match.user_a_id === userId ? match.user_b_id : match.user_a_id;
         const matchUser = usersById[matchUserId];
         const texts = [
-            `Hi ${user.firstName}, you've got a match! On ${day(match.created_at.toDate(), tz)} you'll be chatting with ${matchUser.firstName}${location(matchUser)}.
+            `Hi ${user.firstName}, you've got a match! At ${formattedTime} ${day(match.created_at.toDate(), tz)} you'll be chatting with ${matchUser.firstName}${location(matchUser)}.
 
-Here's how it works: at ${formattedTime}, you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+Here's how it works: at the time of your date, you'll receive a phone call connecting you with your match. ${phoneSwapText}`
         ];
         if (user.funFacts && matchUser.funFacts) {
             texts.push(
@@ -70,36 +70,20 @@ Happy chatting! 🙌`
         const formattedTime2 = formatTime(matches[1].created_at.toDate(), tz);
 
         const texts = [];
-        const day1 =  day(match1.created_at.toDate(), tz);
-        const day2 =  day(match2.created_at.toDate(), tz);
-        if (formattedTime === formattedTime2) {
-            if (match1Location !== match2Location) {
-                texts.push(
-                    `Hi ${user.firstName}, we have two matches for you! On ${day1} you'll be chatting with ${match1User.firstName}${match1Location} and on ${day2} you'll be chatting with ${match2User.firstName}${match2Location}.
+        const day1 = day(match1.created_at.toDate(), tz);
+        const day2 = day(match2.created_at.toDate(), tz);
+        if (match1Location !== match2Location) {
+            texts.push(
+                `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName}${match1Location} and at ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}${match2Location}.
 
-Here's how it works: at ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
-                );
-            } else {
-                texts.push(
-                    `Hi ${user.firstName}, we have two matches for you! On ${day1} you'll be chatting with ${match1User.firstName} and on ${day2} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
-
-Here's how it works: at ${formattedTime} both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
-                );
-            }
+Here's how it works: both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+            );
         } else {
-            if (match1Location !== match2Location) {
-                texts.push(
-                    `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName}${match1Location} and at ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}${match2Location}.
+            texts.push(
+                `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
 
 Here's how it works: both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
-                );
-            } else {
-                texts.push(
-                    `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
-
-Here's how it works: both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
-                );
-            }
+            );
         }
         if (user.funFacts && match1User.funFacts) {
             texts.push(

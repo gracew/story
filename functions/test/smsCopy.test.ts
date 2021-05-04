@@ -8,21 +8,11 @@ const getTimestamp = () => moment("2021-04-22T12:00:00-04:00");
 const userId1 = uuid.v4();
 const userId2 = uuid.v4();
 const userId3 = uuid.v4();
-const expectedSimpleET = `Hi Anna, you've got a match! On Wednesday you'll be chatting with Grace from the San Francisco Bay Area.
-
-Here's how it works: at 8:00pm EDT`;
-const expectedSimple = `Hi Anna, you've got a match! On Wednesday you'll be chatting with Grace from the San Francisco Bay Area.
-
-Here's how it works: at 8:00pm PDT`;
-const expectedTwoMatches = `Hi Anna, we have two matches for you! On Wednesday you'll be chatting with Grace and on Thursday you'll be chatting with Rachael. They are both from the San Francisco Bay Area.
-
-Here's how it works: at 8:00pm PDT both nights`;
-const expectedTwoMatchesSameLocation = `Hi Anna, we have two matches for you! On Wednesday you'll be chatting with Grace and on Thursday you'll be chatting with Rachael. They are both from New York City.
-
-Here's how it works: at 8:00pm PDT both nights`;
-const expectedTwoMatchesDiffLocation = `Hi Anna, we have two matches for you! On Wednesday you'll be chatting with Grace from New York City and on Thursday you'll be chatting with Rachael from the San Francisco Bay Area.
-
-Here's how it works: at 8:00pm PDT both nights`;
+const expectedSimpleET = `Hi Anna, you've got a match! At 8:00pm EDT Wednesday you'll be chatting with Grace from the San Francisco Bay Area.`;
+const expectedSimple = `Hi Anna, you've got a match! At 8:00pm PDT Wednesday you'll be chatting with Grace from the San Francisco Bay Area.`;
+const expectedTwoMatches = `Hi Anna, we have two matches for you! At 8:00pm PDT Wednesday you'll be chatting with Grace and at 8:00pm PDT Thursday you'll be chatting with Rachael. They are both from the San Francisco Bay Area.`;
+const expectedTwoMatchesSameLocation = `Hi Anna, we have two matches for you! At 8:00pm PDT Wednesday you'll be chatting with Grace and at 8:00pm PDT Thursday you'll be chatting with Rachael. They are both from New York City.`;
+const expectedTwoMatchesDiffLocation = `Hi Anna, we have two matches for you! At 8:00pm PDT Wednesday you'll be chatting with Grace from New York City and at 8:00pm PDT Thursday you'll be chatting with Rachael from the San Francisco Bay Area.`;
 
 it("matchNotification for a single match - ET", async () => {
     const user1 = user("Anna");
