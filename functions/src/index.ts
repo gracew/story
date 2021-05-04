@@ -47,7 +47,7 @@ import {
   sendAvailabilityTexts,
   sendMatchNotificationTexts
 } from "./csv";
-import { analyzeCollection, createMatch } from "./retool";
+import { createMatch } from "./retool";
 import {
   bipartiteMatches,
   potentialMatches,
@@ -61,7 +61,6 @@ admin.initializeApp();
 
 export {
   addUserToCall,
-  analyzeCollection,
   bipartiteMatches,
   call1MinWarning,
   call5MinWarning,
