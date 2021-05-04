@@ -47,22 +47,19 @@ import {
   sendAvailabilityTexts,
   sendMatchNotificationTexts
 } from "./csv";
-import { analyzeCollection, createMatch } from "./retool";
+import { createMatch } from "./retool";
 import {
-  bipartiteMatches,
   potentialMatches,
   remainingMatches
 } from "./scheduling";
 import { prompts } from "./smsCopy";
 import { client, sendSms } from "./twilio";
-import { registerUser, saveAvailability } from "./typeform";
+import { saveAvailability } from "./typeform";
 
 admin.initializeApp();
 
 export {
   addUserToCall,
-  analyzeCollection,
-  bipartiteMatches,
   call1MinWarning,
   call5MinWarning,
   callUser,
@@ -84,7 +81,6 @@ export {
   issueRecalls,
   markJoined,
   onboardUser,
-  registerUser,
   rescheduleMatch,
   revealRequest,
   revealRequestVideo,
