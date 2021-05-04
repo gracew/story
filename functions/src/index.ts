@@ -54,7 +54,7 @@ import {
 } from "./scheduling";
 import { prompts } from "./smsCopy";
 import { client, sendSms } from "./twilio";
-import { registerUser, saveAvailability } from "./typeform";
+import { saveAvailability } from "./typeform";
 
 admin.initializeApp();
 
@@ -81,7 +81,6 @@ export {
   issueRecalls,
   markJoined,
   onboardUser,
-  registerUser,
   rescheduleMatch,
   revealRequest,
   revealRequestVideo,
