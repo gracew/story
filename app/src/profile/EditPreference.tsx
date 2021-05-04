@@ -162,7 +162,6 @@ function EditPreference(props: EditPreferenceProps) {
           <div className="pref-options">
             {props.metadata.type === PreferenceType.MULTIPLE_CHOICE_ALLOW_MULTIPLE &&
               <div>
-                <p className="multiple-selection-desc">Choose as many as you like</p>
                 <StoryCheckboxGroup value={valueHandleOther() as string[] | undefined}>
                   {props.metadata.options.map(o => (
                     <Checkbox
@@ -204,7 +203,7 @@ function EditPreference(props: EditPreferenceProps) {
           {props.metadata.dealbreakers &&
             <div>
               <div className="edit-prefs-header-dealbreakers">Match dealbreakers</div>
-              <p className="multiple-selection-desc">Choose as many as you like</p>
+              <p className="multiple-selection-desc">These are traits that you would prefer to avoid in your matches.</p>
               <div className="pref-options">
                 <StoryCheckboxGroup value={dealbreakers}>
                   {(props.metadata.dealbreakerOptions || props.metadata.options).map(o => (
