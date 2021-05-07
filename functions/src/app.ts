@@ -5,6 +5,7 @@ import { isEmpty } from "lodash";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import { Responses } from "../../api/functions";
+import { findCommonAvailability } from "./admin";
 import { createSmsChatHelper } from "./calls";
 import {
   CreateMatchInput,
@@ -14,9 +15,9 @@ import {
   IUser
 } from "./firestore";
 import { listUpcomingMatchViewsForUser } from "./matches";
-import { findCommonAvailability } from "./scheduling";
 import {
   cancelNotification,
+  chatIntro,
   referralSignup,
   rescheduleNotification,
   videoFallbackSwapNumbers,
@@ -25,7 +26,7 @@ import {
   welcome
 } from "./smsCopy";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
-import { nextMatchNameAndDate, sendSms } from "./twilio";
+import { client, nextMatchNameAndDate, sendSms } from "./twilio";
 
 const firestore = new Firestore();
 
@@ -526,6 +527,26 @@ export async function videoNextStep(
   ]);
   await createSmsChatHelper(userA, userB, match);
   return;
+}
+
+export async function createSmsChatHelper(userA: IUser, userB: IUser, match: IMatch) {
+  const session = await client.proxy
+    .services("KS58cecadd35af39c56a4cae81837a89f3")
+    .sessions
+    .create({ uniqueName: match.id });
+  const participants =
+    client.proxy
+      .services("KS58cecadd35af39c56a4cae81837a89f3")
+      .sessions(session.sid)
+      .participants;
+  const [participantA, participantB] = await Promise.all([
+    participants.create({ friendlyName: match.user_a_id, identifier: userA.phone }),
+    participants.create({ friendlyName: match.user_b_id, identifier: userB.phone }),
+  ]);
+  await Promise.all([
+    participants(participantA.sid).messageInteractions.create({ body: chatIntro(userA, userB) }),
+    participants(participantB.sid).messageInteractions.create({ body: chatIntro(userB, userA) })
+  ])
 }
 
 export function firstCommonAvailability(a1: string[], a2: string[]) {

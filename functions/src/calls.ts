@@ -4,7 +4,8 @@ import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import * as util from "util";
 import { Firestore, IMatch, IUser } from "./firestore";
-import { chatExpiration, chatIntro, flakeApology, flakeWarning, reminder, videoLink, videoReminder } from "./smsCopy";
+import { validateSharedSecret } from "./scheduling";
+import { chatExpiration, flakeApology, flakeWarning, reminder, videoLink, videoReminder } from "./smsCopy";
 import {
   callStudio,
   client,
@@ -408,11 +409,6 @@ async function callUserHelper(userId: string) {
   });
 }
 
-export const callUser = functions.https.onRequest(async (request, response) => {
-  await callUserHelper(request.body.userId);
-  response.end();
-});
-
 /** Called directly for incoming calls. Also called for outbound calls after the user has passed the call screen. */
 export const addUserToCall = functions.https.onRequest(
   async (request, response) => {
@@ -559,43 +555,6 @@ export const call1MinWarning = functions.pubsub
       );
     });
   });
-
-export const createSmsChat = functions.https.onRequest(async (request, response) => {
-  const firestore = new Firestore();
-  const match = await firestore.getMatch(request.body.matchId);
-  if (!match) {
-    response.end();
-    return;
-  }
-
-  const usersById = await firestore.getUsersForMatches([match]);
-  const userA = usersById[match.user_a_id];
-  const userB = usersById[match.user_b_id];
-
-  await createSmsChatHelper(userA, userB, match);
-
-  response.end();
-});
-
-export async function createSmsChatHelper(userA: IUser, userB: IUser, match: IMatch) {
-  const session = await client.proxy
-    .services("KS58cecadd35af39c56a4cae81837a89f3")
-    .sessions
-    .create({ uniqueName: match.id });
-  const participants =
-    client.proxy
-      .services("KS58cecadd35af39c56a4cae81837a89f3")
-      .sessions(session.sid)
-      .participants;
-  const [participantA, participantB] = await Promise.all([
-    participants.create({ friendlyName: match.user_a_id, identifier: userA.phone }),
-    participants.create({ friendlyName: match.user_b_id, identifier: userB.phone }),
-  ]);
-  await Promise.all([
-    participants(participantA.sid).messageInteractions.create({ body: chatIntro(userA, userB) }),
-    participants(participantB.sid).messageInteractions.create({ body: chatIntro(userB, userA) })
-  ])
-}
 
 export const warnSmsChatExpiration = functions.https.onRequest(async (request, response) => {
   const participants = await client.proxy

@@ -1,5 +1,5 @@
 import * as uuid from "uuid";
-import { checkGenderPreference } from "../src/scheduling";
+import { checkGenderPreference } from "../src/admin";
 import { user } from "./mock";
 
 const male = user(uuid.v4(), { gender: "Male" });
