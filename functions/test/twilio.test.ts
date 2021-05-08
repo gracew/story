@@ -126,23 +126,23 @@ it("saveReveal Y, other pending", async () => {
     const res = await saveRevealHelper({ phone: user1.phone, reveal: "y", matchId: m1.id }, firestore, today);
     expect(res).toEqual({ next: "reveal_other_pending" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
-    expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: true });
+    expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: true });
 });
 
 it("saveReveal Y, other N", async () => {
-    m1.user_b_revealed = false;
+    m1.revealed[user2.id] = false;
     const res = await saveRevealHelper({ phone: user1.phone, reveal: "y", matchId: m1.id }, firestore, today);
     expect(res).toEqual({ next: "reveal_other_no" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
-    expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: true });
+    expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: true });
 });
 
 it("saveReveal Y, other Y next match", async () => {
-    m1.user_b_revealed = true;
+    m1.revealed[user2.id] = true;
     const res = await saveRevealHelper({ phone: user1.phone, reveal: "y", matchId: m1.id }, firestore, today);
     expect(res).toEqual({ next: "reveal" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
-    expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: true });
+    expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: true });
     expect(mockCreate).toHaveBeenCalledTimes(1);
     expect(mockCreate).toHaveBeenCalledWith({
         to: user2.phone,
@@ -167,15 +167,15 @@ it("saveReveal N", async () => {
     const res = await saveRevealHelper({ phone: user1.phone, reveal: "n", matchId: m1.id }, firestore, today);
     expect(res).toEqual({ next: "no_reveal" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
-    expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: false });
+    expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: false });
 });
 
 it("saveReveal N, other Y next match", async () => {
-    m1.user_b_revealed = true;
+    m1.revealed[user2.id] = true;
     const res = await saveRevealHelper({ phone: user1.phone, reveal: "n", matchId: m1.id }, firestore, today);
     expect(res).toEqual({ next: "no_reveal" })
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
-    expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: false });
+    expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: false });
     expect(mockCreate).toHaveBeenCalledTimes(1);
     expect(mockCreate).toHaveBeenCalledWith({
         to: user2.phone,
@@ -202,7 +202,7 @@ it("saveReveal accepts a variety of inputs", async () => {
         const res = await saveRevealHelper({ phone: user1.phone, reveal: input, matchId: m1.id }, firestore, today);
         expect(res).toEqual({ next: "reveal_other_pending" });
         expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
-        expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: true });
+        expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: true });
     }
 
     const noInputs = ["N", "no", "NO", "n ", " n"];
@@ -211,7 +211,7 @@ it("saveReveal accepts a variety of inputs", async () => {
         const res = await saveRevealHelper({ phone: user1.phone, reveal: input, matchId: m1.id }, firestore, today);
         expect(res).toEqual({ next: "no_reveal" });
         expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
-        expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { user_a_revealed: false });
+        expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: false });
     }
 });
 
