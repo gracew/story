@@ -21,11 +21,6 @@ export function validateRequest(endpoint: string, request: express.Request) {
     }
 }
 
-type Handler = (req: express.Request, res: express.Response) => void | Promise<void>;
-export function applyMiddleware(handler: Handler): Handler {
-    return (req, res) => express.urlencoded({ extended: false })(req, res, () => handler(req, res));
-}
-
 export async function getConferenceTwimlForPhone(phone: string) {
     const users = admin.firestore().collection("users");
     const result = await users.where("phone", "==", phone).get();
