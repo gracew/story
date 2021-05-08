@@ -160,13 +160,13 @@ export const backupFirestore = functions.pubsub
   });
 
 export const notifyIncomingText = functions.https.onRequest(
-    async (request, response) => {
-      validateRequest("notifyIncomingText", request);
-      const phone = request.body.phone;
-      const message = await client.messages(request.body.message).fetch();
-      await notifyIncomingTextHelper(phone, message.body);
-      response.end();
-    }
+  async (request, response) => {
+    validateRequest("notifyIncomingText", request);
+    const phone = request.body.phone;
+    const message = await client.messages(request.body.message).fetch();
+    await notifyIncomingTextHelper(phone, message.body);
+    response.end();
+  }
 );
 
 export const smsStatusCallback = functions.https.onRequest(
