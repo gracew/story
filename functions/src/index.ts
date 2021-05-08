@@ -160,13 +160,13 @@ export const backupFirestore = functions.pubsub
   });
 
 export const notifyIncomingText = functions.https.onRequest(
-  async (request, response) => {
-    validateRequest("notifyIncomingText", request);
-    const phone = request.body.phone;
-    const message = await client.messages(request.body.message).fetch();
-    await notifyIncomingTextHelper(phone, message.body);
-    response.end();
-  }
+    async (request, response) => {
+      validateRequest("notifyIncomingText", request);
+      const phone = request.body.phone;
+      const message = await client.messages(request.body.message).fetch();
+      await notifyIncomingTextHelper(phone, message.body);
+      response.end();
+    }
 );
 
 export const smsStatusCallback = functions.https.onRequest(
@@ -186,8 +186,8 @@ export const smsStatusCallback = functions.https.onRequest(
     const fullName = userQuery.empty
       ? "Unknown user"
       : userQuery.docs[0].get("firstName") +
-        " " +
-        userQuery.docs[0].get("lastName");
+      " " +
+      userQuery.docs[0].get("lastName");
     const message = await client.messages(request.body.MessageSid).fetch();
 
     await fetch(functions.config().slack.webhook_url, {

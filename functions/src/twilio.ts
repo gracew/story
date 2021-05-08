@@ -13,10 +13,17 @@ const authToken = functions.config().twilio.auth_token;
 export const client = twilio(accountSid, authToken);
 
 export function validateRequest(endpoint: string, request: express.Request) {
-    const signature = request.header("X-Twilio-Signature") as string;
-    if (!twilio.validateRequest(authToken, signature, BASE_URL + endpoint, request.body)) {
+    // If the Content-Type is application-json, don't use the JSON body to fill in the validator's param for POST 
+    // parameters. The query parameter bodySHA256 will be included in the request.
+    // https://www.twilio.com/docs/usage/security#notes
+    if (!twilio.validateExpressRequest(request, authToken, { url: BASE_URL + endpoint + "?bodySHA256=" + request.query.bodySHA256 })) {
         throw new functions.https.HttpsError("permission-denied", "incorrect twilio signature");
     }
+}
+
+type Handler = (req: express.Request, res: express.Response) => void | Promise<void>;
+export function applyMiddleware(handler: Handler): Handler {
+    return (req, res) => express.urlencoded({ extended: false })(req, res, () => handler(req, res));
 }
 
 export async function getConferenceTwimlForPhone(phone: string) {
