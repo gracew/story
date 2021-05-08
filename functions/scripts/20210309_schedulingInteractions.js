@@ -1,8 +1,6 @@
 const admin = require("firebase-admin");
 const util = require("./util");
 
-util.checkRequiredEnvVars(["GOOGLE_APPLICATION_CREDENTIALS"]);
-
 admin.initializeApp();
 
 admin
