@@ -6,6 +6,7 @@ import fetch from "node-fetch";
 import * as os from "os";
 import * as path from "path";
 import {
+  callUser,
   createMatch,
   createSmsChat,
   potentialMatches,
@@ -27,7 +28,6 @@ import {
   addUserToCall,
   call1MinWarning,
   call5MinWarning,
-  callUser,
   conferenceStatusWebhook,
   handleFlakes,
   issueCalls,
