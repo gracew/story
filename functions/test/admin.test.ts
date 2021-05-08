@@ -1,5 +1,8 @@
+import * as test from "firebase-functions-test";
+// WARNING: this must come first or else imported modules may not see this config value on load
+test().mockConfig({ twilio: { auth_token: "token" } })
 import * as uuid from "uuid";
-import { checkGenderPreference } from "../src/scheduling";
+import { checkGenderPreference } from "../src/admin";
 import { user } from "./mock";
 
 const male = user(uuid.v4(), { gender: "Male" });

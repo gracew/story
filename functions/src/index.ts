@@ -6,6 +6,13 @@ import fetch from "node-fetch";
 import * as os from "os";
 import * as path from "path";
 import {
+  callUser,
+  createMatch,
+  createSmsChat,
+  potentialMatches,
+  remainingMatches
+} from "./admin";
+import {
   cancelMatch,
   getCommonAvailability,
   getPreferences,
@@ -21,9 +28,7 @@ import {
   addUserToCall,
   call1MinWarning,
   call5MinWarning,
-  callUser,
   conferenceStatusWebhook,
-  createSmsChat,
   handleFlakes,
   issueCalls,
   issueRecalls,
@@ -47,11 +52,6 @@ import {
   sendAvailabilityTexts,
   sendMatchNotificationTexts
 } from "./csv";
-import { createMatch } from "./retool";
-import {
-  potentialMatches,
-  remainingMatches
-} from "./scheduling";
 import { prompts } from "./smsCopy";
 import { client, sendSms, validateRequest } from "./twilio";
 import { saveAvailability } from "./typeform";
