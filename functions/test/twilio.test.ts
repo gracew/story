@@ -143,24 +143,6 @@ it("saveReveal Y, other Y next match", async () => {
     expect(res).toEqual({ next: "reveal" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: true });
-    expect(mockCreate).toHaveBeenCalledTimes(1);
-    expect(mockCreate).toHaveBeenCalledWith({
-        to: user2.phone,
-        from: TWILIO_NUMBER,
-        parameters: {
-            mode: "reveal",
-            matchId: m1.id,
-            userId: user2.id,
-            firstName: user2.firstName,
-            matchName: user1.firstName,
-            matchPhone: user1.phone,
-            matchUserId: user1.id,
-            nextMatchName: user3.firstName,
-            nextMatchDate: "Thursday",
-            nextDays: nextWeek,
-            video: false,
-        }
-    })
 });
 
 it("saveReveal N", async () => {
@@ -176,23 +158,6 @@ it("saveReveal N, other Y next match", async () => {
     expect(res).toEqual({ next: "no_reveal" })
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: false });
-    expect(mockCreate).toHaveBeenCalledTimes(1);
-    expect(mockCreate).toHaveBeenCalledWith({
-        to: user2.phone,
-        from: TWILIO_NUMBER,
-        parameters: {
-            mode: "reveal_other_no",
-            matchId: m1.id,
-            userId: user2.id,
-            firstName: user2.firstName,
-            matchName: user1.firstName,
-            matchPhone: user1.phone,
-            matchUserId: user1.id,
-            nextMatchName: user3.firstName,
-            nextMatchDate: "Thursday",
-            video: false,
-        }
-    })
 });
 
 it("saveReveal accepts a variety of inputs", async () => {

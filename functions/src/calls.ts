@@ -9,8 +9,11 @@ import {
   callStudio,
   client,
   getConferenceTwimlForPhone,
+  nextMatchNameAndDate,
+  POST_CALL_FLOW_ID,
   saveRevealHelper,
   sendSms,
+  TWILIO_NUMBER,
   validateRequest
 } from "./twilio";
 
@@ -382,6 +385,78 @@ export const saveReveal = functions.https.onRequest(
     }
   }
 );
+
+export const notifyRevealOtherUser = functions.firestore
+  .document("matches/{docId}")
+  .onUpdate(async (change, context) => {
+    // firestore triggers have at-least-once delivery semantics, so first check if we have already processed the event
+    const eventRef = admin.firestore().collection("firestoreEvents").doc(context.eventId);
+    const eventDoc = await eventRef.get();
+    if (eventDoc.exists) {
+      return;
+    }
+    await eventRef.create({});
+
+    const afterMatch = change.after.data() as IMatch;
+    const beforeMatch = change.before.data() as IMatch;
+    if (Object.keys(afterMatch.revealed).length !== 2) {
+      // haven't heard back from both users
+      return;
+    }
+    const firestore = new Firestore();
+    const users = await firestore.getUsersForMatches([afterMatch]);
+    if (afterMatch.revealed[afterMatch.user_a_id] !== undefined && beforeMatch.revealed[beforeMatch.user_a_id] === undefined) {
+      // user A responded
+      await notifyOtherUser(firestore, users[afterMatch.user_a_id], users[afterMatch.user_b_id], afterMatch);
+    }
+    if (afterMatch.revealed[afterMatch.user_b_id] !== undefined && beforeMatch.revealed[beforeMatch.user_b_id] === undefined) {
+      // user B responded
+      await notifyOtherUser(firestore, users[afterMatch.user_b_id], users[afterMatch.user_a_id], afterMatch);
+    }
+  });
+
+async function notifyOtherUser(firestore: Firestore, revealingUser: IUser, otherUser: IUser, match: IMatch) {
+  const nextMatchOther = await firestore.nextMatchForUser(otherUser.id)
+  const otherNextMatch = await nextMatchNameAndDate(otherUser.id, firestore, nextMatchOther);
+
+  const otherData = {
+    userId: otherUser.id,
+    firstName: otherUser.firstName,
+    matchUserId: revealingUser.id,
+    matchName: revealingUser.firstName,
+    matchPhone: revealingUser.phone,
+  };
+
+  if (Object.values(match.revealed).every(v => v)) {
+    // both revealed
+    await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
+      to: otherUser.phone,
+      from: TWILIO_NUMBER,
+      parameters: {
+        mode: "reveal",
+        matchId: match.id,
+        ...otherData,
+        ...otherNextMatch,
+        video: match.mode === "video",
+      }
+    });
+  }
+
+  if (match.revealed[revealingUser.id] === false && match.revealed[otherUser.id] === true) {
+    // need to inform otherUser of rejection
+    await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
+      to: otherUser.phone,
+      from: TWILIO_NUMBER,
+      parameters: {
+        mode: "reveal_other_no",
+        matchId: match.id,
+        ...otherData,
+        ...otherNextMatch,
+        video: match.mode === "video",
+      },
+    });
+  }
+};
 
 export async function callUserHelper(userId: string) {
   const user = await admin.firestore().collection("users").doc(userId).get();

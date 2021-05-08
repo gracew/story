@@ -144,51 +144,13 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
         console.error(new Error("Requested match doesn't have the requested users"));
         return;
     }
-    const nextMatchRevealing = await firestore.nextMatchForUser(revealingUser.id);
-    const nextMatchOther = await firestore.nextMatchForUser(otherUser.id)
-    const otherNextMatch = await nextMatchNameAndDate(otherUser.id, firestore, nextMatchOther);
-
-    const otherData = {
-        userId: otherUser.id,
-        firstName: otherUser.firstName,
-        matchUserId: revealingUser.id,
-        matchName: revealingUser.firstName,
-        matchPhone: revealingUser.phone,
-    };
-
     if (reveal && otherReveal) {
-        const nextDays = getNextDays(today, nextMatchRevealing, nextMatchOther);
-        await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
-            to: otherUser.phone,
-            from: TWILIO_NUMBER,
-            parameters: {
-                mode: "reveal",
-                matchId: body.matchId,
-                ...otherData,
-                ...otherNextMatch,
-                nextDays,
-                video: match.mode === "video",
-            }
-        });
         return { next: "reveal" };
     } else if (reveal && otherReveal === false) {
         return { next: "reveal_other_no" };
     } else if (reveal && otherReveal === undefined) {
         return { next: "reveal_other_pending" };
     } else if (!reveal) {
-        if (otherReveal) {
-            await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
-                to: otherUser.phone,
-                from: TWILIO_NUMBER,
-                parameters: {
-                    mode: "reveal_other_no",
-                    matchId: body.matchId,
-                    ...otherData,
-                    ...otherNextMatch,
-                    video: match.mode === "video",
-                },
-            });
-        }
         return { next: "no_reveal" };
     }
     console.error(new Error(`unexpected combination for match ${match.id}, phone ${phone}, reveal ${reveal}, otherReveal ${otherReveal}`))
