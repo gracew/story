@@ -4,6 +4,7 @@ import * as functions from "firebase-functions";
 import * as moment from "moment";
 import { Requests } from "../../api/functions";
 import { createSmsChatHelper } from "./app";
+import { callUserHelper } from "./calls";
 import { Firestore, IUser } from "./firestore";
 
 function validateSharedSecret(request: express.Request) {
@@ -269,7 +270,3 @@ function areUsersCompatible(user: IUser, match: IUser, prevMatches: Record<strin
 
   return true;
 }
-function callUserHelper(userId: any) {
-  throw new Error("Function not implemented.");
-}
-

@@ -4,7 +4,6 @@ import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import * as util from "util";
 import { Firestore, IMatch, IUser } from "./firestore";
-import { validateSharedSecret } from "./scheduling";
 import { chatExpiration, flakeApology, flakeWarning, reminder, videoLink, videoReminder } from "./smsCopy";
 import {
   callStudio,
@@ -384,7 +383,7 @@ export const saveReveal = functions.https.onRequest(
   }
 );
 
-async function callUserHelper(userId: string) {
+export async function callUserHelper(userId: string) {
   const user = await admin.firestore().collection("users").doc(userId).get();
   if (!user.exists) {
     console.error(
