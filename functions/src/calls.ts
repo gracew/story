@@ -10,7 +10,8 @@ import {
   client,
   getConferenceTwimlForPhone,
   saveRevealHelper,
-  sendSms
+  sendSms,
+  validateRequest
 } from "./twilio";
 
 export const sendReminderTexts = functions.pubsub
@@ -415,6 +416,7 @@ export const callUser = functions.https.onRequest(async (request, response) => {
 /** Called directly for incoming calls. Also called for outbound calls after the user has passed the call screen. */
 export const addUserToCall = functions.https.onRequest(
   async (request, response) => {
+    validateRequest("addUserToCall", request);
     const callerPhone =
       request.body.Direction === "inbound"
         ? request.body.From
@@ -427,6 +429,7 @@ export const addUserToCall = functions.https.onRequest(
 
 export const conferenceStatusWebhook = functions.https.onRequest(
   async (request, response) => {
+    validateRequest("conferenceStatusWebhook", request);
     if (request.body.StatusCallbackEvent === "participant-join") {
       const conferenceSid = request.body.ConferenceSid;
       const participants = await client

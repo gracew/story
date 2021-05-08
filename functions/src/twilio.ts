@@ -1,3 +1,4 @@
+import * as express from "express";
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
@@ -11,6 +12,14 @@ const accountSid = 'AC07d4a9a61ac7c91f7e5cecf1e27c45a6';
 const authToken = functions.config().twilio.auth_token;
 export const client = twilio(accountSid, authToken);
 
+export function validateRequest(endpoint: string, request: express.Request) {
+    // If the Content-Type is application-json, don't use the JSON body to fill in the validator's param for POST 
+    // parameters. The query parameter bodySHA256 will be included in the request.
+    // https://www.twilio.com/docs/usage/security#notes
+    if (!twilio.validateExpressRequest(request, authToken, { url: BASE_URL + endpoint + "?bodySHA256=" + request.query.bodySHA256 })) {
+        throw new functions.https.HttpsError("permission-denied", "incorrect twilio signature");
+    }
+}
 
 export async function getConferenceTwimlForPhone(phone: string) {
     const users = admin.firestore().collection("users");
@@ -138,7 +147,7 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
     }
     const nextMatchRevealing = await firestore.nextMatchForUser(revealingUser.id);
     const nextMatchOther = await firestore.nextMatchForUser(otherUser.id)
-    const otherNextMatch = await nextMatchNameAndDate(otherUser.id, firestore,  nextMatchOther);
+    const otherNextMatch = await nextMatchNameAndDate(otherUser.id, firestore, nextMatchOther);
 
     const otherData = {
         userId: otherUser.id,
@@ -239,8 +248,8 @@ export async function nextMatchNameAndDate(userId: string, firestore: Firestore,
 }
 
 export function sendSms(opts: any) {
-    return client.messages.create({ 
-        ...opts, 
+    return client.messages.create({
+        ...opts,
         from: TWILIO_NUMBER,
         statusCallback: BASE_URL + "smsStatusCallback",
     }).catch(console.error);
