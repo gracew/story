@@ -48,11 +48,10 @@ export interface IPreferences {
 export interface IMatch {
   id: string;
   user_a_id: string;
-  user_a_revealed?: boolean;
   user_b_id: string;
-  user_b_revealed?: boolean;
   user_ids: string[];
   joined?: Record<string, boolean>;
+  revealed: Record<string, boolean>;
   created_at: admin.firestore.Timestamp;
   canceled?: boolean;
   rescheduled?: boolean;
@@ -172,6 +171,7 @@ export class Firestore {
       user_a_id: params.userAId,
       user_b_id: params.userBId,
       user_ids: [params.userAId, params.userBId],
+      revealed: {},
       joined: {},
       created_at: admin.firestore.Timestamp.fromDate(params.time),
       canceled: params.canceled || false,

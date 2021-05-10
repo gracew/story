@@ -133,13 +133,12 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
     let otherReveal;
     if (match.user_a_id === revealingUser.id) {
         otherUser = await firestore.getUser(match.user_b_id);
-        otherReveal = match.user_b_revealed;
-        await firestore.updateMatch(match.id, { user_a_revealed: reveal });
+        otherReveal = match.revealed[match.user_b_id];
     } else if (match.user_b_id === revealingUser.id) {
         otherUser = await firestore.getUser(match.user_a_id);
-        otherReveal = match.user_a_revealed;
-        await firestore.updateMatch(match.id, { user_b_revealed: reveal });
+        otherReveal = match.revealed[match.user_a_id];
     }
+    await firestore.updateMatch(match.id, { [`revealed.${revealingUser.id}`]: reveal });
 
     if (!otherUser) {
         console.error(new Error("Requested match doesn't have the requested users"));

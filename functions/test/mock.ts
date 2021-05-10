@@ -52,6 +52,7 @@ export function match(
     user_b_id: userIdB,
     user_ids: [userIdA, userIdB],
     joined: {},
+    revealed: {},
     created_at: new admin.firestore.Timestamp(moment(createdAt).unix(), 0),
     canceled: false,
     interactions: {
