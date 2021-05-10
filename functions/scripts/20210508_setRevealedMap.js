@@ -26,7 +26,11 @@ admin
       if (userBRevealed !== undefined) {
         map[doc.get("user_b_id")] = userBRevealed;
       }
-      batch.update(doc.ref, "revealed", map);
+      batch.update(doc.ref, {
+        "user_a_revealed": admin.firestore.FieldValue.delete(),
+        "user_b_revealed": admin.firestore.FieldValue.delete(),
+        "revealed": map,
+      });
       if (i % 400 === 0) {
         await batch.commit();
         batch = admin.firestore().batch();
