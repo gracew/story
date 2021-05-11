@@ -64,8 +64,6 @@ export interface IMatch {
     warned5Min?: boolean;
     warned1Min?: boolean;
     revealRequested?: boolean;
-    // have we notified both users of the outcome of the call
-    outcomeNotified?: boolean;
     // if both respond Y to the phone call, have we notified both users of the next step
     nextStepHandled?: boolean;
   };
