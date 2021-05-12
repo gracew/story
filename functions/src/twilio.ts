@@ -3,7 +3,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
 import * as twilio from "twilio";
-import { Firestore, IMatch } from "./firestore";
+import { Firestore, IMatch, NotifyRevealMode } from "./firestore";
 
 export const TWILIO_NUMBER = 'MG35ade708f17b5ae9c9af44c95128182b';  // messaging service sid
 export const BASE_URL = 'https://us-central1-speakeasy-prod.cloudfunctions.net/';
@@ -145,7 +145,11 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
         return;
     }
     if (reveal && otherReveal) {
-        await firestore.createNotifyRevealJob({ matchId: match.id, notifyUserId: otherUserId })
+        await firestore.createNotifyRevealJob({
+            matchId: match.id,
+            notifyUserId: otherUserId,
+            mode: NotifyRevealMode.REVEAL,
+        });
         return { next: "reveal" };
     } else if (reveal && otherReveal === false) {
         return { next: "reveal_other_no" };
@@ -153,7 +157,11 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
         return { next: "reveal_other_pending" };
     } else if (!reveal) {
         if (otherReveal) {
-            await firestore.createNotifyRevealJob({ matchId: match.id, notifyUserId: otherUserId })
+            await firestore.createNotifyRevealJob({ 
+                matchId: match.id, 
+                notifyUserId: otherUserId,
+                mode: NotifyRevealMode.REVEAL_OTHER_NO,
+            });
         }
         return { next: "no_reveal" };
     }

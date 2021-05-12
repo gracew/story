@@ -2,7 +2,7 @@ import * as test from "firebase-functions-test";
 // WARNING: this must come first or else imported modules may not see this config value on load
 test().mockConfig({ twilio: { auth_token: "token" } });
 import * as uuid from "uuid";
-import { IMatch, IUser } from "../src/firestore";
+import { IMatch, IUser, NotifyRevealMode } from "../src/firestore";
 import { callStudio, getNextDays, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
 import { firestore, match, user } from "./mock";
 
@@ -144,7 +144,11 @@ it("saveReveal Y, other Y next match", async () => {
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: true });
     expect(firestore.createNotifyRevealJob).toHaveBeenCalledTimes(1);
-    expect(firestore.createNotifyRevealJob).toHaveBeenCalledWith({ matchId: m1.id, notifyUserId: user2.id });
+    expect(firestore.createNotifyRevealJob).toHaveBeenCalledWith({ 
+        matchId: m1.id, 
+        notifyUserId: user2.id, 
+        mode: NotifyRevealMode.REVEAL,
+    });
 });
 
 it("saveReveal N", async () => {
@@ -161,7 +165,11 @@ it("saveReveal N, other Y next match", async () => {
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: false });
     expect(firestore.createNotifyRevealJob).toHaveBeenCalledTimes(1);
-    expect(firestore.createNotifyRevealJob).toHaveBeenCalledWith({ matchId: m1.id, notifyUserId: user2.id });
+    expect(firestore.createNotifyRevealJob).toHaveBeenCalledWith({ 
+        matchId: m1.id, 
+        notifyUserId: user2.id,
+        mode: NotifyRevealMode.REVEAL_OTHER_NO,
+    });
 });
 
 it("saveReveal accepts a variety of inputs", async () => {

@@ -419,35 +419,17 @@ export const notifyRevealJobs = functions.firestore
       matchPhone: revealingUser.phone,
     };
 
-    if (Object.values(match.revealed).every(v => v)) {
-      // both revealed
-      await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
-        to: notifyUser.phone,
-        from: TWILIO_NUMBER,
-        parameters: {
-          mode: "reveal",
-          matchId: match.id,
-          ...data,
-          ...nextMatchMeta,
-          video: match.mode === "video",
-        }
-      });
-    }
-
-    if (match.revealed[revealingUser.id] === false && match.revealed[notifyUser.id] === true) {
-      // need to inform otherUser of rejection
-      await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
-        to: notifyUser.phone,
-        from: TWILIO_NUMBER,
-        parameters: {
-          mode: "reveal_other_no",
-          matchId: match.id,
-          ...data,
-          ...nextMatchMeta,
-          video: match.mode === "video",
-        },
-      });
-    }
+    await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
+      to: notifyUser.phone,
+      from: TWILIO_NUMBER,
+      parameters: {
+        mode: job.mode,
+        matchId: match.id,
+        ...data,
+        ...nextMatchMeta,
+        video: match.mode === "video",
+      }
+    });
   });
 
 export async function callUserHelper(userId: string) {

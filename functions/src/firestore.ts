@@ -106,6 +106,12 @@ export interface CreateMatchInput {
 export interface NotifyRevealJob {
   matchId: string;
   notifyUserId: string;
+  mode: NotifyRevealMode;
+}
+
+export enum NotifyRevealMode {
+  REVEAL = "reveal",
+  REVEAL_OTHER_NO = "reveal_other_no",
 }
 
 export class Firestore {
