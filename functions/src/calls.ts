@@ -3,14 +3,17 @@ import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import * as util from "util";
-import { Firestore, IMatch, IUser } from "./firestore";
+import { Firestore, IMatch, IUser, NotifyRevealJob } from "./firestore";
 import { chatExpiration, flakeApology, flakeWarning, reminder, videoLink, videoReminder } from "./smsCopy";
 import {
   callStudio,
   client,
   getConferenceTwimlForPhone,
+  nextMatchNameAndDate,
+  POST_CALL_FLOW_ID,
   saveRevealHelper,
   sendSms,
+  TWILIO_NUMBER,
   validateRequest
 } from "./twilio";
 
@@ -382,6 +385,48 @@ export const saveReveal = functions.https.onRequest(
     }
   }
 );
+
+export const notifyRevealJobs = functions.firestore
+  .document("notifyRevealJobs/{docId}")
+  .onCreate(async (change, context) => {
+    // firestore triggers have at-least-once delivery semantics, so first check if we have already processed the event
+    const eventRef = admin.firestore().collection("firestoreEvents").doc(context.eventId);
+    const eventDoc = await eventRef.get();
+    if (eventDoc.exists) {
+      return;
+    }
+    await eventRef.create({});
+
+    const job = change.data() as NotifyRevealJob;
+    const firestore = new Firestore();
+    const match = await firestore.getMatch(job.matchId);
+    if (!match) {
+      console.warn(`no match found for notify reveal job ${change.id}`);
+      return;
+    }
+    const users = await firestore.getUsersForMatches([match]);
+    const notifyUser = users[job.notifyUserId];
+    const revealingUserId = match.user_a_id === job.notifyUserId ? match.user_b_id : match.user_a_id;
+    const revealingUser = users[revealingUserId];
+    const nextMatch = await firestore.nextMatchForUser(notifyUser.id)
+    const nextMatchMeta = await nextMatchNameAndDate(notifyUser.id, firestore, nextMatch);
+
+    await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
+      to: notifyUser.phone,
+      from: TWILIO_NUMBER,
+      parameters: {
+        mode: job.mode,
+        matchId: match.id,
+        userId: notifyUser.id,
+        firstName: notifyUser.firstName,
+        matchUserId: revealingUser.id,
+        matchName: revealingUser.firstName,
+        matchPhone: revealingUser.phone,
+        ...nextMatchMeta,
+        video: match.mode === "video",
+      }
+    });
+  });
 
 export async function callUserHelper(userId: string) {
   const user = await admin.firestore().collection("users").doc(userId).get();

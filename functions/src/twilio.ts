@@ -3,7 +3,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
 import * as twilio from "twilio";
-import { Firestore, IMatch } from "./firestore";
+import { Firestore, IMatch, NotifyRevealMode } from "./firestore";
 
 export const TWILIO_NUMBER = 'MG35ade708f17b5ae9c9af44c95128182b';  // messaging service sid
 export const BASE_URL = 'https://us-central1-speakeasy-prod.cloudfunctions.net/';
@@ -129,46 +129,26 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
         return;
     }
 
-    let otherUser;
+    let otherUserId;
     let otherReveal;
     if (match.user_a_id === revealingUser.id) {
-        otherUser = await firestore.getUser(match.user_b_id);
+        otherUserId = match.user_b_id;
         otherReveal = match.revealed[match.user_b_id];
     } else if (match.user_b_id === revealingUser.id) {
-        otherUser = await firestore.getUser(match.user_a_id);
+        otherUserId = match.user_a_id;
         otherReveal = match.revealed[match.user_a_id];
     }
     await firestore.updateMatch(match.id, { [`revealed.${revealingUser.id}`]: reveal });
 
-    if (!otherUser) {
+    if (!otherUserId) {
         console.error(new Error("Requested match doesn't have the requested users"));
         return;
     }
-    const nextMatchRevealing = await firestore.nextMatchForUser(revealingUser.id);
-    const nextMatchOther = await firestore.nextMatchForUser(otherUser.id)
-    const otherNextMatch = await nextMatchNameAndDate(otherUser.id, firestore, nextMatchOther);
-
-    const otherData = {
-        userId: otherUser.id,
-        firstName: otherUser.firstName,
-        matchUserId: revealingUser.id,
-        matchName: revealingUser.firstName,
-        matchPhone: revealingUser.phone,
-    };
-
     if (reveal && otherReveal) {
-        const nextDays = getNextDays(today, nextMatchRevealing, nextMatchOther);
-        await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
-            to: otherUser.phone,
-            from: TWILIO_NUMBER,
-            parameters: {
-                mode: "reveal",
-                matchId: body.matchId,
-                ...otherData,
-                ...otherNextMatch,
-                nextDays,
-                video: match.mode === "video",
-            }
+        await firestore.createNotifyRevealJob({
+            matchId: match.id,
+            notifyUserId: otherUserId,
+            mode: NotifyRevealMode.REVEAL,
         });
         return { next: "reveal" };
     } else if (reveal && otherReveal === false) {
@@ -177,16 +157,10 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
         return { next: "reveal_other_pending" };
     } else if (!reveal) {
         if (otherReveal) {
-            await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
-                to: otherUser.phone,
-                from: TWILIO_NUMBER,
-                parameters: {
-                    mode: "reveal_other_no",
-                    matchId: body.matchId,
-                    ...otherData,
-                    ...otherNextMatch,
-                    video: match.mode === "video",
-                },
+            await firestore.createNotifyRevealJob({ 
+                matchId: match.id, 
+                notifyUserId: otherUserId,
+                mode: NotifyRevealMode.REVEAL_OTHER_NO,
             });
         }
         return { next: "no_reveal" };

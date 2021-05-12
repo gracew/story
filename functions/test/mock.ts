@@ -20,6 +20,7 @@ export const firestore = {
   nextMatchForUser: jest.fn(),
   createSchedulingRecords: jest.fn(),
   getSchedulingRecords: jest.fn(),
+  createNotifyRevealJob: jest.fn(),
 };
 
 export function user(firstName: string, other?: Partial<IUser>): IUser {
