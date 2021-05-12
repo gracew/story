@@ -630,9 +630,8 @@ export const rescheduleMatch = functions.https.onCall(async (data, context) => {
       body: rescheduleNotification(
         otherUser,
         user,
-        match,
         moment,
-        data.newTime
+        data.newTime,
       ),
       to: otherUser.phone,
     }),

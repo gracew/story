@@ -31,7 +31,7 @@ export function optInReminder(user: IUser) {
 }
 
 export function matchNotification(userId: string, matches: IMatch[], usersById: Record<string, IUser>): string[] {
-    const phoneSwapText = `If you miss the call, you can call us back. Afterwards, we'll ask if you want to connect again over video. If there's mutual interest, we'll help schedule a second call.`;
+    const nextStepText = `If you miss the call, you can call us back. Afterwards, we'll ask if you want to connect again over video at another time this week.`
     const user = usersById[userId];
     if (matches.length === 0) {
         return [];
@@ -44,19 +44,13 @@ export function matchNotification(userId: string, matches: IMatch[], usersById: 
         const match = matches[0];
         const matchUserId = match.user_a_id === userId ? match.user_b_id : match.user_a_id;
         const matchUser = usersById[matchUserId];
-        const texts = [
-            `Hi ${user.firstName}, you've got a match! At ${formattedTime} ${day(match.created_at.toDate(), tz)} you'll be chatting with ${matchUser.firstName}${location(matchUser)}.
+        return [
+            `Hi ${user.firstName}, you've got a match! 💘 At ${formattedTime} ${day(match.created_at.toDate(), tz)} you'll be chatting with ${matchUser.firstName}${location(matchUser)}.
 
-Here's how it works: at the time of your date, you'll receive a phone call connecting you with your match. ${phoneSwapText}`
+Here's how it works: at the time of your date, you'll receive a phone call connecting the two of you for just 20 minutes. ${nextStepText}
+
+Look at what ${matchUser.firstName} wrote about themselves for you 💌 https://storydating.com/m`
         ];
-        if (user.funFacts && matchUser.funFacts) {
-            texts.push(
-                `Here are a few fun facts about ${matchUser.firstName}: "${matchUser.funFacts}"
-
-Happy chatting! 🙌`
-            );
-        }
-        return texts;
     } else {
         const match1 = matches[0];
         const matchUser1Id = match1.user_a_id === userId ? match1.user_b_id : match1.user_a_id;
@@ -69,33 +63,23 @@ Happy chatting! 🙌`
         const match2Location = location(match2User);
         const formattedTime2 = formatTime(matches[1].created_at.toDate(), tz);
 
-        const texts = [];
         const day1 = day(match1.created_at.toDate(), tz);
         const day2 = day(match2.created_at.toDate(), tz);
         if (match1Location !== match2Location) {
-            texts.push(
-                `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName}${match1Location} and at ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}${match2Location}.
+            return [
+                `Hi ${user.firstName}, we have two matches for you! 💘 At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName}${match1Location}. At ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}${match2Location}.
 
-Here's how it works: both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
-            );
+Here's how it works: you'll receive a phone call connecting you and that night's date for just 20 minutes. ${nextStepText}`
+            ];
         } else {
-            texts.push(
-                `Hi ${user.firstName}, we have two matches for you! At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName} and at ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
+            return [
+                `Hi ${user.firstName}, we have two matches for you! 💘 At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName}. At ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
 
-Here's how it works: both nights you'll receive a phone call connecting you with your match. ${phoneSwapText}`
-            );
+Here's how it works: you'll receive a phone call connecting you and that night's date for just 20 minutes. ${nextStepText}
+
+Read ${match1User.firstName} and ${match2User.firstName}'s intros now: https://storydating.com/m`
+            ];
         }
-        if (user.funFacts && match1User.funFacts) {
-            texts.push(
-                `Here are a few fun facts about ${match1User.firstName}: "${match1User.funFacts}"`
-            );
-        }
-        if (user.funFacts && match2User.funFacts) {
-            texts.push(
-                `Here are a few fun facts about ${match2User.firstName}: "${match2User.funFacts}"`
-            );
-        }
-        return texts;
     }
 }
 
@@ -105,7 +89,7 @@ export function videoMatchNotification(userA: IUser, userB: IUser, matchTime: st
 }
 
 export function videoFallbackSwapNumbers(userA: IUser, userB: IUser) {
-    return `Hi ${userA.firstName}, we weren't able to schedule a video call for you and ${userB.firstName}, but they also wanted to swap numbers! Here's their number: ${userB.phone}`;
+    return `Hi ${userA.firstName}, we weren't able to schedule a video call for you and ${userB.firstName}, but they also wanted to swap numbers! Text them now at ${userB.phone}`;
 }
 
 export function videoFallbackTextChat(userA: IUser, userB: IUser) {
@@ -172,14 +156,12 @@ export const prompts = [
 export function rescheduleNotification(
     userA: IUser,
     userB: IUser,
-    match: IMatch,
     getTimestamp: () => moment.Moment,
     newTime: string,
 ) {
     const tz = timezone(userA);
-    const oldDay = tonightOrDay(match.created_at.toDate(), tz, getTimestamp);
     const newDay = tonightOrDay(newTime, tz, getTimestamp);
-    return `Hi ${userA.firstName}, ${userB.firstName} let us know something came up for ${formatTime(match.created_at.toDate(), tz)} ${oldDay}. It looks like you are both available at ${formatTime(newTime, tz)} ${newDay}, so we've rescheduled your call for then. If that no longer works for you just give us a text!`;
+    return `Hey ${userA.firstName}, ${userB.firstName} had a conflict at the scheduled time. Good news tho, you're both available at ${formatTime(newTime, tz)} ${newDay}, so we've rescheduled your call for then! If that time no longer works for you, go to https://storydating.com/m to modify. Enjoy the call!`;
 }
 
 export function cancelNotification(
@@ -191,10 +173,10 @@ export function cancelNotification(
 ) {
     const formattedDay = tonightOrDay(match.created_at.toDate(), timezone(cancelee), getTimestamp);
     const nextCopy = canceleeNextMatch
-        ? `You're still scheduled to speak with ${canceleeNextMatch.nextMatchName} on ${canceleeNextMatch.nextMatchDate}.`
-        : "We'll be back in touch next week with another match!";
+        ? `Don't worry, you're still scheduled to speak with ${canceleeNextMatch.nextMatchName} on ${canceleeNextMatch.nextMatchDate} 😍`
+        : "We'll be back in touch next week with another match! 💌";
 
-    return `Hi ${cancelee.firstName}, unfortunately ${canceler.firstName} let us know they can no longer make ${formattedDay}'s date, so you won't be receiving a call from us. ${nextCopy}`;
+    return `Hi ${cancelee.firstName}, unfortunately ${canceler.firstName} let us know they can no longer make ${formattedDay}'s date They (and we) are sorry about that 😔 ${nextCopy}`;
 }
 
 function formatTime(matchTime: string | Date, tz: string) {
