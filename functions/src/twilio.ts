@@ -129,28 +129,32 @@ export async function saveRevealHelper(body: { phone: string, reveal: string, ma
         return;
     }
 
-    let otherUser;
+    let otherUserId;
     let otherReveal;
     if (match.user_a_id === revealingUser.id) {
-        otherUser = await firestore.getUser(match.user_b_id);
+        otherUserId = match.user_b_id;
         otherReveal = match.revealed[match.user_b_id];
     } else if (match.user_b_id === revealingUser.id) {
-        otherUser = await firestore.getUser(match.user_a_id);
+        otherUserId = match.user_a_id;
         otherReveal = match.revealed[match.user_a_id];
     }
     await firestore.updateMatch(match.id, { [`revealed.${revealingUser.id}`]: reveal });
 
-    if (!otherUser) {
+    if (!otherUserId) {
         console.error(new Error("Requested match doesn't have the requested users"));
         return;
     }
     if (reveal && otherReveal) {
+        await firestore.createNotifyRevealJob({ matchId: match.id, notifyUserId: otherUserId })
         return { next: "reveal" };
     } else if (reveal && otherReveal === false) {
         return { next: "reveal_other_no" };
     } else if (reveal && otherReveal === undefined) {
         return { next: "reveal_other_pending" };
     } else if (!reveal) {
+        if (otherReveal) {
+            await firestore.createNotifyRevealJob({ matchId: match.id, notifyUserId: otherUserId })
+        }
         return { next: "no_reveal" };
     }
     console.error(new Error(`unexpected combination for match ${match.id}, phone ${phone}, reveal ${reveal}, otherReveal ${otherReveal}`))

@@ -103,6 +103,11 @@ export interface CreateMatchInput {
   mode?: "video" | "phone";
 }
 
+export interface NotifyRevealJob {
+  matchId: string;
+  notifyUserId: string;
+}
+
 export class Firestore {
   public async saveUser(user: IUser | IPreOnboardedUser): Promise<void> {
     await admin.firestore().collection("users").doc(user.id).update(user);
@@ -307,5 +312,9 @@ export class Firestore {
   // TODO: let's make this private to decouple callers from inner workings of firestore
   public updateMatch(id: string, update: Partial<IMatch>) {
     return admin.firestore().collection("matches").doc(id).update(update);
+  }
+
+  public createNotifyRevealJob(job: NotifyRevealJob) {
+    return admin.firestore().collection("notifyRevealJobs").doc().set(job);
   }
 }

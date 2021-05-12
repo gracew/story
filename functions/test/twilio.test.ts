@@ -143,6 +143,8 @@ it("saveReveal Y, other Y next match", async () => {
     expect(res).toEqual({ next: "reveal" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: true });
+    expect(firestore.createNotifyRevealJob).toHaveBeenCalledTimes(1);
+    expect(firestore.createNotifyRevealJob).toHaveBeenCalledWith({ matchId: m1.id, notifyUserId: user2.id });
 });
 
 it("saveReveal N", async () => {
@@ -158,6 +160,8 @@ it("saveReveal N, other Y next match", async () => {
     expect(res).toEqual({ next: "no_reveal" })
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: false });
+    expect(firestore.createNotifyRevealJob).toHaveBeenCalledTimes(1);
+    expect(firestore.createNotifyRevealJob).toHaveBeenCalledWith({ matchId: m1.id, notifyUserId: user2.id });
 });
 
 it("saveReveal accepts a variety of inputs", async () => {

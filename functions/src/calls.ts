@@ -3,7 +3,7 @@ import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import * as util from "util";
-import { Firestore, IMatch, IUser } from "./firestore";
+import { Firestore, IMatch, IUser, NotifyRevealJob } from "./firestore";
 import { chatExpiration, flakeApology, flakeWarning, reminder, videoLink, videoReminder } from "./smsCopy";
 import {
   callStudio,
@@ -386,9 +386,9 @@ export const saveReveal = functions.https.onRequest(
   }
 );
 
-export const notifyRevealOtherUser = functions.firestore
-  .document("matches/{docId}")
-  .onUpdate(async (change, context) => {
+export const notifyRevealJobs = functions.firestore
+  .document("notifyRevealJobs/{docId}")
+  .onCreate(async (change, context) => {
     // firestore triggers have at-least-once delivery semantics, so first check if we have already processed the event
     const eventRef = admin.firestore().collection("firestoreEvents").doc(context.eventId);
     const eventDoc = await eventRef.get();
@@ -397,66 +397,58 @@ export const notifyRevealOtherUser = functions.firestore
     }
     await eventRef.create({});
 
-    const afterMatch = change.after.data() as IMatch;
-    const beforeMatch = change.before.data() as IMatch;
-    if (Object.keys(afterMatch.revealed).length !== 2) {
-      // haven't heard back from both users
+    const job = change.data() as NotifyRevealJob;
+    const firestore = new Firestore();
+    const match = await firestore.getMatch(job.matchId);
+    if (!match) {
+      console.warn(`no match found for notify reveal job ${change.id}`);
       return;
     }
-    const firestore = new Firestore();
-    const users = await firestore.getUsersForMatches([afterMatch]);
-    if (afterMatch.revealed[afterMatch.user_a_id] !== undefined && beforeMatch.revealed[beforeMatch.user_a_id] === undefined) {
-      // user A responded
-      await notifyOtherUser(firestore, users[afterMatch.user_a_id], users[afterMatch.user_b_id], afterMatch);
+    const users = await firestore.getUsersForMatches([match]);
+    const notifyUser = users[job.notifyUserId];
+    const revealingUserId = match.user_a_id === job.notifyUserId ? match.user_b_id : match.user_a_id;
+    const revealingUser = users[revealingUserId];
+    const nextMatch = await firestore.nextMatchForUser(notifyUser.id)
+    const nextMatchMeta = await nextMatchNameAndDate(notifyUser.id, firestore, nextMatch);
+
+    const data = {
+      userId: notifyUser.id,
+      firstName: notifyUser.firstName,
+      matchUserId: revealingUser.id,
+      matchName: revealingUser.firstName,
+      matchPhone: revealingUser.phone,
+    };
+
+    if (Object.values(match.revealed).every(v => v)) {
+      // both revealed
+      await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
+        to: notifyUser.phone,
+        from: TWILIO_NUMBER,
+        parameters: {
+          mode: "reveal",
+          matchId: match.id,
+          ...data,
+          ...nextMatchMeta,
+          video: match.mode === "video",
+        }
+      });
     }
-    if (afterMatch.revealed[afterMatch.user_b_id] !== undefined && beforeMatch.revealed[beforeMatch.user_b_id] === undefined) {
-      // user B responded
-      await notifyOtherUser(firestore, users[afterMatch.user_b_id], users[afterMatch.user_a_id], afterMatch);
+
+    if (match.revealed[revealingUser.id] === false && match.revealed[notifyUser.id] === true) {
+      // need to inform otherUser of rejection
+      await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
+        to: notifyUser.phone,
+        from: TWILIO_NUMBER,
+        parameters: {
+          mode: "reveal_other_no",
+          matchId: match.id,
+          ...data,
+          ...nextMatchMeta,
+          video: match.mode === "video",
+        },
+      });
     }
   });
-
-async function notifyOtherUser(firestore: Firestore, revealingUser: IUser, otherUser: IUser, match: IMatch) {
-  const nextMatchOther = await firestore.nextMatchForUser(otherUser.id)
-  const otherNextMatch = await nextMatchNameAndDate(otherUser.id, firestore, nextMatchOther);
-
-  const otherData = {
-    userId: otherUser.id,
-    firstName: otherUser.firstName,
-    matchUserId: revealingUser.id,
-    matchName: revealingUser.firstName,
-    matchPhone: revealingUser.phone,
-  };
-
-  if (Object.values(match.revealed).every(v => v)) {
-    // both revealed
-    await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
-      to: otherUser.phone,
-      from: TWILIO_NUMBER,
-      parameters: {
-        mode: "reveal",
-        matchId: match.id,
-        ...otherData,
-        ...otherNextMatch,
-        video: match.mode === "video",
-      }
-    });
-  }
-
-  if (match.revealed[revealingUser.id] === false && match.revealed[otherUser.id] === true) {
-    // need to inform otherUser of rejection
-    await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
-      to: otherUser.phone,
-      from: TWILIO_NUMBER,
-      parameters: {
-        mode: "reveal_other_no",
-        matchId: match.id,
-        ...otherData,
-        ...otherNextMatch,
-        video: match.mode === "video",
-      },
-    });
-  }
-};
 
 export async function callUserHelper(userId: string) {
   const user = await admin.firestore().collection("users").doc(userId).get();
