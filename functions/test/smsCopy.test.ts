@@ -188,8 +188,8 @@ it("rescheduleNotification", async () => {
     const userA = user("userA");
     const userB = user("userB");
     const m = match(userA.id, userB.id, "2021-04-23T20:00:00-07:00");
-    const notification = rescheduleNotification(userA, userB, m, getTimestamp, "2021-04-23T21:00:00-07:00");
-    expect(notification).toContain("Hi userA, userB let us know something came up for 8:00pm PDT Friday")
+    const notification = rescheduleNotification(userA, userB, getTimestamp, "2021-04-23T21:00:00-07:00");
+    expect(notification).toContain("Hi userA, userB had a conflict at the scheduled time")
     expect(notification).toContain("9:00pm PDT Friday")
 });
 
@@ -197,8 +197,8 @@ it("rescheduleNotification - tonight", async () => {
     const userA = user("userA");
     const userB = user("userB");
     const m = match(userA.id, userB.id, "2021-04-22T20:00:00-07:00");
-    const notification = rescheduleNotification(userA, userB, m, getTimestamp, "2021-04-23T21:00:00-07:00");
-    expect(notification).toContain("Hi userA, userB let us know something came up for 8:00pm PDT tonight")
+    const notification = rescheduleNotification(userA, userB, getTimestamp, "2021-04-23T21:00:00-07:00");
+    expect(notification).toContain("Hi userA, userB had a conflict at the scheduled time")
     expect(notification).toContain("9:00pm PDT Friday")
 });
 
