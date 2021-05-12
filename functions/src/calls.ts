@@ -411,21 +411,17 @@ export const notifyRevealJobs = functions.firestore
     const nextMatch = await firestore.nextMatchForUser(notifyUser.id)
     const nextMatchMeta = await nextMatchNameAndDate(notifyUser.id, firestore, nextMatch);
 
-    const data = {
-      userId: notifyUser.id,
-      firstName: notifyUser.firstName,
-      matchUserId: revealingUser.id,
-      matchName: revealingUser.firstName,
-      matchPhone: revealingUser.phone,
-    };
-
     await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
       to: notifyUser.phone,
       from: TWILIO_NUMBER,
       parameters: {
         mode: job.mode,
         matchId: match.id,
-        ...data,
+        userId: notifyUser.id,
+        firstName: notifyUser.firstName,
+        matchUserId: revealingUser.id,
+        matchName: revealingUser.firstName,
+        matchPhone: revealingUser.phone,
         ...nextMatchMeta,
         video: match.mode === "video",
       }
