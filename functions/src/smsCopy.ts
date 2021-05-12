@@ -75,7 +75,7 @@ Here's how it works: you'll receive a phone call connecting you and that night's
             return [
                 `Hi ${user.firstName}, we have two matches for you! 💘 At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName}. At ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
 
-Here's how it works: both nights you'll receive a phone call connecting you with your match. ${nextStepText}
+Here's how it works: you'll receive a phone call connecting you and that night's date for just 20 minutes. ${nextStepText}
 
 Read ${match1User.firstName} and ${match2User.firstName}'s intros now: https://storydating.com/m`
             ];
@@ -161,7 +161,7 @@ export function rescheduleNotification(
 ) {
     const tz = timezone(userA);
     const newDay = tonightOrDay(newTime, tz, getTimestamp);
-    return `Hey ${userA.firstName}, ${userB.firstName} had a conflict at the scheduled time. Good news tho, you're both vailable at ${formatTime(newTime, tz)} ${newDay}, so we've rescheduled your call for then! If that time no longer works for you, go to https://storydating.com/m to modify. Enjoy the call!`;
+    return `Hey ${userA.firstName}, ${userB.firstName} had a conflict at the scheduled time. Good news tho, you're both available at ${formatTime(newTime, tz)} ${newDay}, so we've rescheduled your call for then! If that time no longer works for you, go to https://storydating.com/m to modify. Enjoy the call!`;
 }
 
 export function cancelNotification(
