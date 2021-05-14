@@ -1,5 +1,7 @@
 import * as admin from "firebase-admin";
 import moment = require("moment-timezone");
+import { firestore } from "firebase-admin/lib/firestore";
+import Transaction = firestore.Transaction;
 
 export interface ICalendarDate {
   year: number;
@@ -11,7 +13,12 @@ export interface ICalendarDate {
 // type safety and clarity
 export type IPreOnboardedUser = Pick<
   IUser,
-  "id" | "phone" | "status" | "locationFlexibility" | "onboardingComplete" | "referrer"
+  | "id"
+  | "phone"
+  | "status"
+  | "locationFlexibility"
+  | "onboardingComplete"
+  | "referrer"
 >;
 
 export interface IUser {
@@ -270,6 +277,28 @@ export class Firestore {
     return Object.assign(
       {},
       ...allUsers.map((user) => ({ [user.id]: user.data() }))
+    );
+  }
+
+  // mostly the same as getUsersForMatches except works inside of a transaction
+  public static async getUsersForMatchesInTxn(
+    txn: Transaction,
+    matches: IMatch[]
+  ): Promise<Record<string, IUser>> {
+    const userAIds = matches.map((m) => m.user_a_id);
+    const userBIds = matches.map((m) => m.user_b_id);
+    const userIds = userAIds.concat(userBIds);
+
+    if (userIds.length === 0) {
+      return {};
+    }
+    const users = await txn.getAll(
+      ...userIds.map((id) => admin.firestore().collection("users").doc(id))
+    );
+
+    return Object.assign(
+      {},
+      ...users.map((user) => ({ [user.id]: user.data() }))
     );
   }
 

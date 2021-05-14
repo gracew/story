@@ -3,8 +3,17 @@ import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import * as util from "util";
+import { isEmpty } from "lodash";
+import {
+  chatExpiration,
+  flakeApology,
+  flakeWarning,
+  audioReminderOneHour,
+  videoLink,
+  videoReminderOneHour,
+  audioReminderTenMinutes,
+} from "./smsCopy";
 import { Firestore, IMatch, IUser, NotifyRevealJob } from "./firestore";
-import { chatExpiration, flakeApology, flakeWarning, reminder, videoLink, videoReminder } from "./smsCopy";
 import {
   callStudio,
   client,
@@ -14,10 +23,16 @@ import {
   saveRevealHelper,
   sendSms,
   TWILIO_NUMBER,
-  validateRequest
+  validateRequest,
 } from "./twilio";
 
-export const sendReminderTexts = functions.pubsub
+/**
+ * Sends reminder texts to either phone or video matches happening in the next hour (phone or video matches only happen
+ * at :00 or :30)
+ *
+ * Sets the "interactions.reminded" flag on the match when succeeded.
+ */
+export const sendReminderTextsOneHour = functions.pubsub
   .schedule("0,30 * * * *")
   .onRun(async (context) => {
     const createdAt = moment().utc().startOf("hour").add(1, "hour");
@@ -25,7 +40,7 @@ export const sendReminderTexts = functions.pubsub
       createdAt.add(30, "minutes");
     }
     await admin.firestore().runTransaction(async (txn) => {
-      const matches = await txn.get(
+      const matchSnaps = await txn.get(
         admin
           .firestore()
           .collection("matches")
@@ -34,50 +49,109 @@ export const sendReminderTexts = functions.pubsub
           .where("canceled", "==", false)
       );
       console.log(
-        "found the following matches: " + matches.docs.map((doc) => doc.id)
+        "found the following matches: " + matchSnaps.docs.map((doc) => doc.id)
       );
 
-      const userAIds = matches.docs.map((doc) => doc.get("user_a_id"));
-      const userBIds = matches.docs.map((doc) => doc.get("user_b_id"));
-      const userIds = userAIds.concat(userBIds);
-      console.log("sending texts to the following users: " + userIds);
+      const matches = matchSnaps.docs.map((m) => m.data() as IMatch);
+      const usersById = await Firestore.getUsersForMatchesInTxn(txn, matches);
+      console.log(
+        "sending texts to the following users: " + Object.keys(usersById)
+      );
 
-      if (userIds.length === 0) {
+      if (isEmpty(usersById)) {
         return;
       }
-      const users = await txn.getAll(
-        ...userIds.map((id) => admin.firestore().collection("users").doc(id))
-      );
 
-      const usersById = Object.assign(
-        {},
-        ...users.map((user) => ({ [user.id]: user.data() }))
-      );
-
-      const allPromises: Array<Promise<any>> = [];
-      matches.docs.forEach((doc) => {
-        const userA = usersById[doc.get("user_a_id")];
-        const userB = usersById[doc.get("user_b_id")];
-        const video = doc.get("mode") === "video";
-        allPromises.push(textUserHelper(userA, userB, video));
-        allPromises.push(textUserHelper(userB, userA, video));
+      const sendReminderPromises: Array<Promise<any>> = [];
+      matches.forEach((match) => {
+        const userA = usersById[match.user_a_id];
+        const userB = usersById[match.user_b_id];
+        const genCopy =
+          match.mode === "video"
+            ? promisify(videoReminderOneHour)
+            : audioReminderOneHour;
+        sendReminderPromises.push(sendReminderTextPairs(userA, userB, genCopy));
       });
 
-      await Promise.all(allPromises);
+      await Promise.all(sendReminderPromises);
       await Promise.all(
-        matches.docs.map((doc) => txn.update(doc.ref, "interactions.reminded", true))
+        matchSnaps.docs.map((doc) =>
+          txn.update(doc.ref, "interactions.reminded", true)
+        )
       );
     });
   });
 
-async function textUserHelper(userA: IUser, userB: IUser, video: boolean) {
-  const body = video
-    ? videoReminder(userA, userB)
-    : await reminder(userA, userB);
-  await sendSms({
-    body,
+/**
+ * Sends reminder texts ONLY to phone matches happening in the next 10 minutes (phone or video matches only happen
+ * at :00 or :30). For video matches, we already send the video link close to the time of the call, so we don't need
+ * to send yet another reminder for those.
+ *
+ * Sets the "interactions.remindedClose" flag on the match when succeeded.
+ */
+export const sendReminderTextsTenMinutes = functions.pubsub
+  .schedule("50,20 * * * *")
+  .onRun(async (context) => {
+    const createdAt = moment().utc().startOf("hour").add(1, "hour");
+    if (moment().minutes() >= 20) {
+      createdAt.add(30, "minutes");
+    }
+    await admin.firestore().runTransaction(async (txn) => {
+      const matchSnaps = await txn.get(
+        admin
+          .firestore()
+          .collection("matches")
+          .where("created_at", "==", createdAt)
+          .where("mode", "==", "phone")
+          .where("interactions.remindedClose", "==", false)
+          .where("canceled", "==", false)
+      );
+      console.log(
+        "found the following matches: " + matchSnaps.docs.map((doc) => doc.id)
+      );
+
+      const matches = matchSnaps.docs.map((m) => m.data() as IMatch);
+      const usersById = await Firestore.getUsersForMatchesInTxn(txn, matches);
+      console.log(
+        "sending texts to the following users: " + Object.keys(usersById)
+      );
+
+      if (isEmpty(usersById)) {
+        return;
+      }
+
+      const sendReminderPromises: Array<Promise<any>> = [];
+      matches.forEach((match) => {
+        const userA = usersById[match.user_a_id];
+        const userB = usersById[match.user_b_id];
+        sendReminderPromises.push(
+          sendReminderTextPairs(userA, userB, audioReminderTenMinutes)
+        );
+      });
+
+      await Promise.all(sendReminderPromises);
+      await Promise.all(
+        matchSnaps.docs.map((doc) =>
+          txn.update(doc.ref, "interactions.remindedClose", true)
+        )
+      );
+    });
+  });
+
+async function sendReminderTextPairs(
+  userA: IUser,
+  userB: IUser,
+  genCopy: (userA: IUser, userB: IUser) => Promise<string>
+) {
+  const sendFirstSms = sendSms({
+    body: await genCopy(userA, userB),
     to: userA.phone,
   });
+  const sendSecondSms = sendSms({
+    body: await genCopy(userB, userA),
+    to: userB.phone,
+  });
+  return Promise.all([sendFirstSms, sendSecondSms]);
 }
 
 export const sendVideoLink = functions.pubsub
@@ -93,9 +167,9 @@ export const sendVideoLink = functions.pubsub
           .where("interactions.called", "==", false)
           .where("canceled", "==", false)
       );
-      const videoMatches = matches.docs.filter(
-        (doc) => doc.get("mode") === "video"
-      ).map(doc => doc.data() as IMatch);
+      const videoMatches = matches.docs
+        .filter((doc) => doc.get("mode") === "video")
+        .map((doc) => doc.data() as IMatch);
       console.log(
         "found the following matches: " + videoMatches.map((m) => m.id)
       );
@@ -123,18 +197,19 @@ export const sendVideoLink = functions.pubsub
         const userB = usersById[m.user_b_id];
         const bodyA = videoLink(userA, m);
         const bodyB = videoLink(userB, m);
-        allPromises.push(
-          sendSms({ body: bodyA, to: userA.phone })
-        );
-        allPromises.push(
-          sendSms({ body: bodyB, to: userB.phone })
-        );
+        allPromises.push(sendSms({ body: bodyA, to: userA.phone }));
+        allPromises.push(sendSms({ body: bodyB, to: userB.phone }));
       });
 
       await Promise.all(allPromises);
       await Promise.all(
         videoMatches.map((m) =>
-          txn.update(admin.firestore().collection("matches").doc(m.id), "interactions.called", true))
+          txn.update(
+            admin.firestore().collection("matches").doc(m.id),
+            "interactions.called",
+            true
+          )
+        )
       );
     });
   });
@@ -166,7 +241,9 @@ export const issueCalls = functions.pubsub
 
       await Promise.all(userIds.map((id) => callUserHelper(id)));
       await Promise.all(
-        matches.docs.map((doc) => txn.update(doc.ref, "interactions.called", true))
+        matches.docs.map((doc) =>
+          txn.update(doc.ref, "interactions.called", true)
+        )
       );
     });
   });
@@ -188,14 +265,14 @@ export const issueRecalls = functions.pubsub
           .where("canceled", "==", false)
       );
       const matchesToRecall = matches.docs
-        .map(doc => doc.data() as IMatch)
-        .filter(m => m.mode === "phone" && m.twilioSid === undefined)
+        .map((doc) => doc.data() as IMatch)
+        .filter((m) => m.mode === "phone" && m.twilioSid === undefined);
       console.log(
-        "found the following matches: " + matchesToRecall.map(m => m.id)
+        "found the following matches: " + matchesToRecall.map((m) => m.id)
       );
 
       const usersToRecall: string[] = [];
-      matchesToRecall.forEach(m => {
+      matchesToRecall.forEach((m) => {
         const joined = Object.keys(m.joined || {});
         if (!joined.includes(m.user_a_id)) {
           usersToRecall.push(m.user_a_id);
@@ -203,13 +280,15 @@ export const issueRecalls = functions.pubsub
         if (!joined.includes(m.user_b_id)) {
           usersToRecall.push(m.user_b_id);
         }
-      })
+      });
 
       console.log("issuing calls to the following users: " + usersToRecall);
 
       await Promise.all(usersToRecall.map((id) => callUserHelper(id)));
       await Promise.all(
-        matches.docs.map((doc) => txn.update(doc.ref, "interactions.recalled", true))
+        matches.docs.map((doc) =>
+          txn.update(doc.ref, "interactions.recalled", true)
+        )
       );
     });
   });
@@ -262,7 +341,9 @@ export const handleFlakes = functions.pubsub
       });
       await Promise.all(smsPromises);
       await Promise.all(
-        matches.docs.map((doc) => txn.update(doc.ref, "interactions.flakesHandled", true))
+        matches.docs.map((doc) =>
+          txn.update(doc.ref, "interactions.flakesHandled", true)
+        )
       );
     });
   });
@@ -305,7 +386,9 @@ export const revealRequest = functions.pubsub
           .where("created_at", "==", createdAt)
           .where("interactions.revealRequested", "==", false)
       );
-      const connectedMatches = matches.docs.filter((doc) => doc.get("twilioSid") !== undefined);
+      const connectedMatches = matches.docs.filter(
+        (doc) => doc.get("twilioSid") !== undefined
+      );
       await Promise.all(
         connectedMatches.map(async (doc) => {
           await playCallOutro(doc.data() as IMatch, doc.get("twilioSid"));
@@ -330,7 +413,10 @@ export const revealRequestVideo = functions.pubsub
           .where("interactions.revealRequested", "==", false)
       );
       const videoMatches = matches.docs.filter(
-        (doc) => doc.get("canceled") === false && doc.get("mode") === "video" && Object.keys(doc.get("joined")).length === 2
+        (doc) =>
+          doc.get("canceled") === false &&
+          doc.get("mode") === "video" &&
+          Object.keys(doc.get("joined")).length === 2
       );
       await Promise.all(
         videoMatches.map(async (doc) => {
@@ -390,7 +476,10 @@ export const notifyRevealJobs = functions.firestore
   .document("notifyRevealJobs/{docId}")
   .onCreate(async (change, context) => {
     // firestore triggers have at-least-once delivery semantics, so first check if we have already processed the event
-    const eventRef = admin.firestore().collection("firestoreEvents").doc(context.eventId);
+    const eventRef = admin
+      .firestore()
+      .collection("firestoreEvents")
+      .doc(context.eventId);
     const eventDoc = await eventRef.get();
     if (eventDoc.exists) {
       return;
@@ -406,10 +495,15 @@ export const notifyRevealJobs = functions.firestore
     }
     const users = await firestore.getUsersForMatches([match]);
     const notifyUser = users[job.notifyUserId];
-    const revealingUserId = match.user_a_id === job.notifyUserId ? match.user_b_id : match.user_a_id;
+    const revealingUserId =
+      match.user_a_id === job.notifyUserId ? match.user_b_id : match.user_a_id;
     const revealingUser = users[revealingUserId];
-    const nextMatch = await firestore.nextMatchForUser(notifyUser.id)
-    const nextMatchMeta = await nextMatchNameAndDate(notifyUser.id, firestore, nextMatch);
+    const nextMatch = await firestore.nextMatchForUser(notifyUser.id);
+    const nextMatchMeta = await nextMatchNameAndDate(
+      notifyUser.id,
+      firestore,
+      nextMatch
+    );
 
     await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
       to: notifyUser.phone,
@@ -424,7 +518,7 @@ export const notifyRevealJobs = functions.firestore
         matchPhone: revealingUser.phone,
         ...nextMatchMeta,
         video: match.mode === "video",
-      }
+      },
     });
   });
 
@@ -439,9 +533,7 @@ export async function callUserHelper(userId: string) {
 
   const match = await new Firestore().currentMatchForUser(userId);
   if (!match) {
-    console.error(
-      new Error("No scheduled match for user: " + userId)
-    );
+    console.error(new Error("No scheduled match for user: " + userId));
     return;
   }
 
@@ -488,7 +580,8 @@ export const conferenceStatusWebhook = functions.https.onRequest(
           // 2. the other user previously joined and left the conference
           // 3. both users were previously in the conference and have now left (e.g. due to connection issues)
           const userId = participants[0].label;
-          const otherId = match.user_a_id === userId ? match.user_b_id : match.user_a_id;
+          const otherId =
+            match.user_a_id === userId ? match.user_b_id : match.user_a_id;
           console.log("issuing call to user: " + otherId);
           await Promise.all([
             callUserHelper(otherId),
@@ -556,16 +649,17 @@ export const call5MinWarning = functions.pubsub
       );
       await Promise.all(
         ongoingCalls.docs.map((doc) =>
-          client
-            .conferences(doc.get("twilioSid"))
-            .update({
-              announceUrl: "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media",
-              announceMethod: "GET",
-            })
+          client.conferences(doc.get("twilioSid")).update({
+            announceUrl:
+              "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media",
+            announceMethod: "GET",
+          })
         )
       );
       await Promise.all(
-        ongoingCalls.docs.map((doc) => txn.update(doc.ref, "interactions.warned5Min", true))
+        ongoingCalls.docs.map((doc) =>
+          txn.update(doc.ref, "interactions.warned5Min", true)
+        )
       );
     });
   });
@@ -586,35 +680,39 @@ export const call1MinWarning = functions.pubsub
       );
       await Promise.all(
         ongoingCalls.docs.map((doc) =>
-          client
-            .conferences(doc.get("twilioSid"))
-            .update({
-              announceUrl: "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media",
-              announceMethod: "GET",
-            })
+          client.conferences(doc.get("twilioSid")).update({
+            announceUrl:
+              "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media",
+            announceMethod: "GET",
+          })
         )
       );
       await Promise.all(
-        ongoingCalls.docs.map((doc) => txn.update(doc.ref, "interactions.warned1Min", true))
+        ongoingCalls.docs.map((doc) =>
+          txn.update(doc.ref, "interactions.warned1Min", true)
+        )
       );
     });
   });
 
-export const warnSmsChatExpiration = functions.https.onRequest(async (request, response) => {
-  const participants = await client.proxy
-    .services("KS58cecadd35af39c56a4cae81837a89f3")
-    .sessions(request.body.sessionSid)
-    .participants
-    .list();
-  await Promise.all(participants.map(p =>
-    client.proxy
+export const warnSmsChatExpiration = functions.https.onRequest(
+  async (request, response) => {
+    const participants = await client.proxy
       .services("KS58cecadd35af39c56a4cae81837a89f3")
       .sessions(request.body.sessionSid)
-      .participants(p.sid)
-      .messageInteractions.create({ body: chatExpiration })
-  ));
-  response.end();
-});
+      .participants.list();
+    await Promise.all(
+      participants.map((p) =>
+        client.proxy
+          .services("KS58cecadd35af39c56a4cae81837a89f3")
+          .sessions(request.body.sessionSid)
+          .participants(p.sid)
+          .messageInteractions.create({ body: chatExpiration })
+      )
+    );
+    response.end();
+  }
+);
 
 export async function notifyIncomingTextHelper(phone: string, message: string) {
   const userQuery = await admin
@@ -622,13 +720,23 @@ export async function notifyIncomingTextHelper(phone: string, message: string) {
     .collection("users")
     .where("phone", "==", phone)
     .get();
-  const fullName = userQuery.empty ? "Unknown user" : userQuery.docs[0].get("firstName") + " " + userQuery.docs[0].get("lastName");
+  const fullName = userQuery.empty
+    ? "Unknown user"
+    : userQuery.docs[0].get("firstName") +
+      " " +
+      userQuery.docs[0].get("lastName");
   return fetch(functions.config().slack.webhook_url, {
     method: "post",
     body: JSON.stringify({
       text: `From: ${fullName}
-Body: ${message}`
+Body: ${message}`,
     }),
     headers: { "Content-Type": "application/json" },
   });
+}
+
+function promisify<I, A extends Array<I>, R>(
+  f: (...args: A) => R
+): (...args: A) => Promise<R> {
+  return (...args: A) => Promise.resolve(f(...args));
 }
