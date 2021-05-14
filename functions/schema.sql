@@ -15,7 +15,6 @@ CREATE TABLE date_users (
 );
 
 
-ALTER TABLE date_users OWNER TO sumeet;
 ALTER TABLE ONLY date_users ADD CONSTRAINT pk_date_users_id PRIMARY KEY (id);
 CREATE INDEX idx_date_users_user_id ON date_users USING btree (user_id);
 CREATE UNIQUE INDEX unq_date_users ON date_users USING btree (date_id, user_id);
