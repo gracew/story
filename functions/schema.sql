@@ -27,7 +27,7 @@ CREATE TABLE match_meetings (
     interactions jsonb,
     meeting_metadata jsonb,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 ALTER TABLE ONLY match_meetings ADD CONSTRAINT pk_match_meetings_id PRIMARY KEY (id);
