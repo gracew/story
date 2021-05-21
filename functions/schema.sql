@@ -23,7 +23,7 @@ CREATE UNIQUE INDEX unq_date_users ON date_users USING btree (date_id, user_id);
 CREATE TABLE dates (
     id text NOT NULL,
     meeting_type text NOT NULL,
-    meeting_time timestamp with time zone,
+    meeting_time timestamp without time zone,
     interactions jsonb,
     meeting_metadata jsonb,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
@@ -31,14 +31,6 @@ CREATE TABLE dates (
 );
 
 ALTER TABLE ONLY dates ADD CONSTRAINT pk_dates_id PRIMARY KEY (id);
-
-CREATE TABLE locations (
-    id SERIAL NOT NULL,
-    name text NOT NULL,
-    timezone text NOT NULL
-);
-ALTER TABLE ONLY locations ADD CONSTRAINT pk_locations_id PRIMARY KEY (id);
-
 
 CREATE TABLE match_preferences (
     user_id text NOT NULL,
@@ -76,14 +68,12 @@ CREATE TABLE users (
     linkedin_url text,
     location text,
     status text,
-    location_id_unused integer,
     phone text,
     email text,
     ethnicity_code text,
     is_ethnicity_self_reported boolean
 );
 ALTER TABLE ONLY users ADD CONSTRAINT pk_users_id PRIMARY KEY (id);
-CREATE INDEX idx_users_location_id ON users USING btree (location_id_unused);
 
 CREATE TABLE weekly_call_optins (
     id SERIAL NOT NULL,
@@ -92,7 +82,7 @@ CREATE TABLE weekly_call_optins (
     reminded_at timestamp without time zone,
     requested_at timestamp without time zone,
     responded_at timestamp without time zone,
-    available_times timestamp with time zone[],
+    available_times timestamp without time zone[],
     week date
 );
 ALTER TABLE ONLY weekly_call_optins ADD CONSTRAINT pk_weekly_call_optins_id PRIMARY KEY (id);

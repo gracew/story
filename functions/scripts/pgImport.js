@@ -15,11 +15,11 @@ function pgParams(num) {
     return paramStrs.join(', ');
 }
 
-function fromFireTime(fireTime) {
-    if (!fireTime) {
-        return fireTime
+function fromFirestoreTimestamp(ts) {
+    if (!ts) {
+        return ts
     }
-    return new Date(fireTime._seconds * 1000);
+    return new Date(ts._seconds * 1000);
 }
 
 async function insert(client, tableName, kv) {
@@ -28,13 +28,21 @@ async function insert(client, tableName, kv) {
     return client.query(q, Object.values(kv));
 }
 
-function getArray(obj, ...path) {
+function getPath(obj, ...path) {
     let resolved = obj;
     for (const step of path) {
         resolved = obj[step];
         if (!resolved) {
-            return [];
+            return resolved;
         }
+    }
+    return resolved;
+}
+
+function getArray(obj, ...path) {
+    const resolved = getPath(obj, ...path);
+    if (!resolved) {
+        return [];
     }
     if (Array.isArray(resolved)) {
         return resolved;
@@ -52,13 +60,18 @@ function getArray(obj, ...path) {
 
     /// users
     for (const [userId, user] of Object.entries(dump.users)) {
+        if (!user.firstName) {
+            console.warn("preferences not found for", user, "skipping");
+            continue;
+        }
+
         await insert(client, "users", {
             id: userId,
             first_name: user.firstName,
             last_name: user.lastName,
             email: user.email,
             is_eligible: true,
-            created_at: fromFireTime(user.registeredAt) || new Date(0),
+            created_at: fromFirestoreTimestamp(user.registeredAt) || new Date(0),
             fun_facts: [user.funFacts],
             gender: user.gender || "Unknown",
             interests_blurb: user.interests,
@@ -75,7 +88,7 @@ function getArray(obj, ...path) {
             continue;
         }
 
-        const relationType = prefs?.relationshipType?.value;
+        const relationType = getPath(prefs, 'relationshipType', 'value');
         if (!relationType) {
             console.warn("relationType not found for", userId, "skipping");
             continue;
@@ -116,8 +129,8 @@ function getArray(obj, ...path) {
 
             if (payload.available) {
                 if (Array.isArray(payload.available)) {
-                    for (const d of payload.available) {
-                        availableTimes.push(fromFireTime(d));
+                    for (const ts of payload.available) {
+                        availableTimes.push(fromFirestoreTimestamp(ts));
                     }
                 } else {
                     console.warn("got unexpected value for available", payload.available);
