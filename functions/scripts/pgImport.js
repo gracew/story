@@ -118,7 +118,7 @@ function getArray(obj, ...path) {
         const subCollections = Object.values(subCollection);
         const optinsByUserId = _.maxBy(subCollections, obj => Object.keys(obj).length);
         for (const [userId, payload] of Object.entries(optinsByUserId)) {
-            let availableTimes = [];
+            const availableTimes = [];
             for (const dayOfWeek of daysOfWeek) {
                 if (payload[dayOfWeek]) {
                     availableTimes.push(weekMoment.day(dayOfWeek).toDate());
@@ -135,10 +135,6 @@ function getArray(obj, ...path) {
                 } else {
                     console.warn("got unexpected value for available", payload.available);
                 }
-            }
-
-            if (payload.skip) {
-                availableTimes = [];
             }
 
             await insert(client, "weekly_call_optins", {

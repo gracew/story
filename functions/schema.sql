@@ -26,8 +26,8 @@ CREATE TABLE match_meetings (
     meeting_time timestamp without time zone,
     interactions jsonb,
     meeting_metadata jsonb,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
 );
 
 ALTER TABLE ONLY match_meetings ADD CONSTRAINT pk_match_meetings_id PRIMARY KEY (id);
@@ -42,7 +42,7 @@ CREATE TABLE match_preferences (
     kids_profile text[] NOT NULL,
     politics_dealbreakers text[] NOT NULL,
     politics_profile text[] NOT NULL,
-    relation_type text DEFAULT 'monogamous'::text NOT NULL,
+    relation_type text NOT NULL,
     religion_dealbreakers text[] NOT NULL,
     religion_profile text,
     smoking_dealbreakers text[] NOT NULL,
@@ -59,18 +59,15 @@ CREATE TABLE users (
     is_eligible boolean NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    fun_facts text[],
+    fun_facts text,
     gender text NOT NULL,
     interests_blurb text,
-    twitter_handle text,
     referral_code text,
     heard_about_us_thru text,
-    linkedin_url text,
     location text,
     status text,
     phone text,
     email text,
-    ethnicity_code text,
     is_ethnicity_self_reported boolean
 );
 ALTER TABLE ONLY users ADD CONSTRAINT pk_users_id PRIMARY KEY (id);
@@ -79,9 +76,6 @@ CREATE TABLE weekly_call_optins (
     id SERIAL NOT NULL,
     user_id text NOT NULL,
     num_matches integer,
-    reminded_at timestamp without time zone,
-    requested_at timestamp without time zone,
-    responded_at timestamp without time zone,
     available_times timestamp without time zone[],
     week date
 );
