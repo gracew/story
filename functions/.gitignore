@@ -10,3 +10,6 @@ node_modules/
 
 # local development data
 .localdata
+
+# dump for postgres data loading
+firestore_dump.json
