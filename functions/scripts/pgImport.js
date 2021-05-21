@@ -55,7 +55,7 @@ function getArray(obj, ...path) {
 
     /// blocklist
     for (const [_, block] of Object.entries(dump.blocklist)) {
-        await client.query('INSERT INTO blocks(user_ids) VALUES ($1)', [block.userIds]);
+        await client.query('INSERT INTO blocklists(user_ids) VALUES ($1)', [block.userIds]);
     }
 
     /// users

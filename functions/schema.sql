@@ -1,26 +1,26 @@
-CREATE TABLE blocks (
+CREATE TABLE blocklists (
     id SERIAL NOT NULL,
     user_ids text[]
 );
-ALTER TABLE ONLY blocks ADD CONSTRAINT pk_blocks_id PRIMARY KEY (id);
-CREATE INDEX idx_blocks_user_ids ON blocks USING gin (user_ids);
+ALTER TABLE ONLY blocklists ADD CONSTRAINT pk_blocklists_id PRIMARY KEY (id);
+CREATE INDEX idx_blocklists_user_ids ON blocklists USING gin (user_ids);
 
 
-CREATE TABLE date_users (
+CREATE TABLE meeting_participants (
     id SERIAL NOT NULL,
     user_id text NOT NULL,
-    date_id text NOT NULL,
+    match_meeting_id text NOT NULL,
     canceled_at timestamp without time zone,
     joined_at timestamp without time zone
 );
 
 
-ALTER TABLE ONLY date_users ADD CONSTRAINT pk_date_users_id PRIMARY KEY (id);
-CREATE INDEX idx_date_users_user_id ON date_users USING btree (user_id);
-CREATE UNIQUE INDEX unq_date_users ON date_users USING btree (date_id, user_id);
+ALTER TABLE ONLY meeting_participants ADD CONSTRAINT pk_date_users_id PRIMARY KEY (id);
+CREATE INDEX idx_date_users_user_id ON meeting_participants USING btree (user_id);
+CREATE UNIQUE INDEX unq_date_users ON meeting_participants USING btree (match_meeting_id, user_id);
 
 
-CREATE TABLE dates (
+CREATE TABLE match_meetings (
     id text NOT NULL,
     meeting_type text NOT NULL,
     meeting_time timestamp without time zone,
@@ -30,7 +30,7 @@ CREATE TABLE dates (
     updated_at timestamp without time zone
 );
 
-ALTER TABLE ONLY dates ADD CONSTRAINT pk_dates_id PRIMARY KEY (id);
+ALTER TABLE ONLY match_meetings ADD CONSTRAINT pk_match_meetings_id PRIMARY KEY (id);
 
 CREATE TABLE match_preferences (
     user_id text NOT NULL,
