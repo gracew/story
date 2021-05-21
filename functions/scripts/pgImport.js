@@ -72,7 +72,7 @@ function getArray(obj, ...path) {
             email: user.email,
             is_eligible: true,
             created_at: fromFirestoreTimestamp(user.registeredAt) || new Date(0),
-            fun_facts: [user.funFacts],
+            fun_facts: user.funFacts,
             gender: user.gender || "Unknown",
             interests_blurb: user.interests,
             heard_about_us_thru: user.whereDidYouHearAboutUs,
