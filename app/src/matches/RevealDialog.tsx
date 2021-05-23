@@ -20,13 +20,28 @@ function RevealDialog(props: RevealDialogProps) {
   const [step, setStep] = useState(RevealDialogStep.REVEAL);
   const [rating, setRating] = useState<number>();
 
-  async function onSaveReveal(reveal: boolean) {
-    await saveReveal({ matchId: props.matchId, reveal });
+  const [revealNoLoading, setRevealNoLoading] = useState(false);
+  const [revealYesLoading, setRevealYesLoading] = useState(false);
+  const [ratingLoading, setRatingLoading] = useState(false);
+
+  async function onSaveRevealNo() {
+    setRevealNoLoading(true);
+    await saveReveal({ matchId: props.matchId, reveal: false });
+    setRevealNoLoading(false);
+    setStep(RevealDialogStep.RATING);
+  }
+
+  async function onSaveRevealYes() {
+    setRevealYesLoading(true);
+    await saveReveal({ matchId: props.matchId, reveal: true });
+    setRevealYesLoading(false);
     setStep(RevealDialogStep.RATING);
   }
 
   async function onSaveRating() {
+    setRatingLoading(true);
     await saveRating({ matchId: props.matchId, rating: rating! });
+    setRatingLoading(false);
     setStep(RevealDialogStep.COMPLETE);
   }
 
@@ -49,8 +64,8 @@ function RevealDialog(props: RevealDialogProps) {
     return <div className="reveal-dialog">
       Thanks for chatting with {props.matchName}! Would you like to have a second date over video?
     <StoryButtonContainer>
-        <Button onClick={() => onSaveReveal(false)}>No thanks</Button>
-        <Button onClick={() => onSaveReveal(true)} type="primary">I'm in</Button>
+        <Button onClick={onSaveRevealNo} loading={revealNoLoading}>No thanks</Button>
+        <Button onClick={onSaveRevealYes} loading={revealYesLoading} type="primary">I'm in</Button>
       </StoryButtonContainer>
     </div>;
   }
@@ -79,7 +94,12 @@ function RevealDialog(props: RevealDialogProps) {
         <div>{text()}</div>
       </div>
       <StoryButtonContainer>
-        <Button type="primary" disabled={rating === undefined} onClick={onSaveRating}>Send feedback</Button>
+        <Button
+          type="primary"
+          disabled={rating === undefined}
+          onClick={onSaveRating}
+          loading={ratingLoading}
+        >Send feedback</Button>
       </StoryButtonContainer>
     </div>;
   }
