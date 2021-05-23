@@ -11,7 +11,7 @@ import {
   getConferenceTwimlForPhone,
   nextMatchNameAndDate,
   POST_CALL_FLOW_ID,
-  saveRevealHelper,
+
   sendSms,
   TWILIO_NUMBER,
   validateRequest
@@ -372,19 +372,6 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
   const today = moment().tz("America/Los_Angeles").format("dddd");
   await callStudio("reveal_request", match, new Firestore(), false, today);
 }
-
-export const saveReveal = functions.https.onRequest(
-  async (request, response) => {
-    const today = moment().tz("America/Los_Angeles").format("dddd");
-    const res = await saveRevealHelper(request.body, new Firestore(), today);
-    if (res) {
-      response.send(res);
-    } else {
-      await notifyIncomingTextHelper(request.body.phone, request.body.reveal);
-      response.end();
-    }
-  }
-);
 
 export const notifyRevealJobs = functions.firestore
   .document("notifyRevealJobs/{docId}")

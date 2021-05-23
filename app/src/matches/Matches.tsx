@@ -12,6 +12,7 @@ import StoryModal from "../components/StoryModal";
 import ProfileCard from "../profile/ProfileCard";
 import "./Matches.css";
 import RescheduleModal from "./RescheduleModal";
+import RevealDialog from "./RevealDialog";
 
 enum ModalType {
   RESCHEDULE,
@@ -27,10 +28,13 @@ export default function Matches(): JSX.Element {
   const [commonAvailabilityLoading, setCommonAvailabilityLoading] = useState(false);
   const [rescheduleLoading, setRescheduleLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [revealDialogMatch, setRevealDialogMatch] = useState<Resources.UpcomingMatch>();
 
   useEffect(() => {
     (async () => {
-      setUpcomingMatches(await getUpcomingMatches());
+      const res = await getUpcomingMatches();
+      setUpcomingMatches(res);
+      setRevealDialogMatch(res.find(res => res.requestReveal));
     })();
   }, []);
 
@@ -109,6 +113,11 @@ export default function Matches(): JSX.Element {
 
   return (
     <div className="matches">
+      {revealDialogMatch && <RevealDialog
+        matchId={revealDialogMatch.id}
+        matchName={revealDialogMatch.firstName}
+        closeDialog={() => setRevealDialogMatch(undefined)}
+      />}
       <div className="match-card-container">
         <ProfileCard
           firstName={thisMatch.firstName}

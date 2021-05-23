@@ -1,8 +1,9 @@
+import moment = require("moment");
 import { Firestore, IMatch, IUser } from "./firestore";
 
 const firestore = new Firestore();
 
-function createUpcomingMatchView(match: IMatch, otherUser: IUser) {
+function createUpcomingMatchView(match: IMatch, viewingUser: IUser, otherUser: IUser) {
   const mode = match.mode || "phone";
   let photo = undefined;
   switch (mode) {
@@ -13,6 +14,13 @@ function createUpcomingMatchView(match: IMatch, otherUser: IUser) {
       photo = otherUser.photo;
       break;
   }
+  const requestReveal =
+    // the users connected successfully via twilio OR both users joined the video call
+    (match.twilioSid !== undefined || (match.mode === "video" && Object.keys((match.joined || {})).length === 2))
+    // the call ended < 15 min ago
+    && moment().diff(match.created_at.toDate(), "minutes") < 35
+    // the user hasn't responded yet to the reveal request
+    && match.revealed[viewingUser.id] === undefined;
   return {
     firstName: otherUser.firstName,
     gender: otherUser.gender,
@@ -21,6 +29,7 @@ function createUpcomingMatchView(match: IMatch, otherUser: IUser) {
     photo,
     id: match.id,
     meetingTime: match.created_at.toDate(),
+    requestReveal,
   };
 }
 
@@ -40,7 +49,7 @@ export async function listUpcomingMatchViewsForUser(viewingUser: IUser) {
       );
       continue;
     }
-    upcomingMatches.push(createUpcomingMatchView(match, otherUsers[0]));
+    upcomingMatches.push(createUpcomingMatchView(match, viewingUser, otherUsers[0]));
   }
   return upcomingMatches;
 }

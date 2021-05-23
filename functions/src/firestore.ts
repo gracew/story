@@ -52,6 +52,9 @@ export interface IMatch {
   user_ids: string[];
   joined?: Record<string, boolean>;
   revealed: Record<string, boolean>;
+  /* A map from user id to a score from 1-5 (inclusive). An entry with key X is user X's rating of their match. */
+  ratings?: Record<string, number>;
+
   created_at: admin.firestore.Timestamp;
   canceled?: boolean;
   rescheduled?: boolean;

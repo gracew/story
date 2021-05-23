@@ -4,7 +4,7 @@ import { CallableContext } from "firebase-functions/lib/providers/https";
 import { isEmpty } from "lodash";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
-import { Responses } from "../../api/functions";
+import { Requests, Responses } from "../../api/functions";
 import { findCommonAvailability } from "./admin";
 import {
   CreateMatchInput,
@@ -25,7 +25,7 @@ import {
   welcome
 } from "./smsCopy";
 import { processTimeZone, Timezone, videoTimeOptions } from "./times";
-import { client, nextMatchNameAndDate, sendSms } from "./twilio";
+import { client, nextMatchNameAndDate, saveRevealHelper, sendSms } from "./twilio";
 
 const firestore = new Firestore();
 
@@ -350,6 +350,7 @@ export const getUpcomingMatches = functions.https.onCall(
           meetingTime: matchView.meetingTime.toJSON(),
           mode: matchView.mode,
           gender: matchView.gender,
+          requestReveal: matchView.requestReveal,
         };
       }),
     };
@@ -675,3 +676,21 @@ export const cancelMatch = functions.https.onCall(async (data, context) => {
   });
   return {};
 });
+
+export const saveReveal = functions.https.onCall(
+  async (data, context) => {
+    const user = await requireLoggedInUser(data, context);
+    const match = await checkUserIsInMatch(user.id, data.matchId);
+
+    return saveRevealHelper(user, match, data.reveal, new Firestore());
+  }
+);
+
+export const saveRating = functions.https.onCall(
+  async (data: Requests.SaveRating, context) => {
+    const user = await requireLoggedInUser(data, context);
+    const match = await checkUserIsInMatch(user.id, data.matchId);
+
+    await firestore.updateMatch(match.id, { [`ratings.${user.id}`]: data.rating });
+  }
+);
