@@ -547,6 +547,12 @@ export async function createSmsChatHelper(userA: IUser, userB: IUser, match: IMa
     participants(participantA.sid).messageInteractions.create({ body: chatIntro(userA, userB) }),
     participants(participantB.sid).messageInteractions.create({ body: chatIntro(userB, userA) })
   ])
+  // save off session SID for later access (e.g. to close the session)
+  await admin.firestore().collection("matches").doc(match.id).update(
+    {
+      twilioChatCreatedAt: new Date(),
+      twilioChatSid: session.sid,
+    });
 }
 
 export function firstCommonAvailability(a1: string[], a2: string[]) {

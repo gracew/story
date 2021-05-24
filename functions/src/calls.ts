@@ -587,21 +587,51 @@ export const call1MinWarning = functions.pubsub
     });
   });
 
-export const warnSmsChatExpiration = functions.https.onRequest(async (request, response) => {
-  const participants = await client.proxy
-    .services("KS58cecadd35af39c56a4cae81837a89f3")
-    .sessions(request.body.sessionSid)
-    .participants
-    .list();
-  await Promise.all(participants.map(p =>
-    client.proxy
-      .services("KS58cecadd35af39c56a4cae81837a89f3")
-      .sessions(request.body.sessionSid)
-      .participants(p.sid)
-      .messageInteractions.create({ body: chatExpiration })
-  ));
-  response.end();
-});
+/* Checks for SMS chats eligible for expiration at 1pm Pacific every day. */
+export const warnSmsChatExpiration = functions.pubsub
+  .schedule("0 13 * * *")
+  .onRun(async (context) => {
+    const oneWeekAgo = moment().subtract(1, "week").toDate();
+    await admin.firestore().runTransaction(async txn => {
+      const matches = await txn.get(
+        admin.firestore().collection("matches").where("twilioChatCreatedAt", "<=", oneWeekAgo));
+      matches.docs.forEach(async matchDoc => {
+        const match = matchDoc.data() as IMatch;
+        if (match.interactions.warnedSmsChatExpiration || !match.twilioChatSid) {
+          return;
+        }
+        client.proxy
+          .services("KS58cecadd35af39c56a4cae81837a89f3")
+          .sessions(match.twilioChatSid)
+          .participants
+          .each(p => p.messageInteractions().create({ body: chatExpiration }));
+        txn.update(matchDoc.ref, "interactions.warnedSmsChatExpiration", true);
+      });
+    });
+  });
+
+/* Expires eligible SMS chats at midnight Pacific every day. */
+export const expireSmsChat = functions.pubsub
+  .schedule("0 0 * * *")
+  .onRun(async (context) => {
+    const matches = await admin.firestore()
+      .collection("matches")
+      .where("interactions.warnedSmsChatExpiration", "==", true)
+      .get();
+    matches.docs.forEach(async matchDoc => {
+      const match = matchDoc.data() as IMatch;
+      if (!match.twilioChatSid) {
+        return;
+      }
+      const session = await client.proxy
+        .services("KS58cecadd35af39c56a4cae81837a89f3")
+        .sessions(match.twilioChatSid)
+        .fetch();
+      if (session.status === "open") {
+        await session.update({ status: "closed" });
+      }
+    });
+  });
 
 export async function notifyIncomingTextHelper(phone: string, message: string) {
   const userQuery = await admin
