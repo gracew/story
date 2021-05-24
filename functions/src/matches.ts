@@ -14,11 +14,12 @@ function createUpcomingMatchView(match: IMatch, viewingUser: IUser, otherUser: I
       photo = otherUser.photo;
       break;
   }
+  const minutesSinceMatch = moment().diff(match.created_at.toDate(), "minutes");
   const requestReveal =
     // the users connected successfully via twilio OR both users joined the video call
     (match.twilioSid !== undefined || (match.mode === "video" && Object.keys((match.joined || {})).length === 2))
     // the call ended < 15 min ago
-    && moment().diff(match.created_at.toDate(), "minutes") < 35
+    && minutesSinceMatch > 0 && minutesSinceMatch < 35
     // the user hasn't responded yet to the reveal request
     && match.revealed[viewingUser.id] === undefined;
   return {
