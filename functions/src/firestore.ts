@@ -52,6 +52,9 @@ export interface IMatch {
   user_ids: string[];
   joined?: Record<string, boolean>;
   revealed: Record<string, boolean>;
+  /* A map from user id to a score from 1-5 (inclusive). An entry with key X is user X's rating of their match. */
+  ratings?: Record<string, number>;
+
   created_at: admin.firestore.Timestamp;
   canceled?: boolean;
   rescheduled?: boolean;
@@ -246,7 +249,7 @@ export class Firestore {
       .where("user_ids", "array-contains", userId)
       .where("canceled", "==", false)
       // created_at is actually their meeting time, not the time the record was created
-      .where("created_at", ">=", new Date())
+      .where("created_at", ">=", moment().startOf("week").toDate())
       .orderBy("created_at", "asc")
       .get();
     return querySnapshot.docs.map((snap) => snap.data() as IMatch);

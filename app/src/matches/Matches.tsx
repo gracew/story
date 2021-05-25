@@ -3,6 +3,7 @@ import { Button, Modal } from "antd";
 import firebase from "firebase";
 import moment from "moment";
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { Resources } from "../../../api/functions";
 import { cancelMatch, getCommonAvailability, getUpcomingMatches, rescheduleMatch } from "../apiClient";
 import CenteredDiv from "../components/CenteredDiv";
@@ -12,6 +13,7 @@ import StoryModal from "../components/StoryModal";
 import ProfileCard from "../profile/ProfileCard";
 import "./Matches.css";
 import RescheduleModal from "./RescheduleModal";
+import RevealDialog from "./RevealDialog";
 
 enum ModalType {
   RESCHEDULE,
@@ -19,6 +21,7 @@ enum ModalType {
 }
 
 export default function Matches(): JSX.Element {
+  const { matchId } = useParams();
   const [upcomingMatches, setUpcomingMatches] = useState<Resources.UpcomingMatch[]>();
   const [pageIndex, setPageIndex] = useState<number>(0);
   const [photoUrl, setPhotoUrl] = useState<string>();
@@ -27,12 +30,21 @@ export default function Matches(): JSX.Element {
   const [commonAvailabilityLoading, setCommonAvailabilityLoading] = useState(false);
   const [rescheduleLoading, setRescheduleLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [revealDialogMatch, setRevealDialogMatch] = useState<Resources.UpcomingMatch>();
 
   useEffect(() => {
     (async () => {
-      setUpcomingMatches(await getUpcomingMatches());
+      const res = await getUpcomingMatches();
+      setUpcomingMatches(res);
+      setRevealDialogMatch(res.find(res => res.requestReveal));
+      if (matchId) {
+        const index = res.findIndex(m => m.id === matchId);
+        if (index >= 0) {
+          setPageIndex(index);
+        }
+      }
     })();
-  }, []);
+  }, [matchId]);
 
   useEffect(() => {
     if (!upcomingMatches || !upcomingMatches[pageIndex] || !upcomingMatches[pageIndex].photo) {
@@ -107,18 +119,28 @@ export default function Matches(): JSX.Element {
     });
   }
 
+  // if the match is in the future, allow rescheduling
+  const footer = moment(thisMatch.meetingTime).diff(moment()) > 0
+    ? <Button
+      className="match-reschedule"
+      loading={commonAvailabilityLoading}
+      onClick={onClickReschedule}
+    >Reschedule</Button>
+    : undefined;
+
   return (
     <div className="matches">
+      {revealDialogMatch && <RevealDialog
+        matchId={revealDialogMatch.id}
+        matchName={revealDialogMatch.firstName}
+        closeDialog={() => setRevealDialogMatch(undefined)}
+      />}
       <div className="match-card-container">
         <ProfileCard
           firstName={thisMatch.firstName}
           gender={thisMatch.gender}
           photoUrl={photoUrl}
-          footer={<Button
-            className="match-reschedule"
-            loading={commonAvailabilityLoading}
-            onClick={onClickReschedule}
-          >Reschedule</Button>}
+          footer={footer}
         >
           <div className="match-details">
             <div className="match-time">

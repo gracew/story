@@ -19,6 +19,17 @@ export namespace Requests {
     canceled?: boolean;
     mode?: Types.MatchMode;
   }
+
+  export interface SaveReveal {
+    matchId: string;
+    reveal: boolean;
+  }
+
+  export interface SaveRating {
+    matchId: string;
+    /* An integer 1-5, inclusive */
+    rating: number;
+  }
 }
 
 export namespace Responses {
@@ -40,6 +51,7 @@ export namespace Resources {
     meetingTime: Types.JSONDateTime;
     mode: Types.MatchMode;
     gender: string;
+    requestReveal: boolean;
   }
 }
 

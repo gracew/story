@@ -75,10 +75,10 @@ function App() {
             <Route path="/u/:userId">
               <PublicProfile />
             </Route>
-            <PrivateRoute path={["/m", "/matches"]} exact>
+            <PrivateRoute path={["/m/:matchId", "/matches/:matchId", "/m", "/matches"]}>
               <Matches />
             </PrivateRoute>
-            <PrivateRoute path="/m/:matchId">
+            <PrivateRoute path="/s/:matchId">
               <VideoAvailability />
             </PrivateRoute>
             <Route path="/login">

@@ -22,6 +22,8 @@ import {
   onboardUser,
   rescheduleMatch,
   savePreferences,
+  saveRating,
+  saveReveal,
   saveVideoAvailability
 } from "./app";
 import {
@@ -36,7 +38,6 @@ import {
   notifyIncomingTextHelper,
   revealRequest,
   revealRequestVideo,
-  saveReveal,
   sendReminderTexts,
   sendVideoLink,
   warnSmsChatExpiration
@@ -86,6 +87,7 @@ export {
   revealRequestVideo,
   saveAvailability,
   savePreferences,
+  saveRating,
   saveReveal,
   saveVideoAvailability,
   sendAvailabilityTexts,
