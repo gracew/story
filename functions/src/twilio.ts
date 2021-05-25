@@ -1,9 +1,10 @@
+import { Transaction } from "@google-cloud/firestore";
 import * as express from "express";
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as moment from "moment-timezone";
 import * as twilio from "twilio";
-import { Firestore, IMatch, NotifyRevealMode } from "./firestore";
+import { Firestore, IMatch, IUser, NotifyRevealMode } from "./firestore";
 
 export const TWILIO_NUMBER = "MG35ade708f17b5ae9c9af44c95128182b"; // messaging service sid
 export const BASE_URL =
@@ -156,27 +157,20 @@ export async function callStudio(
 }
 
 export async function saveRevealHelper(
-  body: { phone: string; reveal: string; matchId: string },
+  revealingUser: IUser,
+  match: IMatch,
+  reveal: boolean,
   firestore: Firestore,
-  today: string
+  txn?: Transaction
 ) {
-  const phone = body.phone;
-  const reveal = parseUserReveal(body.reveal);
-  if (reveal === undefined) {
-    console.warn("Could not parse reveal response");
-    return;
-  }
-
-  const revealingUser = await firestore.getUserByPhone(phone);
-  if (!revealingUser) {
-    console.error(new Error("No user with phone " + phone));
-    return;
-  }
-
-  const match = await firestore.getMatch(body.matchId);
-  if (!match) {
-    console.error(new Error("Could not find match with id " + body.matchId));
-    return;
+  if (txn) {
+    firestore.updateMatchInTxn(txn, match.id, {
+      [`revealed.${revealingUser.id}`]: reveal,
+    });
+  } else {
+    await firestore.updateMatch(match.id, {
+      [`revealed.${revealingUser.id}`]: reveal,
+    });
   }
 
   let otherUserId;
@@ -188,15 +182,12 @@ export async function saveRevealHelper(
     otherUserId = match.user_a_id;
     otherReveal = match.revealed[match.user_a_id];
   }
-  await firestore.updateMatch(match.id, {
-    [`revealed.${revealingUser.id}`]: reveal,
-  });
 
   if (!otherUserId) {
     console.error(
       new Error("Requested match doesn't have the requested users")
     );
-    return;
+    return {};
   }
   if (reveal && otherReveal) {
     await firestore.createNotifyRevealJob({
@@ -206,6 +197,12 @@ export async function saveRevealHelper(
     });
     return { next: "reveal" };
   } else if (reveal && otherReveal === false) {
+    // this could be removed and just incorporated into the web app
+    await firestore.createNotifyRevealJob({
+      matchId: match.id,
+      notifyUserId: revealingUser.id,
+      mode: NotifyRevealMode.REVEAL_OTHER_NO,
+    });
     return { next: "reveal_other_no" };
   } else if (reveal && otherReveal === undefined) {
     return { next: "reveal_other_pending" };
@@ -221,10 +218,10 @@ export async function saveRevealHelper(
   }
   console.error(
     new Error(
-      `unexpected combination for match ${match.id}, phone ${phone}, reveal ${reveal}, otherReveal ${otherReveal}`
+      `unexpected combination for match ${match.id}, user ${revealingUser.id}, reveal ${reveal}, otherReveal ${otherReveal}`
     )
   );
-  return;
+  return {};
 }
 
 export function getNextDays(
@@ -270,17 +267,6 @@ export function getNextDays(
       .filter((day) => !nextMatchDays.has(day));
   }
   return availableNextDays.slice(0, 3).join(", ");
-}
-
-function parseUserReveal(reveal: string) {
-  const normalized = reveal.trim().toLowerCase();
-  if (normalized === "y" || normalized === "yes") {
-    return true;
-  }
-  if (normalized === "n" || normalized === "no") {
-    return false;
-  }
-  return undefined;
 }
 
 export interface NextMatchNameDate {

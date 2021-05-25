@@ -23,7 +23,6 @@ let user2: IUser;
 let user3: IUser;
 let m1: IMatch;
 let m2: IMatch;
-const today = "Wednesday";
 const nextWeek = "Friday, Saturday, Sunday";
 
 beforeEach(() => {
@@ -123,7 +122,7 @@ it("callStudio - both photo", async () => {
 });
 
 it("saveReveal Y, other pending", async () => {
-    const res = await saveRevealHelper({ phone: user1.phone, reveal: "y", matchId: m1.id }, firestore, today);
+    const res = await saveRevealHelper(user1, m1, true, firestore);
     expect(res).toEqual({ next: "reveal_other_pending" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: true });
@@ -131,7 +130,7 @@ it("saveReveal Y, other pending", async () => {
 
 it("saveReveal Y, other N", async () => {
     m1.revealed[user2.id] = false;
-    const res = await saveRevealHelper({ phone: user1.phone, reveal: "y", matchId: m1.id }, firestore, today);
+    const res = await saveRevealHelper(user1, m1, true, firestore);
     expect(res).toEqual({ next: "reveal_other_no" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: true });
@@ -139,7 +138,7 @@ it("saveReveal Y, other N", async () => {
 
 it("saveReveal Y, other Y next match", async () => {
     m1.revealed[user2.id] = true;
-    const res = await saveRevealHelper({ phone: user1.phone, reveal: "y", matchId: m1.id }, firestore, today);
+    const res = await saveRevealHelper(user1, m1, true, firestore);
     expect(res).toEqual({ next: "reveal" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: true });
@@ -152,7 +151,7 @@ it("saveReveal Y, other Y next match", async () => {
 });
 
 it("saveReveal N", async () => {
-    const res = await saveRevealHelper({ phone: user1.phone, reveal: "n", matchId: m1.id }, firestore, today);
+    const res = await saveRevealHelper(user1, m1, false, firestore);
     expect(res).toEqual({ next: "no_reveal" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: false });
@@ -160,7 +159,7 @@ it("saveReveal N", async () => {
 
 it("saveReveal N, other Y next match", async () => {
     m1.revealed[user2.id] = true;
-    const res = await saveRevealHelper({ phone: user1.phone, reveal: "n", matchId: m1.id }, firestore, today);
+    const res = await saveRevealHelper(user1, m1, false, firestore);
     expect(res).toEqual({ next: "no_reveal" })
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: false });
@@ -170,32 +169,6 @@ it("saveReveal N, other Y next match", async () => {
         notifyUserId: user2.id,
         mode: NotifyRevealMode.REVEAL_OTHER_NO,
     });
-});
-
-it("saveReveal accepts a variety of inputs", async () => {
-    const yesInputs = ["Y", "yes", "YES", "y ", " y"];
-    for (const input of yesInputs) {
-        firestore.updateMatch.mockReset();
-        const res = await saveRevealHelper({ phone: user1.phone, reveal: input, matchId: m1.id }, firestore, today);
-        expect(res).toEqual({ next: "reveal_other_pending" });
-        expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
-        expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: true });
-    }
-
-    const noInputs = ["N", "no", "NO", "n ", " n"];
-    for (const input of noInputs) {
-        firestore.updateMatch.mockReset();
-        const res = await saveRevealHelper({ phone: user1.phone, reveal: input, matchId: m1.id }, firestore, today);
-        expect(res).toEqual({ next: "no_reveal" });
-        expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
-        expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: false });
-    }
-});
-
-it("saveReveal does not save for unknown input", async () => {
-    const res = await saveRevealHelper({ phone: user1.phone, reveal: "foo", matchId: m1.id }, firestore, today);
-    expect(res).toBeUndefined();
-    expect(firestore.updateMatch).not.toHaveBeenCalled();
 });
 
 it("getNextDays", async () => {

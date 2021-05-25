@@ -15,6 +15,7 @@ export const firestore = {
   getMatch: jest.fn(),
   rescheduleMatch: jest.fn(),
   updateMatch: jest.fn(),
+  updateMatchInTxn: jest.fn(),
   cancelMatch: jest.fn(),
   currentMatchForUser: jest.fn(),
   nextMatchForUser: jest.fn(),

@@ -41,3 +41,11 @@ export async function cancelMatch(req: Requests.CancelMatch): Promise<void> {
 export async function rescheduleMatch(req: Requests.RescheduleMatch): Promise<void> {
   await firebase.functions().httpsCallable("rescheduleMatch")(req);
 }
+
+export async function saveReveal(req: Requests.SaveReveal): Promise<void> {
+  await firebase.functions().httpsCallable("saveReveal")(req);
+}
+
+export async function saveRating(req: Requests.SaveRating): Promise<void> {
+  await firebase.functions().httpsCallable("saveRating")(req);
+}

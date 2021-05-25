@@ -10,6 +10,7 @@ import {
   flakeWarning,
   phoneReminderOneHour,
   phoneReminderTenMinutes,
+  revealNoReply,
   videoLink,
   videoReminderOneHour,
 } from "./smsCopy";
@@ -444,6 +445,51 @@ export const revealRequestVideo = functions.pubsub
     });
   });
 
+/* Runs 15 minutes after the call ends to check for matches where oen or both users didn't reply. */
+export const handleRevealNoReply = functions.pubsub
+  .schedule("5,35 * * * *")
+  .onRun(async (context) => {
+    const createdAt = moment().utc().startOf("hour");
+    if (moment().minutes() < 30) {
+      createdAt.subtract(30, "minutes");
+    }
+    await admin.firestore().runTransaction(async (txn) => {
+      const matchRes = await txn.get(
+        admin
+          .firestore()
+          .collection("matches")
+          .where("created_at", "==", createdAt)
+          .where("interactions.revealRequested", "==", true)
+      );
+      const incompleteMatches = matchRes.docs
+        .map((doc) => doc.data() as IMatch)
+        .filter((m) => Object.keys(m.revealed).length < 2);
+
+      // ok for this call to happen outside of the txn since we're not modifying the user objects
+      const firestore = new Firestore();
+      const usersById = await firestore.getUsersForMatches(incompleteMatches);
+
+      return Promise.all(
+        incompleteMatches.map(async (m) => {
+          const userA = usersById[m.user_a_id];
+          const userB = usersById[m.user_b_id];
+          if (m.revealed[m.user_a_id] === undefined) {
+            await Promise.all([
+              saveRevealHelper(userA, m, false, firestore, txn),
+              sendSms({ body: revealNoReply(userA, userB), to: userA.phone }),
+            ]);
+          }
+          if (m.revealed[m.user_b_id] === undefined) {
+            await Promise.all([
+              saveRevealHelper(userB, m, false, firestore, txn),
+              sendSms({ body: revealNoReply(userB, userA), to: userB.phone }),
+            ]);
+          }
+        })
+      );
+    });
+  });
+
 async function playCallOutro(match: IMatch, conferenceSid: string) {
   try {
     // wrap in try/catch as twilio will throw if the conference has already ended
@@ -469,19 +515,6 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
   const today = moment().tz("America/Los_Angeles").format("dddd");
   await callStudio("reveal_request", match, new Firestore(), false, today);
 }
-
-export const saveReveal = functions.https.onRequest(
-  async (request, response) => {
-    const today = moment().tz("America/Los_Angeles").format("dddd");
-    const res = await saveRevealHelper(request.body, new Firestore(), today);
-    if (res) {
-      response.send(res);
-    } else {
-      await notifyIncomingTextHelper(request.body.phone, request.body.reveal);
-      response.end();
-    }
-  }
-);
 
 export const notifyRevealJobs = functions.firestore
   .document("notifyRevealJobs/{docId}")
