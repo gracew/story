@@ -18,23 +18,17 @@ interface RevealDialogProps {
 
 function RevealDialog(props: RevealDialogProps) {
   const [step, setStep] = useState(RevealDialogStep.REVEAL);
+  const [reveal, setReveal] = useState<boolean>();
   const [rating, setRating] = useState<number>();
 
-  const [revealNoLoading, setRevealNoLoading] = useState(false);
-  const [revealYesLoading, setRevealYesLoading] = useState(false);
+  const [revealLoading, setRevealLoading] = useState(false);
   const [ratingLoading, setRatingLoading] = useState(false);
 
-  async function onSaveRevealNo() {
-    setRevealNoLoading(true);
-    await saveReveal({ matchId: props.matchId, reveal: false });
-    setRevealNoLoading(false);
-    setStep(RevealDialogStep.RATING);
-  }
-
-  async function onSaveRevealYes() {
-    setRevealYesLoading(true);
-    await saveReveal({ matchId: props.matchId, reveal: true });
-    setRevealYesLoading(false);
+  async function onSaveReveal(value: boolean) {
+    setReveal(value);
+    setRevealLoading(true);
+    await saveReveal({ matchId: props.matchId, reveal: value});
+    setRevealLoading(false);
     setStep(RevealDialogStep.RATING);
   }
 
@@ -64,8 +58,8 @@ function RevealDialog(props: RevealDialogProps) {
     return <div className="reveal-dialog">
       Thanks for chatting with {props.matchName}! Would you like to have a second date over video?
     <StoryButtonContainer>
-        <Button onClick={onSaveRevealNo} loading={revealNoLoading}>No thanks</Button>
-        <Button onClick={onSaveRevealYes} loading={revealYesLoading} type="primary">I'm in</Button>
+        <Button onClick={() => onSaveReveal(false)} loading={reveal === false && revealLoading}>No thanks</Button>
+        <Button onClick={() => onSaveReveal(true)} loading={reveal === true && revealLoading} type="primary">I'm in</Button>
       </StoryButtonContainer>
     </div>;
   }
@@ -105,7 +99,8 @@ function RevealDialog(props: RevealDialogProps) {
   }
 
   return <div className="reveal-dialog">
-    Thanks! We're learning your type and will use your feedback to help pick your future matches.
+    <p>Thanks! We're learning your type and will use your feedback to help pick your future matches.</p>
+    {reveal && <p>We’ll text you about scheduling if {props.matchName} is also interested in video chatting.</p>}
       <StoryButtonContainer>
       <Button href="https://calendly.com/gracew_/match-prefs" target="_blank">Learn more</Button>
       <Button type="primary" onClick={props.closeDialog}>Got it</Button>
