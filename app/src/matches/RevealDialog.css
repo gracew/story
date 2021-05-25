@@ -27,4 +27,14 @@
 
 .rating-options .ant-btn {
     font-size: 24px;
+    padding: 8px 12px;
+    height: 44px;
+}
+
+.rating-options .ant-btn:focus {
+    border-bottom: 2px solid #54175F;
+}
+
+.rating-text {
+    margin-top: 10px;
 }

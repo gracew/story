@@ -91,7 +91,7 @@ function RevealDialog(props: RevealDialogProps) {
             <span role="img" aria-label="emoji-blush">😊</span>
           </Button>
         </div>
-        <div>{text()}</div>
+        <div className="rating-text">{text()}</div>
       </div>
       <StoryButtonContainer>
         <Button
@@ -99,7 +99,7 @@ function RevealDialog(props: RevealDialogProps) {
           disabled={rating === undefined}
           onClick={onSaveRating}
           loading={ratingLoading}
-        >Send feedback</Button>
+        >Submit to Story</Button>
       </StoryButtonContainer>
     </div>;
   }
