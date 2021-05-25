@@ -144,6 +144,12 @@ export async function saveRevealHelper(
         });
         return { next: "reveal" };
     } else if (reveal && otherReveal === false) {
+        // this could be removed and just incorporated into the web app
+        await firestore.createNotifyRevealJob({
+            matchId: match.id,
+            notifyUserId: revealingUser.id,
+            mode: NotifyRevealMode.REVEAL_OTHER_NO,
+        });
         return { next: "reveal_other_no" };
     } else if (reveal && otherReveal === undefined) {
         return { next: "reveal_other_pending" };
