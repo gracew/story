@@ -1,3 +1,4 @@
+import { Transaction } from "@google-cloud/firestore";
 import * as admin from "firebase-admin";
 import moment = require("moment-timezone");
 
@@ -327,6 +328,10 @@ export class Firestore {
   // TODO: let's make this private to decouple callers from inner workings of firestore
   public updateMatch(id: string, update: Partial<IMatch>) {
     return admin.firestore().collection("matches").doc(id).update(update);
+  }
+
+  public updateMatchInTxn(txn: Transaction, id: string, update: Partial<IMatch>) {
+    return txn.update(admin.firestore().collection("matches").doc(id), update);
   }
 
   public createNotifyRevealJob(job: NotifyRevealJob) {

@@ -1,3 +1,4 @@
+import { Transaction } from "@google-cloud/firestore";
 import * as express from "express";
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
@@ -109,8 +110,17 @@ export async function callStudio(mode: string, match: IMatch, firestore: Firesto
     await Promise.all([userAPromise, userBPromise]);
 }
 
-export async function saveRevealHelper(revealingUser: IUser, match: IMatch, reveal: boolean, firestore: Firestore) {
-    await firestore.updateMatch(match.id, { [`revealed.${revealingUser.id}`]: reveal });
+export async function saveRevealHelper(
+    revealingUser: IUser,
+    match: IMatch,
+    reveal: boolean,
+    firestore: Firestore,
+    txn?: Transaction) {
+    if (txn) {
+        firestore.updateMatchInTxn(txn, match.id, { [`revealed.${revealingUser.id}`]: reveal });
+    } else {
+        await firestore.updateMatch(match.id, { [`revealed.${revealingUser.id}`]: reveal });
+    }
 
     let otherUserId;
     let otherReveal;

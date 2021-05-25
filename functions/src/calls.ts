@@ -4,13 +4,15 @@ import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import * as util from "util";
 import { Firestore, IMatch, IUser, NotifyRevealJob } from "./firestore";
-import { chatExpiration, flakeApology, flakeWarning, reminder, videoLink, videoReminder } from "./smsCopy";
+import { chatExpiration, flakeApology, flakeWarning, reminder, revealNoReply, videoLink, videoReminder } from "./smsCopy";
 import {
   callStudio,
   client,
   getConferenceTwimlForPhone,
   nextMatchNameAndDate,
   POST_CALL_FLOW_ID,
+
+  saveRevealHelper,
 
   sendSms,
   TWILIO_NUMBER,
@@ -344,6 +346,47 @@ export const revealRequestVideo = functions.pubsub
           txn.update(doc.ref, "interactions.revealRequested", true);
         })
       );
+    });
+  });
+
+/* Runs 15 minutes after the call ends to check for matches where oen or both users didn't reply. */
+export const handleRevealNoReply = functions.pubsub
+  .schedule("5,35 * * * *")
+  .onRun(async (context) => {
+    const createdAt = moment().utc().startOf("hour");
+    if (moment().minutes() < 30) {
+      createdAt.subtract(30, "minutes");
+    }
+    await admin.firestore().runTransaction(async (txn) => {
+      const matchRes = await txn.get(
+        admin
+          .firestore()
+          .collection("matches")
+          .where("created_at", "==", createdAt)
+          .where("interactions.revealRequested", "==", true)
+      );
+      const incompleteMatches = matchRes.docs.map(doc => doc.data() as IMatch).filter(m => Object.keys(m.revealed).length < 2);
+
+      // ok for this call to happen outside of the txn since we're not modifying the user objects
+      const firestore = new Firestore();
+      const usersById = await firestore.getUsersForMatches(incompleteMatches);
+
+      incompleteMatches.forEach(async m => {
+        const userA = usersById[m.user_a_id];
+        const userB = usersById[m.user_b_id];
+        if (m.revealed[m.user_a_id] === undefined) {
+          await Promise.all([
+            saveRevealHelper(userA, m, false, firestore, txn),
+            sendSms({ body: revealNoReply(userA, userB), phone: userA.phone })
+          ]);
+        }
+        if (m.revealed[m.user_b_id] === undefined) {
+          await Promise.all([
+            saveRevealHelper(userB, m, false, firestore, txn),
+            sendSms({ body: revealNoReply(userB, userA), phone: userB.phone }),
+          ]);
+        }
+      });
     });
   });
 
