@@ -11,7 +11,7 @@ function createUpcomingMatchView(match: IMatch, viewingUser: IUser, otherUser: I
   const minutesSinceMatch = moment().diff(match.created_at.toDate(), "minutes");
   const requestReveal = connected
     // the call ended < 15 min ago
-    && minutesSinceMatch > 0 && minutesSinceMatch < 35
+    && minutesSinceMatch >= 20 && minutesSinceMatch < 35
     // the user hasn't responded yet to the reveal request
     && match.revealed[viewingUser.id] === undefined;
   return {
