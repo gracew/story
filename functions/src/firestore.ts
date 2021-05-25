@@ -65,6 +65,7 @@ export interface IMatch {
   interactions: {
     notified?: boolean;
     reminded?: boolean;
+    remindedClose?: boolean;
     called?: boolean;
     recalled?: boolean;
     flakesHandled?: boolean;
@@ -201,6 +202,7 @@ export class Firestore {
       canceled: params.canceled || false,
       interactions: {
         notified: params.notified || false,
+        remindedClose: false,
         reminded: false,
         called: false,
         recalled: false,

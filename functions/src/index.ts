@@ -38,6 +38,7 @@ import {
   revealRequestVideo,
   saveReveal,
   sendReminderTextsOneHour,
+  sendReminderTextsTenMinutes,
   sendVideoLink,
   warnSmsChatExpiration,
 } from "./calls";
@@ -95,6 +96,7 @@ export {
   sendAvailabilityReminderPT,
   sendMatchNotificationTexts,
   sendReminderTextsOneHour,
+  sendReminderTextsTenMinutes,
   sendVideoLink,
   warnSmsChatExpiration,
 };

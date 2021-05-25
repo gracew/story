@@ -110,14 +110,18 @@ export const sendReminderTextsTenMinutes = functions.pubsub
           .collection("matches")
           .where("created_at", "==", createdAt)
           .where("mode", "==", "phone")
-          .where("interactions.remindedClose", "==", false)
+          // TODO: after 5/31/2021, we can include this in the query and remove the in-code check for this field
+          // .where("interactions.remindedClose", "==", false)
           .where("canceled", "==", false)
       );
       console.log(
         "found the following matches: " + matchSnaps.docs.map((doc) => doc.id)
       );
 
-      const matches = matchSnaps.docs.map((m) => m.data() as IMatch);
+      const matches = matchSnaps.docs
+        .map((m) => m.data() as IMatch)
+        // TODO: remove this in-code check along with the query check we're removing after 5/31/2021
+        .filter((match) => !match.interactions?.remindedClose);
       const usersById = await Firestore.getUsersForMatchesInTxn(txn, matches);
       console.log(
         "sending texts to the following users: " + Object.keys(usersById)
