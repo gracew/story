@@ -73,6 +73,8 @@ export interface IMatch {
     revealRequested?: boolean;
     // if both respond Y to the phone call, have we notified both users of the next step
     nextStepHandled?: boolean;
+    // if an SMS chat was created, did we send an expiration warning after 7 days
+    warnedSmsChatExpiration?: boolean;
   };
   mode?: "video" | "phone";
 
@@ -86,6 +88,10 @@ export interface IMatch {
   videoLink?: string;
   videoPasscode?: string;
   videoAvailability?: Record<string, any>;
+
+  // set if the users are connected in a text chat
+  twilioChatSid?: string;
+  twilioChatCreatedAt?: admin.firestore.Timestamp;
 }
 
 interface ISchedulingRecord {

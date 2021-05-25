@@ -77,13 +77,13 @@ Look at what ${
   } else {
     const match1 = matches[0];
     const matchUser1Id =
-      match1.user_a_id === userId ? match1.user_b_id : match1.user_a_id;
+        match1.user_a_id === userId ? match1.user_b_id : match1.user_a_id;
     const match1User = usersById[matchUser1Id];
     const match1Location = location(match1User);
 
     const match2 = matches[1];
     const matchUser2Id =
-      match2.user_a_id === userId ? match2.user_b_id : match2.user_a_id;
+        match2.user_a_id === userId ? match2.user_b_id : match2.user_a_id;
     const match2User = usersById[matchUser2Id];
     const match2Location = location(match2User);
     const formattedTime2 = formatTime(matches[1].created_at.toDate(), tz);
@@ -97,13 +97,36 @@ Look at what ${
 Here's how it works: you'll receive a phone call connecting you and that night's date for just 20 minutes. ${nextStepText}`,
       ];
     } else {
-      return [
-        `Hi ${user.firstName}, we have two matches for you! 💘 At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName}. At ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
+      const match1 = matches[0];
+      const matchUser1Id = match1.user_a_id === userId ? match1.user_b_id : match1.user_a_id;
+      const match1User = usersById[matchUser1Id];
+      const match1Location = location(match1User);
+
+      const match2 = matches[1];
+      const matchUser2Id = match2.user_a_id === userId ? match2.user_b_id : match2.user_a_id;
+      const match2User = usersById[matchUser2Id];
+      const match2Location = location(match2User);
+      const formattedTime2 = formatTime(matches[1].created_at.toDate(), tz);
+
+      const day1 = day(match1.created_at.toDate(), tz);
+      const day2 = day(match2.created_at.toDate(), tz);
+      if (match1Location !== match2Location) {
+        return [
+          `Hi ${user.firstName}, we have two matches for you! 💘 At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName}${match1Location}. At ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}${match2Location}.
+
+Here's how it works: you'll receive a phone call connecting you and that night's date for just 20 minutes. ${nextStepText}
+
+Read ${match1User.firstName} and ${match2User.firstName}'s intros now: https://storydating.com/m`
+        ];
+      } else {
+        return [
+          `Hi ${user.firstName}, we have two matches for you! 💘 At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName}. At ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
 
 Here's how it works: you'll receive a phone call connecting you and that night's date for just 20 minutes. ${nextStepText}
 
 Read ${match1User.firstName} and ${match2User.firstName}'s intros now: https://storydating.com/m`,
-      ];
+        ];
+      }
     }
   }
 }
