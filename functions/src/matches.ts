@@ -4,20 +4,12 @@ import { Firestore, IMatch, IUser } from "./firestore";
 const firestore = new Firestore();
 
 function createUpcomingMatchView(match: IMatch, viewingUser: IUser, otherUser: IUser) {
+  // the users connected successfully via twilio OR both users joined the video call
+  const connected = (match.twilioSid !== undefined || (match.mode === "video" && Object.keys((match.joined || {})).length === 2))
   const mode = match.mode || "phone";
-  let photo = undefined;
-  switch (mode) {
-    case "phone":
-      photo = undefined;
-      break;
-    case "video":
-      photo = otherUser.photo;
-      break;
-  }
+  const photo = (connected || mode === "video") ? otherUser.photo : undefined;
   const minutesSinceMatch = moment().diff(match.created_at.toDate(), "minutes");
-  const requestReveal =
-    // the users connected successfully via twilio OR both users joined the video call
-    (match.twilioSid !== undefined || (match.mode === "video" && Object.keys((match.joined || {})).length === 2))
+  const requestReveal = connected
     // the call ended < 15 min ago
     && minutesSinceMatch > 0 && minutesSinceMatch < 35
     // the user hasn't responded yet to the reveal request

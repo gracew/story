@@ -111,6 +111,15 @@ export default function Matches(): JSX.Element {
     });
   }
 
+  // if the match is in the future, allow rescheduling
+  const footer = moment(thisMatch.meetingTime).diff(moment()) > 0
+    ? <Button
+      className="match-reschedule"
+      loading={commonAvailabilityLoading}
+      onClick={onClickReschedule}
+    >Reschedule</Button>
+    : undefined;
+
   return (
     <div className="matches">
       {revealDialogMatch && <RevealDialog
@@ -123,11 +132,7 @@ export default function Matches(): JSX.Element {
           firstName={thisMatch.firstName}
           gender={thisMatch.gender}
           photoUrl={photoUrl}
-          footer={<Button
-            className="match-reschedule"
-            loading={commonAvailabilityLoading}
-            onClick={onClickReschedule}
-          >Reschedule</Button>}
+          footer={footer}
         >
           <div className="match-details">
             <div className="match-time">
