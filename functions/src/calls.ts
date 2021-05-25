@@ -97,7 +97,7 @@ export const sendReminderTextsTenMinutes = functions.pubsub
     const currentTime = moment().utc();
     // case 1, xx:50 minutes where call starts in 10 minutes:
     if (currentTime.minutes() >= 50) {
-      createdAt = moment().utc().startOf("hour").add(1, "hour");
+      createdAt = currentTime.startOf("hour").add(1, "hour");
     // case 2, xx:20 minutes where call starts in 10 minutes:
     } else {
       createdAt = moment().utc().startOf("hour").add(30, "minutes");
