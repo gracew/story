@@ -92,10 +92,17 @@ export const sendReminderTextsOneHour = functions.pubsub
 export const sendReminderTextsTenMinutes = functions.pubsub
   .schedule("50,20 * * * *")
   .onRun(async (context) => {
-    const createdAt = moment().utc().startOf("hour").add(1, "hour");
-    if (moment().minutes() >= 20) {
-      createdAt.add(30, "minutes");
+    let currentTime;
+    
+    const currentTime = moment().utc();
+    // case 1, xx:50 minutes where call starts in 10 minutes:
+    if (currentTime.minutes() >= 50) {
+      createdAt = moment().utc().startOf("hour").add(1, "hour");
+    // case 2, xx:20 minutes where call starts in 10 minutes:
+    } else {
+      createdAt = moment().utc().startOf("hour").add(30, "minutes");
     }
+    
     await admin.firestore().runTransaction(async (txn) => {
       const matchSnaps = await txn.get(
         admin
