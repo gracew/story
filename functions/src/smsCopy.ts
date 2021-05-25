@@ -152,7 +152,7 @@ export function videoLink(user: IUser, match: IMatch) {
   return `It's time for your video date! You can join the call in a few minutes at https://storydating.com/v/${match.videoId}/${aOrB}. In case you need it, the passcode is ${match.videoPasscode}. Have fun! 😄`;
 }
 
-export async function audioReminderOneHour(userA: IUser, userB: IUser) {
+export async function phoneReminderOneHour(userA: IUser, userB: IUser) {
   const week = moment().startOf("week").format("YYYY-MM-DD");
   const smsCopy = await admin.firestore().collection("smsCopy").doc(week).get();
   const reminderTexts = userA.photo
@@ -167,7 +167,7 @@ export async function audioReminderOneHour(userA: IUser, userB: IUser) {
     .join("\n\n")}`;
 }
 
-export async function audioReminderTenMinutes(userA: IUser, userB: IUser) {
+export async function phoneReminderTenMinutes(userA: IUser, userB: IUser) {
   return `10 minutes until your date with ${userB.firstName} ⏱️ Turn on your ringer so you don’t miss the call, and have fun!`;
 }
 

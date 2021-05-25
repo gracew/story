@@ -8,10 +8,10 @@ import {
   chatExpiration,
   flakeApology,
   flakeWarning,
-  audioReminderOneHour,
+  phoneReminderOneHour,
+  phoneReminderTenMinutes,
   videoLink,
   videoReminderOneHour,
-  audioReminderTenMinutes,
 } from "./smsCopy";
 import { Firestore, IMatch, IUser, NotifyRevealJob } from "./firestore";
 import {
@@ -69,7 +69,7 @@ export const sendReminderTextsOneHour = functions.pubsub
         const genCopy =
           match.mode === "video"
             ? promisify(videoReminderOneHour)
-            : audioReminderOneHour;
+            : phoneReminderOneHour;
         sendReminderPromises.push(sendReminderTextPairs(userA, userB, genCopy));
       });
 
@@ -92,17 +92,17 @@ export const sendReminderTextsOneHour = functions.pubsub
 export const sendReminderTextsTenMinutes = functions.pubsub
   .schedule("50,20 * * * *")
   .onRun(async (context) => {
-    let currentTime;
-    
+    let createdAt: moment.Moment;
+
     const currentTime = moment().utc();
     // case 1, xx:50 minutes where call starts in 10 minutes:
     if (currentTime.minutes() >= 50) {
       createdAt = currentTime.startOf("hour").add(1, "hour");
-    // case 2, xx:20 minutes where call starts in 10 minutes:
+      // case 2, xx:20 minutes where call starts in 10 minutes:
     } else {
       createdAt = moment().utc().startOf("hour").add(30, "minutes");
     }
-    
+
     await admin.firestore().runTransaction(async (txn) => {
       const matchSnaps = await txn.get(
         admin
@@ -132,7 +132,7 @@ export const sendReminderTextsTenMinutes = functions.pubsub
         const userA = usersById[match.user_a_id];
         const userB = usersById[match.user_b_id];
         sendReminderPromises.push(
-          sendReminderTextPairs(userA, userB, audioReminderTenMinutes)
+          sendReminderTextPairs(userA, userB, phoneReminderTenMinutes)
         );
       });
 
@@ -707,19 +707,27 @@ export const warnSmsChatExpiration = functions.pubsub
   .schedule("0 13 * * *")
   .onRun(async (context) => {
     const oneWeekAgo = moment().subtract(1, "week").toDate();
-    await admin.firestore().runTransaction(async txn => {
+    await admin.firestore().runTransaction(async (txn) => {
       const matches = await txn.get(
-        admin.firestore().collection("matches").where("twilioChatCreatedAt", "<=", oneWeekAgo));
-      matches.docs.forEach(async matchDoc => {
+        admin
+          .firestore()
+          .collection("matches")
+          .where("twilioChatCreatedAt", "<=", oneWeekAgo)
+      );
+      matches.docs.forEach(async (matchDoc) => {
         const match = matchDoc.data() as IMatch;
-        if (match.interactions.warnedSmsChatExpiration || !match.twilioChatSid) {
+        if (
+          match.interactions.warnedSmsChatExpiration ||
+          !match.twilioChatSid
+        ) {
           return;
         }
         client.proxy
           .services("KS58cecadd35af39c56a4cae81837a89f3")
           .sessions(match.twilioChatSid)
-          .participants
-          .each(p => p.messageInteractions().create({ body: chatExpiration }));
+          .participants.each((p) =>
+            p.messageInteractions().create({ body: chatExpiration })
+          );
         txn.update(matchDoc.ref, "interactions.warnedSmsChatExpiration", true);
       });
     });
@@ -729,11 +737,12 @@ export const warnSmsChatExpiration = functions.pubsub
 export const expireSmsChat = functions.pubsub
   .schedule("0 0 * * *")
   .onRun(async (context) => {
-    const matches = await admin.firestore()
+    const matches = await admin
+      .firestore()
       .collection("matches")
       .where("interactions.warnedSmsChatExpiration", "==", true)
       .get();
-    matches.docs.forEach(async matchDoc => {
+    matches.docs.forEach(async (matchDoc) => {
       const match = matchDoc.data() as IMatch;
       if (!match.twilioChatSid) {
         return;
