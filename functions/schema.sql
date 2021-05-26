@@ -24,10 +24,8 @@ CREATE TABLE match_meetings (
     id text NOT NULL,
     meeting_type text NOT NULL,
     meeting_time timestamp without time zone,
-    interactions jsonb,
-    meeting_metadata jsonb,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    user_a_id text NOT NULL,
+    user_b_id text NOT NULL
 );
 
 ALTER TABLE ONLY match_meetings ADD CONSTRAINT pk_match_meetings_id PRIMARY KEY (id);
@@ -68,7 +66,8 @@ CREATE TABLE users (
     status text,
     phone text,
     email text,
-    is_ethnicity_self_reported boolean
+    is_ethnicity_self_reported boolean,
+    photo text
 );
 ALTER TABLE ONLY users ADD CONSTRAINT pk_users_id PRIMARY KEY (id);
 

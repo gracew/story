@@ -79,6 +79,7 @@ function getArray(obj, ...path) {
             location: user.location,
             phone: user.phone,
             is_ethnicity_self_reported: true,
+            photo: user.photo,
         });
 
         /// prefs
@@ -108,6 +109,17 @@ function getArray(obj, ...path) {
             religion_profile: getArray(prefs, 'religion', 'value'),
             smoking_dealbreakers: getArray(prefs, 'smoking', 'dealbreakers'),
             smoking_profile: getArray(prefs, 'smoking', 'value'),
+        });
+    }
+
+    /// matches
+    for (const [matchId, match] of Object.entries(dump.matches)) {
+        await insert(client, "match_meetings", {
+            id: matchId,
+            meeting_type: match.mode || "phone",
+            meeting_time: new Date(match.created_at._seconds * 1000),
+            user_a_id: match.user_a_id,
+            user_b_id: match.user_b_id,
         });
     }
 
