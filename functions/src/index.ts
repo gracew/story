@@ -10,7 +10,7 @@ import {
   createMatch,
   createSmsChat,
   potentialMatches,
-  remainingMatches
+  remainingMatches,
 } from "./admin";
 import {
   cancelMatch,
@@ -24,7 +24,7 @@ import {
   savePreferences,
   saveRating,
   saveReveal,
-  saveVideoAvailability
+  saveVideoAvailability,
 } from "./app";
 import {
   addUserToCall,
@@ -39,9 +39,10 @@ import {
   notifyRevealJobs,
   revealRequest,
   revealRequestVideo,
-  sendReminderTexts,
+  sendReminderTextsOneHour,
+  sendReminderTextsTenMinutes,
   sendVideoLink,
-  warnSmsChatExpiration
+  warnSmsChatExpiration,
 } from "./calls";
 import {
   createMatches,
@@ -52,7 +53,7 @@ import {
   sendAvailabilityReminderMT,
   sendAvailabilityReminderPT,
   sendAvailabilityTexts,
-  sendMatchNotificationTexts
+  sendMatchNotificationTexts,
 } from "./csv";
 import { prompts } from "./smsCopy";
 import { client, sendSms, validateRequest } from "./twilio";
@@ -98,7 +99,8 @@ export {
   sendAvailabilityReminderMT,
   sendAvailabilityReminderPT,
   sendMatchNotificationTexts,
-  sendReminderTexts,
+  sendReminderTextsOneHour,
+  sendReminderTextsTenMinutes,
   sendVideoLink,
   warnSmsChatExpiration,
 };
@@ -190,8 +192,8 @@ export const smsStatusCallback = functions.https.onRequest(
     const fullName = userQuery.empty
       ? "Unknown user"
       : userQuery.docs[0].get("firstName") +
-      " " +
-      userQuery.docs[0].get("lastName");
+        " " +
+        userQuery.docs[0].get("lastName");
     const message = await client.messages(request.body.MessageSid).fetch();
 
     await fetch(functions.config().slack.webhook_url, {

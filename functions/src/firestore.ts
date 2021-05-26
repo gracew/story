@@ -12,7 +12,12 @@ export interface ICalendarDate {
 // type safety and clarity
 export type IPreOnboardedUser = Pick<
   IUser,
-  "id" | "phone" | "status" | "locationFlexibility" | "onboardingComplete" | "referrer"
+  | "id"
+  | "phone"
+  | "status"
+  | "locationFlexibility"
+  | "onboardingComplete"
+  | "referrer"
 >;
 
 export interface IUser {
@@ -62,6 +67,7 @@ export interface IMatch {
   interactions: {
     notified?: boolean;
     reminded?: boolean;
+    remindedClose?: boolean;
     called?: boolean;
     recalled?: boolean;
     flakesHandled?: boolean;
@@ -198,6 +204,7 @@ export class Firestore {
       canceled: params.canceled || false,
       interactions: {
         notified: params.notified || false,
+        remindedClose: false,
         reminded: false,
         called: false,
         recalled: false,
@@ -283,6 +290,28 @@ export class Firestore {
     );
   }
 
+  // mostly the same as getUsersForMatches except works inside of a transaction
+  public static async getUsersForMatchesInTxn(
+    txn: Transaction,
+    matches: IMatch[]
+  ): Promise<Record<string, IUser>> {
+    const userAIds = matches.map((m) => m.user_a_id);
+    const userBIds = matches.map((m) => m.user_b_id);
+    const userIds = userAIds.concat(userBIds);
+
+    if (userIds.length === 0) {
+      return {};
+    }
+    const users = await txn.getAll(
+      ...userIds.map((id) => admin.firestore().collection("users").doc(id))
+    );
+
+    return Object.assign(
+      {},
+      ...users.map((user) => ({ [user.id]: user.data() }))
+    );
+  }
+
   public async createSchedulingRecords(week: string, userIds: string[]) {
     const batch = admin.firestore().batch();
     const data = {
@@ -330,7 +359,11 @@ export class Firestore {
     return admin.firestore().collection("matches").doc(id).update(update);
   }
 
-  public updateMatchInTxn(txn: Transaction, id: string, update: Partial<IMatch>) {
+  public updateMatchInTxn(
+    txn: Transaction,
+    id: string,
+    update: Partial<IMatch>
+  ) {
     return txn.update(admin.firestore().collection("matches").doc(id), update);
   }
 
