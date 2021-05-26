@@ -231,8 +231,14 @@ export function cancelNotification(
   return `Hi ${cancelee.firstName}, unfortunately ${canceler.firstName} let us know they can no longer make ${formattedDay}'s date They (and we) are sorry about that 😔 ${nextCopy}`;
 }
 
-export function revealNoReply(userA: IUser, userB: IUser) {
-    return `Hi ${userA.firstName}, since we didn't hear from you we'll assume you're not interested in continuing to chat with ${userB.firstName}. No sweat, see ya next week! ️✌️`;
+export function revealNoReply(userA: IUser, userB: IUser, userANextMatch?: NextMatchNameDate) {
+  const nextCopy = userANextMatch
+  ? `No sweat, you're still scheduled to talk to ${userANextMatch.nextMatchName} on ${userANextMatch.nextMatchDate}!`
+  : `No sweat, see ya next week!
+
+As a woman-led startup, word of mouth is what has kept us growing. If you enjoy Story, tell your friends to try us too using this link: https://storydating.com/r?r=${userA.id}. This referral link lets us know not to match you with your friends 😉`;
+
+    return `Hi ${userA.firstName}, since we didn't hear from you we'll assume you're not interested in continuing to chat with ${userB.firstName}. ${nextCopy}`;
 }
 
 function formatTime(matchTime: string | Date, tz: string) {
