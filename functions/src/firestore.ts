@@ -249,8 +249,8 @@ export class Firestore {
     return match.empty ? undefined : (match.docs[0].data() as IMatch);
   }
 
-  // ordered by meeting time, ascended, where all matches have a meeting time after now.
-  public async upcomingMatchesForUser(userId: string): Promise<IMatch[]> {
+  // ordered by meeting time, ascended, where all matches have a meeting time after the start of the week
+  public async thisWeeksMatchesForUser(userId: string): Promise<IMatch[]> {
     const querySnapshot = await admin
       .firestore()
       .collection("matches")
@@ -264,7 +264,16 @@ export class Firestore {
   }
 
   public async nextMatchForUser(userId: string): Promise<IMatch | undefined> {
-    return (await this.upcomingMatchesForUser(userId))[0];
+    const querySnapshot = await admin
+      .firestore()
+      .collection("matches")
+      .where("user_ids", "array-contains", userId)
+      .where("canceled", "==", false)
+      // created_at is actually their meeting time, not the time the record was created
+      .where("created_at", ">=", new Date())
+      .orderBy("created_at", "asc")
+      .get();
+    return querySnapshot.docs.map((snap) => snap.data() as IMatch)[0];
   }
 
   public async getUsersForMatches(
