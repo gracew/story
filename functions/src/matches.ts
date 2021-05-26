@@ -27,7 +27,7 @@ function createUpcomingMatchView(match: IMatch, viewingUser: IUser, otherUser: I
 }
 
 export async function listUpcomingMatchViewsForUser(viewingUser: IUser) {
-  const matches = await firestore.upcomingMatchesForUser(viewingUser.id);
+  const matches = await firestore.thisWeeksMatchesForUser(viewingUser.id);
   const allUserById = await firestore.getUsersForMatches(matches);
   const upcomingMatches = [];
   for (const match of matches) {
