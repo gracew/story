@@ -32,6 +32,7 @@ import {
   call5MinWarning,
   conferenceStatusWebhook,
   handleFlakes,
+  handleRevealNoReply,
   issueCalls,
   issueRecalls,
   markJoined,
@@ -56,7 +57,7 @@ import {
   sendMatchNotificationTexts,
 } from "./csv";
 import { prompts } from "./smsCopy";
-import { client, sendSms, validateRequest } from "./twilio";
+import { client, sendSms } from "./twilio";
 import { saveAvailability } from "./typeform";
 
 admin.initializeApp();
@@ -75,6 +76,7 @@ export {
   potentialMatches,
   remainingMatches,
   handleFlakes,
+  handleRevealNoReply,
   getCommonAvailability,
   getPreferences,
   getPublicProfile,
@@ -124,7 +126,6 @@ export const bulkSms = functions.storage.object().onFinalize(async (object) => {
 
 export const markActive = functions.https.onRequest(
   async (request, response) => {
-    validateRequest("markActive", request);
     const phone = request.body.phone;
     const userQuery = await admin
       .firestore()
@@ -167,7 +168,6 @@ export const backupFirestore = functions.pubsub
 
 export const notifyIncomingText = functions.https.onRequest(
   async (request, response) => {
-    validateRequest("notifyIncomingText", request);
     const phone = request.body.phone;
     const message = await client.messages(request.body.message).fetch();
     await notifyIncomingTextHelper(phone, message.body);
@@ -177,7 +177,6 @@ export const notifyIncomingText = functions.https.onRequest(
 
 export const smsStatusCallback = functions.https.onRequest(
   async (request, response) => {
-    validateRequest("smsStatusCallback", request);
     const status = request.body.MessageStatus;
     if (status !== "undelivered" && status !== "failed") {
       response.end();

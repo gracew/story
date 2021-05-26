@@ -1,9 +1,10 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
+import { isEmpty } from "lodash";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import * as util from "util";
-import { isEmpty } from "lodash";
+import { Firestore, IMatch, IUser, NotifyRevealJob } from "./firestore";
 import {
   chatExpiration,
   flakeApology,
@@ -12,9 +13,8 @@ import {
   phoneReminderTenMinutes,
   revealNoReply,
   videoLink,
-  videoReminderOneHour,
+  videoReminderOneHour
 } from "./smsCopy";
-import { Firestore, IMatch, IUser, NotifyRevealJob } from "./firestore";
 import {
   callStudio,
   client,
@@ -23,8 +23,7 @@ import {
   POST_CALL_FLOW_ID,
   saveRevealHelper,
   sendSms,
-  TWILIO_NUMBER,
-  validateRequest,
+  TWILIO_NUMBER
 } from "./twilio";
 
 /**
@@ -592,7 +591,6 @@ export async function callUserHelper(userId: string) {
 /** Called directly for incoming calls. Also called for outbound calls after the user has passed the call screen. */
 export const addUserToCall = functions.https.onRequest(
   async (request, response) => {
-    validateRequest("addUserToCall", request);
     const callerPhone =
       request.body.Direction === "inbound"
         ? request.body.From
@@ -605,7 +603,6 @@ export const addUserToCall = functions.https.onRequest(
 
 export const conferenceStatusWebhook = functions.https.onRequest(
   async (request, response) => {
-    validateRequest("conferenceStatusWebhook", request);
     if (request.body.StatusCallbackEvent === "participant-join") {
       const conferenceSid = request.body.ConferenceSid;
       const participants = await client

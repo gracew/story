@@ -105,8 +105,8 @@ export async function callStudio(
           userA.photo && userB.photo
             ? "both_photo"
             : !userA.photo
-            ? "self_no_photo"
-            : "other_no_photo",
+              ? "self_no_photo"
+              : "other_no_photo",
         userId: userAId,
         matchId: match.id,
         firstName: userA.firstName,
@@ -135,8 +135,8 @@ export async function callStudio(
           userA.photo && userB.photo
             ? "both_photo"
             : !userB.photo
-            ? "self_no_photo"
-            : "other_no_photo",
+              ? "self_no_photo"
+              : "other_no_photo",
         userId: userBId,
         matchId: match.id,
         firstName: userB.firstName,
@@ -184,20 +184,26 @@ export async function saveRevealHelper(
   }
 
   if (!otherUserId) {
-    console.error(
-      new Error("Requested match doesn't have the requested users")
-    );
+    console.error(new Error("Requested match doesn't have the requested users"));
     return {};
   }
   if (reveal && otherReveal) {
-    await firestore.createNotifyRevealJob({
-      matchId: match.id,
-      notifyUserId: otherUserId,
-      mode: NotifyRevealMode.REVEAL,
-    });
+    await Promise.all([
+      // TODO: remove this and incorporate into the web app reveal flow
+      firestore.createNotifyRevealJob({
+        matchId: match.id,
+        notifyUserId: revealingUser.id,
+        mode: NotifyRevealMode.REVEAL,
+      }),
+      firestore.createNotifyRevealJob({
+        matchId: match.id,
+        notifyUserId: otherUserId,
+        mode: NotifyRevealMode.REVEAL,
+      }),
+    ]);
     return { next: "reveal" };
   } else if (reveal && otherReveal === false) {
-    // this could be removed and just incorporated into the web app
+    // TODO: remove this and incorporate into the web app reveal flow
     await firestore.createNotifyRevealJob({
       matchId: match.id,
       notifyUserId: revealingUser.id,
@@ -216,11 +222,7 @@ export async function saveRevealHelper(
     }
     return { next: "no_reveal" };
   }
-  console.error(
-    new Error(
-      `unexpected combination for match ${match.id}, user ${revealingUser.id}, reveal ${reveal}, otherReveal ${otherReveal}`
-    )
-  );
+  console.error(new Error(`unexpected combination for match ${match.id}, user ${revealingUser.id}, reveal ${reveal}, otherReveal ${otherReveal}`))
   return {};
 }
 
