@@ -9,6 +9,16 @@ import StoryButtonContainer from "./components/StoryButtonContainer";
 import StoryFilledInput from "./components/StoryFilledInput";
 import "./Login.css";
 
+function formatPhone(phone: string) {
+  if (phone.startsWith("+")) {
+    return phone;
+  }
+  if (phone.length === 10) {
+    return "+1" + phone;
+  }
+  return phone;
+}
+
 function Login() {
   const history = useHistory();
   const location = useLocation();
@@ -17,7 +27,7 @@ function Login() {
   const urlParams = new URLSearchParams(window.location.search);
 
   // save user input
-  const [phone, setPhone] = useState(urlParams.get("phone") || "");
+  const [phone, setPhone] = useState(formatPhone(urlParams.get("phone") || ""));
   const [code, setCode] = useState("");
 
   // used internally
