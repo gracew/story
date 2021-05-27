@@ -10,7 +10,7 @@ import StoryFilledInput from "./components/StoryFilledInput";
 import "./Login.css";
 
 function formatPhone(phone: string) {
-  if (phone.startsWith("+1")) {
+  if (phone.startsWith("+")) {
     return phone;
   }
   if (phone.length === 10) {
