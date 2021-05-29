@@ -132,6 +132,7 @@ export default function Matches(): JSX.Element {
     <div className="matches">
       {revealDialogMatch && <RevealDialog
         matchId={revealDialogMatch.id}
+        matchMode={revealDialogMatch.mode}
         matchName={revealDialogMatch.firstName}
         closeDialog={() => setRevealDialogMatch(undefined)}
       />}
