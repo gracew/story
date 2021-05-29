@@ -12,6 +12,7 @@ enum RevealDialogStep {
 
 interface RevealDialogProps {
   matchId: string;
+  matchMode: string;
   matchName: string;
   closeDialog: () => void;
 }
@@ -100,7 +101,8 @@ function RevealDialog(props: RevealDialogProps) {
 
   return <div className="reveal-dialog">
     <p>Thanks! We're learning your type and will use your feedback to help pick your future matches.</p>
-    {reveal && <p>We’ll text you about scheduling if {props.matchName} is also interested in video chatting.</p>}
+    {reveal && props.matchMode === "phone" && <p>We’ll text you about scheduling if {props.matchName} is also interested in video chatting.</p>}
+    {reveal && props.matchMode === "video" && <p>We’ll text you {props.matchName}'s phone number in the case of mutual interest.</p>}
       <StoryButtonContainer>
       <Button href="https://calendly.com/gracew_/match-prefs" target="_blank">Learn more</Button>
       <Button type="primary" onClick={props.closeDialog}>Got it</Button>
