@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Play>https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_first_arrival_grace.mp3?alt=media</Play>
+  <Redirect method="GET">http://twimlets.com/holdmusic?Bucket=com.twilio.music.guitars</Redirect>
+</Response>

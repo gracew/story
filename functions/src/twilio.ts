@@ -61,7 +61,8 @@ export async function getConferenceTwimlForPhone(phone: string) {
       // @ts-ignore
       jitterBufferSize: functions.config().twilio.jitter_buffer_size,
       participantLabel: userId,
-      waitUrl: "http://twimlets.com/holdmusic?Bucket=com.twilio.music.guitars",
+      waitUrl: "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2FconferenceWait.xml?alt=media",
+      waitMethod: "GET",
       statusCallbackEvent: ["join", "end"],
       statusCallback: BASE_URL + "conferenceStatusWebhook",
       muted: true,
