@@ -1,4 +1,4 @@
-import { LeftOutlined, PhoneOutlined, RightOutlined, VideoCameraOutlined } from "@ant-design/icons";
+import { LeftOutlined, PhoneOutlined, QuestionOutlined, RightOutlined, VideoCameraOutlined } from "@ant-design/icons";
 import { Button, Modal } from "antd";
 import firebase from "firebase";
 import moment from "moment";
@@ -120,7 +120,8 @@ export default function Matches(): JSX.Element {
   }
 
   // if the match is in the future, allow rescheduling
-  const footer = moment(thisMatch.meetingTime).diff(moment()) > 0
+  const futureMatch = moment(thisMatch.meetingTime).diff(moment()) > 0
+  const footer = futureMatch
     ? <Button
       className="match-reschedule"
       loading={commonAvailabilityLoading}
@@ -128,6 +129,9 @@ export default function Matches(): JSX.Element {
     >Reschedule</Button>
     : undefined;
 
+  // if a phone match hasn't happened, use a question mark for intrigue rather than the user icon, which elsewhere 
+  // indicates a missing photo
+  const noPhotoIcon = thisMatch.mode === "phone" && futureMatch ? <QuestionOutlined /> : undefined;
   return (
     <div className="matches">
       {revealDialogMatch && <RevealDialog
@@ -142,6 +146,7 @@ export default function Matches(): JSX.Element {
           gender={thisMatch.gender}
           photoUrl={photoUrl}
           footer={footer}
+          noPhotoIcon={noPhotoIcon}
         >
           <div className="match-details">
             <div className="match-time">
