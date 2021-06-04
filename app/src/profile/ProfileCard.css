@@ -37,6 +37,7 @@
 }
 
 .profile-photo-placeholder {
+  display: flex;
   font-size: 40px;
 }
 
