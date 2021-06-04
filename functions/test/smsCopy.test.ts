@@ -92,17 +92,6 @@ it("matchNotification for two matches - same location", async () => {
     expect(res[0]).toContain(expectedTwoMatchesSameLocation);
 });
 
-it("matchNotification for two matches - others not flexible", async () => {
-    const user1 = user("Anna", { location: "New York City", locationFlexibility: true });
-    const user2 = user("Grace", { location: "New York City", locationFlexibility: false });
-    const user3 = user("Rachael", { location: "New York City", locationFlexibility: false });
-    const matchUser2 = match(userId1, userId2, "2020-09-23T20:00:00-07:00");
-    const matchUser3 = match(userId1, userId3, "2020-09-24T20:00:00-07:00");
-    const res = matchNotification(userId1, [matchUser2, matchUser3], { [userId1]: user1, [userId2]: user2, [userId3]: user3 })
-    expect(res).toHaveLength(1);
-    expect(res[0]).toContain(expectedTwoMatchesSameLocation);
-});
-
 it("matchNotification for two matches - diff location", async () => {
     const user1 = user("Anna", { location: "location", locationFlexibility: true });
     const user2 = user("Grace", { location: "New York City", locationFlexibility: true });
@@ -124,6 +113,28 @@ it("matchNotification for two matches, different times", async () => {
     expect(res).toHaveLength(1);
     expect(res[0]).toContain("At 8:00pm PDT Wednesday you'll be chatting with Grace. At 8:30pm PDT Thursday you'll be chatting with Rachael.")
 });
+
+it("matchNotification for 3 matches", async () => {
+    const user1 = user("Grace");
+    const user2 = user("Sandra", { location: "Seattle" });
+    const user3 = user("Sumeet");
+    const user4 = user("Bing", { location: "Washington, DC" });
+    const m1 = match(user1.id, user2.id, "2021-06-03T20:00:00-07:00");
+    const m2 = match(user1.id, user3.id, "2021-06-04T20:00:00-07:00");
+    const m3 = match(user1.id, user4.id, "2021-06-04T21:00:00-07:00");
+    const res = matchNotification(user1.id, [m1, m2, m3], { [user1.id]: user1, [user2.id]: user2, [user3.id]: user3, [user4.id]: user4 })
+    expect(res).toHaveLength(1);
+    expect(res[0]).toEqual(`Hi Grace, we have 3 matches for you this week! 💘
+
+1. Thu 8:00pm PDT: Sandra from Seattle
+2. Fri 8:00pm PDT: Sumeet from the San Francisco Bay Area
+3. Fri 9:00pm PDT: Bing from Washington, DC
+
+Here's how it works: you'll receive a phone call connecting you and that night's date for just 20 minutes. If you miss the call, you can call us back. Afterwards, we'll ask if you want to connect again over video at another time this week.
+
+Read their intros now: https://storydating.com/m`)
+});
+
 
 it("videoMatchNotification", async () => {
     const user1 = user("Sandra", { timezone: "MT" });
