@@ -18,7 +18,7 @@ export function validateRequest(endpoint: string, request: express.Request) {
   // If the Content-Type is application-json, don't use the JSON body to fill in the validator's param for POST
   // parameters. The query parameter bodySHA256 will be included in the request.
   // https://www.twilio.com/docs/usage/security#notes
-  const bodyQuery = request.is("application/json") ? "?bodySHA256" + request.query.bodySHA256 : "";
+  const bodyQuery = request.is("application/json") ? "?bodySHA256=" + request.query.bodySHA256 : "";
   if (
     !twilio.validateExpressRequest(request, authToken, {
       url: BASE_URL + endpoint + bodyQuery,
