@@ -23,7 +23,8 @@ import {
   POST_CALL_FLOW_ID,
   saveRevealHelper,
   sendSms,
-  TWILIO_NUMBER
+  TWILIO_NUMBER,
+  validateRequest
 } from "./twilio";
 
 /**
