@@ -68,11 +68,10 @@ export function matchNotification(
         tz
       )} you'll be chatting with ${matchUser.firstName}${location(matchUser)}.
 Here's how it works: at the time of your date, you'll receive a phone call connecting the two of you for just 20 minutes. ${nextStepText}
-Look at what ${
-        matchUser.firstName
-      } wrote about themselves for you 💌 https://storydating.com/m`,
+Look at what ${matchUser.firstName
+      } wrote about themself for you 💌 https://storydating.com/m`,
     ];
-  } else {
+  } else if (matches.length === 2) {
     const match1 = matches[0];
     const matchUser1Id =
       match1.user_a_id === userId ? match1.user_b_id : match1.user_a_id;
@@ -101,6 +100,21 @@ Here's how it works: you'll receive a phone call connecting you and that night's
 Read ${match1User.firstName} and ${match2User.firstName}'s intros now: https://storydating.com/m`,
       ];
     }
+  } else {
+    // 3+ matches
+    let s = `Hi ${user.firstName}, we have ${matches.length} matches for you this week! 💘
+
+`;
+    matches.forEach((m, i) => {
+      const matchUserId = m.user_a_id === userId ? m.user_b_id : m.user_a_id;
+      const matchUser = usersById[matchUserId];
+      s = s + `${i + 1}. ${shortDay(m.created_at.toDate(), tz)} ${formatTime(m.created_at.toDate(), tz)}: ${matchUser.firstName}${location(matchUser)}\n`
+    });
+    return [s + `
+Here's how it works: you'll receive a phone call connecting you and that night's date for just 20 minutes. ${nextStepText}
+
+Read their intros now: https://storydating.com/m`
+    ];
   }
 }
 
@@ -110,12 +124,11 @@ export function videoMatchNotification(
   matchTime: string
 ) {
   const tz = timezone(userA);
-  return `Hi ${userA.firstName}, you'll be speaking again with ${
-    userB.firstName
-  } over video at ${formatTime(matchTime, tz)} on ${day(
-    matchTime,
-    tz
-  )}. We'll send you a reminder and video link earlier that day!`;
+  return `Hi ${userA.firstName}, you'll be speaking again with ${userB.firstName
+    } over video at ${formatTime(matchTime, tz)} on ${day(
+      matchTime,
+      tz
+    )}. We'll send you a reminder and video link earlier that day!`;
 }
 
 export function videoFallbackSwapNumbers(userA: IUser, userB: IUser) {
@@ -204,12 +217,11 @@ export function rescheduleNotification(
 ) {
   const tz = timezone(userA);
   const newDay = tonightOrDay(newTime, tz, getTimestamp);
-  return `Hey ${userA.firstName}, ${
-    userB.firstName
-  } had a conflict at the scheduled time. Good news tho, you're both available at ${formatTime(
-    newTime,
-    tz
-  )} ${newDay}, so we've rescheduled your call for then! If that time no longer works for you, go to https://storydating.com/m to modify. Enjoy the call!`;
+  return `Hey ${userA.firstName}, ${userB.firstName
+    } had a conflict at the scheduled time. Good news tho, you're both available at ${formatTime(
+      newTime,
+      tz
+    )} ${newDay}, so we've rescheduled your call for then! If that time no longer works for you, go to https://storydating.com/m to modify. Enjoy the call!`;
 }
 
 export function cancelNotification(
@@ -243,6 +255,10 @@ As a woman-led startup, word of mouth is what has kept us growing. If you enjoy 
 
 function formatTime(matchTime: string | Date, tz: string) {
   return moment(matchTime).tz(tz).format("h:mma z");
+}
+
+function shortDay(matchTime: string | Date, tz: string) {
+  return moment(matchTime).tz(tz).format("ddd");
 }
 
 function day(matchTime: string | Date, tz: string) {

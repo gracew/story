@@ -12,6 +12,7 @@ enum RevealDialogStep {
 
 interface RevealDialogProps {
   matchId: string;
+  matchMode: string;
   matchName: string;
   closeDialog: () => void;
 }
@@ -27,7 +28,7 @@ function RevealDialog(props: RevealDialogProps) {
   async function onSaveReveal(value: boolean) {
     setReveal(value);
     setRevealLoading(true);
-    await saveReveal({ matchId: props.matchId, reveal: value});
+    await saveReveal({ matchId: props.matchId, reveal: value });
     setRevealLoading(false);
     setStep(RevealDialogStep.RATING);
   }
@@ -56,8 +57,9 @@ function RevealDialog(props: RevealDialogProps) {
 
   if (step === RevealDialogStep.REVEAL) {
     return <div className="reveal-dialog">
-      Thanks for chatting with {props.matchName}! Would you like to have a second date over video?
-    <StoryButtonContainer>
+      {props.matchMode === "phone" && <div>Thanks for chatting with {props.matchName}! Would you like to have a second date over video?</div>}
+      {props.matchMode === "video" && <div>Thanks for chatting with {props.matchName}! Would you like to get their phone number and share yours? Your number won't be shared unless there's mutual interest.</div>}
+      <StoryButtonContainer>
         <Button onClick={() => onSaveReveal(false)} loading={reveal === false && revealLoading}>No thanks</Button>
         <Button onClick={() => onSaveReveal(true)} loading={reveal === true && revealLoading} type="primary">I'm in</Button>
       </StoryButtonContainer>
@@ -100,8 +102,9 @@ function RevealDialog(props: RevealDialogProps) {
 
   return <div className="reveal-dialog">
     <p>Thanks! We're learning your type and will use your feedback to help pick your future matches.</p>
-    {reveal && <p>We’ll text you about scheduling if {props.matchName} is also interested in video chatting.</p>}
-      <StoryButtonContainer>
+    {reveal && props.matchMode === "phone" && <p>We’ll text you about scheduling if {props.matchName} is also interested in video chatting.</p>}
+    {reveal && props.matchMode === "video" && <p>We’ll text you {props.matchName}'s phone number in the case of mutual interest.</p>}
+    <StoryButtonContainer>
       <Button href="https://calendly.com/gracew_/match-prefs" target="_blank">Learn more</Button>
       <Button type="primary" onClick={props.closeDialog}>Got it</Button>
     </StoryButtonContainer>

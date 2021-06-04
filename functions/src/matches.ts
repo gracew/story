@@ -9,9 +9,12 @@ function createUpcomingMatchView(match: IMatch, viewingUser: IUser, otherUser: I
   const mode = match.mode || "phone";
   const photo = (connected || mode === "video") ? otherUser.photo : undefined;
   const minutesSinceMatch = moment().diff(match.created_at.toDate(), "minutes");
-  const requestReveal = connected
-    // the call ended < 15 min ago
-    && minutesSinceMatch >= 20 && minutesSinceMatch < 35
+  const inRevealWindow = 
+    // if a phone call, it ended < 15 min ago
+    (mode === "phone" && minutesSinceMatch >= 20 && minutesSinceMatch < 35)
+    // if a video call, it ended < 1 hour ago
+    || (mode === "video" && minutesSinceMatch >= 60 && minutesSinceMatch < 120);
+  const requestReveal = connected && inRevealWindow
     // the user hasn't responded yet to the reveal request
     && match.revealed[viewingUser.id] === undefined;
   return {
