@@ -5,16 +5,15 @@
     justify-content: space-between;
 }
 
-.menu-button {
-    margin: 0 5px;
+.story-header .ant-menu {
+  background: transparent;
 }
 
-.menu-button span {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.story-header-menu-item {
+  margin: 0 10px !important;
+  height: 36px; 
 }
 
-.menu-button span svg {
+.story-header-menu-item span svg {
     font-size: 24px;
 }
