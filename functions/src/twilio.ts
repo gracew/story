@@ -21,7 +21,7 @@ export function validateRequest(endpoint: string, request: express.Request) {
   const bodyQuery = request.is("application/json") ? "?bodySHA256" + request.query.bodySHA256 : "";
   if (
     !twilio.validateExpressRequest(request, authToken, {
-      url: BASE_URL + endpoint + bodyQuery;
+      url: BASE_URL + endpoint + bodyQuery,
     })
   ) {
     throw new functions.https.HttpsError(

@@ -10,7 +10,7 @@ import {
   createMatch,
   createSmsChat,
   potentialMatches,
-  remainingMatches,
+  remainingMatches
 } from "./admin";
 import {
   cancelMatch,
@@ -24,7 +24,7 @@ import {
   savePreferences,
   saveRating,
   saveReveal,
-  saveVideoAvailability,
+  saveVideoAvailability
 } from "./app";
 import {
   addUserToCall,
@@ -43,7 +43,7 @@ import {
   sendReminderTextsOneHour,
   sendReminderTextsTenMinutes,
   sendVideoLink,
-  warnSmsChatExpiration,
+  warnSmsChatExpiration
 } from "./calls";
 import {
   createMatches,
@@ -54,10 +54,10 @@ import {
   sendAvailabilityReminderMT,
   sendAvailabilityReminderPT,
   sendAvailabilityTexts,
-  sendMatchNotificationTexts,
+  sendMatchNotificationTexts
 } from "./csv";
 import { prompts } from "./smsCopy";
-import { client, sendSms } from "./twilio";
+import { client, sendSms, validateRequest } from "./twilio";
 import { saveAvailability } from "./typeform";
 
 admin.initializeApp();
