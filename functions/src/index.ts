@@ -10,7 +10,7 @@ import {
   createMatch,
   createSmsChat,
   potentialMatches,
-  remainingMatches,
+  remainingMatches
 } from "./admin";
 import {
   cancelMatch,
@@ -24,7 +24,7 @@ import {
   savePreferences,
   saveRating,
   saveReveal,
-  saveVideoAvailability,
+  saveVideoAvailability
 } from "./app";
 import {
   addUserToCall,
@@ -32,6 +32,7 @@ import {
   call5MinWarning,
   conferenceStatusWebhook,
   handleFlakes,
+  handleRevealNoReply,
   issueCalls,
   issueRecalls,
   markJoined,
@@ -42,7 +43,7 @@ import {
   sendReminderTextsOneHour,
   sendReminderTextsTenMinutes,
   sendVideoLink,
-  warnSmsChatExpiration,
+  warnSmsChatExpiration
 } from "./calls";
 import {
   createMatches,
@@ -53,7 +54,7 @@ import {
   sendAvailabilityReminderMT,
   sendAvailabilityReminderPT,
   sendAvailabilityTexts,
-  sendMatchNotificationTexts,
+  sendMatchNotificationTexts
 } from "./csv";
 import { prompts } from "./smsCopy";
 import { client, sendSms, validateRequest } from "./twilio";
@@ -75,6 +76,7 @@ export {
   potentialMatches,
   remainingMatches,
   handleFlakes,
+  handleRevealNoReply,
   getCommonAvailability,
   getPreferences,
   getPublicProfile,

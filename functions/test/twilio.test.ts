@@ -142,7 +142,12 @@ it("saveReveal Y, other Y next match", async () => {
     expect(res).toEqual({ next: "reveal" });
     expect(firestore.updateMatch).toHaveBeenCalledTimes(1);
     expect(firestore.updateMatch).toHaveBeenCalledWith(m1.id, { [`revealed.${user1.id}`]: true });
-    expect(firestore.createNotifyRevealJob).toHaveBeenCalledTimes(1);
+    expect(firestore.createNotifyRevealJob).toHaveBeenCalledTimes(2);
+    expect(firestore.createNotifyRevealJob).toHaveBeenCalledWith({ 
+        matchId: m1.id, 
+        notifyUserId: user1.id, 
+        mode: NotifyRevealMode.REVEAL,
+    });
     expect(firestore.createNotifyRevealJob).toHaveBeenCalledWith({ 
         matchId: m1.id, 
         notifyUserId: user2.id, 

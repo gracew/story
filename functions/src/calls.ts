@@ -1,9 +1,10 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
+import { isEmpty } from "lodash";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import * as util from "util";
-import { isEmpty } from "lodash";
+import { Firestore, IMatch, IUser, NotifyRevealJob } from "./firestore";
 import {
   chatExpiration,
   flakeApology,
@@ -12,9 +13,8 @@ import {
   phoneReminderTenMinutes,
   revealNoReply,
   videoLink,
-  videoReminderOneHour,
+  videoReminderOneHour
 } from "./smsCopy";
-import { Firestore, IMatch, IUser, NotifyRevealJob } from "./firestore";
 import {
   callStudio,
   client,
@@ -24,7 +24,7 @@ import {
   saveRevealHelper,
   sendSms,
   TWILIO_NUMBER,
-  validateRequest,
+  validateRequest
 } from "./twilio";
 
 /**
@@ -474,15 +474,19 @@ export const handleRevealNoReply = functions.pubsub
           const userA = usersById[m.user_a_id];
           const userB = usersById[m.user_b_id];
           if (m.revealed[m.user_a_id] === undefined) {
+            const nextMatch = await firestore.nextMatchForUser(m.user_a_id);
+            const nextMatchMeta = await nextMatchNameAndDate(m.user_a_id, firestore, nextMatch);
             await Promise.all([
               saveRevealHelper(userA, m, false, firestore, txn),
-              sendSms({ body: revealNoReply(userA, userB), to: userA.phone }),
+              sendSms({ body: revealNoReply(userA, userB, nextMatchMeta), to: userA.phone }),
             ]);
           }
           if (m.revealed[m.user_b_id] === undefined) {
+            const nextMatch = await firestore.nextMatchForUser(m.user_b_id);
+            const nextMatchMeta = await nextMatchNameAndDate(m.user_b_id, firestore, nextMatch);
             await Promise.all([
               saveRevealHelper(userB, m, false, firestore, txn),
-              sendSms({ body: revealNoReply(userB, userA), to: userB.phone }),
+              sendSms({ body: revealNoReply(userB, userA, nextMatchMeta), to: userB.phone }),
             ]);
           }
         })
@@ -803,8 +807,8 @@ export async function notifyIncomingTextHelper(phone: string, message: string) {
   const fullName = userQuery.empty
     ? "Unknown user"
     : userQuery.docs[0].get("firstName") +
-      " " +
-      userQuery.docs[0].get("lastName");
+    " " +
+    userQuery.docs[0].get("lastName");
   return fetch(functions.config().slack.webhook_url, {
     method: "post",
     body: JSON.stringify({
