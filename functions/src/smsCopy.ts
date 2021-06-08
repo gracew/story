@@ -67,7 +67,9 @@ export function matchNotification(
         match.created_at.toDate(),
         tz
       )} you'll be chatting with ${matchUser.firstName}${location(matchUser)}.
+
 Here's how it works: at the time of your date, you'll receive a phone call connecting the two of you for just 20 minutes. ${nextStepText}
+
 Look at what ${matchUser.firstName
       } wrote about themself for you 💌 https://storydating.com/m`,
     ];
@@ -90,13 +92,17 @@ Look at what ${matchUser.firstName
     if (match1Location !== match2Location) {
       return [
         `Hi ${user.firstName}, we have two matches for you! 💘 At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName}${match1Location}. At ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}${match2Location}.
+
 Here's how it works: you'll receive a phone call connecting you and that night's date for just 20 minutes. ${nextStepText}
+
 Read ${match1User.firstName} and ${match2User.firstName}'s intros now: https://storydating.com/m`,
       ];
     } else {
       return [
         `Hi ${user.firstName}, we have two matches for you! 💘 At ${formattedTime} ${day1} you'll be chatting with ${match1User.firstName}. At ${formattedTime2} ${day2} you'll be chatting with ${match2User.firstName}. They are both${match1Location}.
+  
 Here's how it works: you'll receive a phone call connecting you and that night's date for just 20 minutes. ${nextStepText}
+
 Read ${match1User.firstName} and ${match2User.firstName}'s intros now: https://storydating.com/m`,
       ];
     }
