@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import { isEmpty } from "lodash";
+import { isEmpty, partition } from "lodash";
 import * as moment from "moment-timezone";
 import fetch from "node-fetch";
 import * as util from "util";
@@ -13,19 +13,23 @@ import {
   phoneReminderTenMinutes,
   revealNoReply,
   videoLink,
-  videoReminderOneHour
+  videoReminderOneHour,
 } from "./smsCopy";
 import {
   callStudio,
-  client,
+  client as twilioClient,
   getConferenceTwimlForPhone,
   nextMatchNameAndDate,
   POST_CALL_FLOW_ID,
   saveRevealHelper,
   sendSms,
   TWILIO_NUMBER,
-  validateRequest
+  validateRequest,
 } from "./twilio";
+
+const VOICE_FROM_NUMBER = "+12036338466";
+// TODO: this is wrong
+const GRACE_PHONE_NUMBER = "+19375551212";
 
 /**
  * Sends reminder texts to either phone or video matches happening in the next hour (phone or video matches only happen
@@ -403,7 +407,9 @@ export const revealRequest = functions.pubsub
       );
       await Promise.all(
         connectedMatches.map(async (doc) => {
-          await playCallOutro(doc.data() as IMatch, doc.get("twilioSid"));
+          const match = doc.data() as IMatch;
+          await playCallOutroAndEndConference(match);
+          await triggerEndOfCallTexts(match);
           txn.update(doc.ref, "interactions.revealRequested", true);
         })
       );
@@ -475,18 +481,32 @@ export const handleRevealNoReply = functions.pubsub
           const userB = usersById[m.user_b_id];
           if (m.revealed[m.user_a_id] === undefined) {
             const nextMatch = await firestore.nextMatchForUser(m.user_a_id);
-            const nextMatchMeta = await nextMatchNameAndDate(m.user_a_id, firestore, nextMatch);
+            const nextMatchMeta = await nextMatchNameAndDate(
+              m.user_a_id,
+              firestore,
+              nextMatch
+            );
             await Promise.all([
               saveRevealHelper(userA, m, false, firestore, txn),
-              sendSms({ body: revealNoReply(userA, userB, nextMatchMeta), to: userA.phone }),
+              sendSms({
+                body: revealNoReply(userA, userB, nextMatchMeta),
+                to: userA.phone,
+              }),
             ]);
           }
           if (m.revealed[m.user_b_id] === undefined) {
             const nextMatch = await firestore.nextMatchForUser(m.user_b_id);
-            const nextMatchMeta = await nextMatchNameAndDate(m.user_b_id, firestore, nextMatch);
+            const nextMatchMeta = await nextMatchNameAndDate(
+              m.user_b_id,
+              firestore,
+              nextMatch
+            );
             await Promise.all([
               saveRevealHelper(userB, m, false, firestore, txn),
-              sendSms({ body: revealNoReply(userB, userA, nextMatchMeta), to: userB.phone }),
+              sendSms({
+                body: revealNoReply(userB, userA, nextMatchMeta),
+                to: userB.phone,
+              }),
             ]);
           }
         })
@@ -494,28 +514,98 @@ export const handleRevealNoReply = functions.pubsub
     });
   });
 
-async function playCallOutro(match: IMatch, conferenceSid: string) {
+async function playCallOutroAndEndConference(match: IMatch) {
   try {
     // wrap in try/catch as twilio will throw if the conference has already ended
-    const participants = await client
-      .conferences(conferenceSid)
-      .participants.list();
-    await Promise.all(
-      participants.map((participant) =>
-        client
-          .conferences(conferenceSid)
-          .participants(participant.callSid)
-          .update({ muted: true })
-      )
-    );
-    await client
-      .conferences(conferenceSid)
-      .update({ announceUrl: getOutroUrl(match), announceMethod: "GET" });
-    await util.promisify(setTimeout)(31_000);
-    await client.conferences(conferenceSid).update({ status: "completed" });
+    await muteAllParticipants(match.twilioSid!);
+    if (match.interviewUserId) {
+      await specialInterviewVoiceCallEnding(match);
+    } else {
+      await regularVoiceCallEnding(match);
+    }
   } catch (err) {
     console.log(err);
   }
+}
+
+async function specialInterviewVoiceCallEnding(match: IMatch) {
+  const conference = twilioClient.conferences(match.twilioSid!);
+  const participants = await conference.participants.list();
+  const [[participantToInterview], [participantNotToInterview]] = partition(
+    participants,
+    (participant) => participant.label === match.interviewUserId
+  );
+
+  return Promise.all([
+    // for participant to interview
+    async () => {
+      // play the feedback request audio recording
+      await participantToInterview.update({
+        // !!! WARNING !!!
+        // !!! WARNING !!!
+        // INCOMPLETE: this needs to be the feedback request audio URL, not the regular outro one!!!!
+        announceUrl: getOutroUrl(match),
+        // !!! WARNING !!!
+        // !!! WARNING !!!
+        announceMethod: "GET",
+      });
+
+      // sleep while it's playing for the amount of time
+      await util.promisify(setTimeout)(18_000);
+
+      // add grace to the conference
+      await conference.participants.create({
+        from: VOICE_FROM_NUMBER,
+        to: GRACE_PHONE_NUMBER,
+        muted: false,
+      });
+      await participantToInterview.update({ muted: false });
+
+      // we're done here, the conference will end when these users disconnect
+    },
+    // for participant not to interview
+    async () => {
+      // play the regular outro only to them (the other user won't hear it)
+      await participantNotToInterview.update({
+        announceUrl: getOutroUrl(match),
+        announceMethod: "GET",
+      });
+      // sleep while it's playing
+      await util.promisify(setTimeout)(31_000);
+      // kick them off the call
+      await participantNotToInterview.remove();
+    },
+  ]);
+}
+
+async function regularVoiceCallEnding(match: IMatch) {
+  const conference = twilioClient.conferences(match.twilioSid!);
+  // play outro voice message
+  await conference.update({
+    announceUrl: getOutroUrl(match),
+    announceMethod: "GET",
+  });
+  // sleep while it's playing
+  await util.promisify(setTimeout)(31_000);
+  // then end the conference
+  await conference.update({ status: "completed" });
+}
+
+async function muteAllParticipants(conferenceSid: string) {
+  const participants = await twilioClient
+    .conferences(conferenceSid)
+    .participants.list();
+  await Promise.all(
+    participants.map((participant) =>
+      twilioClient
+        .conferences(conferenceSid)
+        .participants(participant.callSid)
+        .update({ muted: true })
+    )
+  );
+}
+
+async function triggerEndOfCallTexts(match: IMatch) {
   const today = moment().tz("America/Los_Angeles").format("dddd");
   await callStudio("reveal_request", match, new Firestore(), false, today);
 }
@@ -553,7 +643,7 @@ export const notifyRevealJobs = functions.firestore
       nextMatch
     );
 
-    await client.studio.flows(POST_CALL_FLOW_ID).executions.create({
+    await twilioClient.studio.flows(POST_CALL_FLOW_ID).executions.create({
       to: notifyUser.phone,
       from: TWILIO_NUMBER,
       parameters: {
@@ -585,11 +675,11 @@ export async function callUserHelper(userId: string) {
     return;
   }
 
-  await client.calls.create({
+  await twilioClient.calls.create({
     url: getScreenUrl(match),
     method: "GET",
     to: user.get("phone"),
-    from: "+12036338466",
+    from: VOICE_FROM_NUMBER,
   });
 }
 
@@ -612,7 +702,7 @@ export const conferenceStatusWebhook = functions.https.onRequest(
     validateRequest("conferenceStatusWebhook", request);
     if (request.body.StatusCallbackEvent === "participant-join") {
       const conferenceSid = request.body.ConferenceSid;
-      const participants = await client
+      const participants = await twilioClient
         .conferences(conferenceSid)
         .participants.list();
       const matchDoc = await admin
@@ -642,13 +732,13 @@ export const conferenceStatusWebhook = functions.https.onRequest(
 
       // both participants have joined, save off the conferenceSid and play intro message
       await matchDoc.ref.update({ ongoing: true, twilioSid: conferenceSid });
-      await client
+      await twilioClient
         .conferences(conferenceSid)
         .update({ announceUrl: getIntroUrl(match), announceMethod: "GET" });
       await util.promisify(setTimeout)(26_000);
       await Promise.all(
         participants.map((participant) =>
-          client
+          twilioClient
             .conferences(conferenceSid)
             .participants(participant.callSid)
             .update({ muted: false })
@@ -697,7 +787,7 @@ export const call5MinWarning = functions.pubsub
       );
       await Promise.all(
         ongoingCalls.docs.map((doc) =>
-          client.conferences(doc.get("twilioSid")).update({
+          twilioClient.conferences(doc.get("twilioSid")).update({
             announceUrl:
               "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media",
             announceMethod: "GET",
@@ -728,7 +818,7 @@ export const call1MinWarning = functions.pubsub
       );
       await Promise.all(
         ongoingCalls.docs.map((doc) =>
-          client.conferences(doc.get("twilioSid")).update({
+          twilioClient.conferences(doc.get("twilioSid")).update({
             announceUrl:
               "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fbell.mp3?alt=media",
             announceMethod: "GET",
@@ -763,7 +853,7 @@ export const warnSmsChatExpiration = functions.pubsub
         ) {
           return;
         }
-        client.proxy
+        twilioClient.proxy
           .services("KS58cecadd35af39c56a4cae81837a89f3")
           .sessions(match.twilioChatSid)
           .participants.each((p) =>
@@ -788,7 +878,7 @@ export const expireSmsChat = functions.pubsub
       if (!match.twilioChatSid) {
         return;
       }
-      const session = await client.proxy
+      const session = await twilioClient.proxy
         .services("KS58cecadd35af39c56a4cae81837a89f3")
         .sessions(match.twilioChatSid)
         .fetch();
@@ -807,8 +897,8 @@ export async function notifyIncomingTextHelper(phone: string, message: string) {
   const fullName = userQuery.empty
     ? "Unknown user"
     : userQuery.docs[0].get("firstName") +
-    " " +
-    userQuery.docs[0].get("lastName");
+      " " +
+      userQuery.docs[0].get("lastName");
   return fetch(functions.config().slack.webhook_url, {
     method: "post",
     body: JSON.stringify({

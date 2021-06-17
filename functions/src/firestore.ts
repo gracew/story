@@ -95,6 +95,8 @@ export interface IMatch {
   // set if the users are connected in a text chat
   twilioChatSid?: string;
   twilioChatCreatedAt?: admin.firestore.Timestamp;
+
+  interviewUserId?: string;
 }
 
 interface ISchedulingRecord {
