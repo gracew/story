@@ -3,7 +3,7 @@ import React from "react";
 import StoryInput from "../components/StoryInput";
 import StoryRadioGroup from '../components/StoryRadioGroup';
 
-const OPTIONS = ["Twitter", "Instagram", "Facebook", "TikTok", "Friend"];
+const OPTIONS = ["Twitter", "Instagram", "Facebook", "TikTok", "Friend", "QR Code"];
 
 export interface ChannelSelection {
   option?: string;
@@ -26,11 +26,12 @@ function followUp(option: string) {
         description: <div>We want to thank them and make sure you two aren't matched <span role="img" aria-label="emoji-wink">😉</span></div>
       };
     case "Other":
-    default:
       return {
         question: "Can you tell us a bit more?",
         description: <div>This helps us understand what's working well <span role="img" aria-label="emoji-blush">😊</span></div>
       };
+    default:
+      return undefined;
   }
 }
 
@@ -49,6 +50,8 @@ function ChannelInput(props: ChannelInputProps) {
     props.update({ ...props.value, context });
   }
 
+  const f = props.value?.option ? followUp(props.value.option) : undefined;
+
   return (
     <div>
       <StoryRadioGroup value={props.value?.option}>
@@ -64,10 +67,10 @@ function ChannelInput(props: ChannelInputProps) {
         >Other</Radio>
       </StoryRadioGroup>
 
-      {props.value?.option &&
+      {f &&
         <div>
-          <h3>{followUp(props.value.option).question}</h3>
-          {followUp(props.value.option).description}
+          <h3>{f.question}</h3>
+          {f.description}
           <StoryInput autoFocus value={props.value?.context} onChange={e => onContextChange(e.target.value)} />
         </div>
       }
