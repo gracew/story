@@ -1,10 +1,10 @@
 import * as test from "firebase-functions-test";
-// WARNING: this must come first or else imported modules may not see this config value on load
-test().mockConfig({ twilio: { auth_token: "token" } });
 import * as uuid from "uuid";
 import { IMatch, IUser, NotifyRevealMode } from "../src/firestore";
-import { callStudio, getNextDays, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
+import { callStudio, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
 import { firestore, match, user } from "./mock";
+// WARNING: this must come first or else imported modules may not see this config value on load
+test().mockConfig({ twilio: { auth_token: "token" } });
 
 const mockCreate = jest.fn();
 jest.mock("twilio", () => {
@@ -23,7 +23,6 @@ let user2: IUser;
 let user3: IUser;
 let m1: IMatch;
 let m2: IMatch;
-const nextWeek = "Friday, Saturday, Sunday";
 
 beforeEach(() => {
     user1 = user(uuid.v4());
@@ -55,7 +54,7 @@ beforeEach(() => {
 
 it("callStudio", async () => {
     firestore.getUsersForMatches.mockReturnValue({ [user1.id]: user1, [user2.id]: user2 });
-    await callStudio("reveal_request", m1, firestore, false, "Wednesday");
+    await callStudio("reveal_request", m1, firestore, false);
     expect(mockCreate).toHaveBeenCalledTimes(2);
     expect(mockCreate).toHaveBeenCalledWith({
         to: user1.phone,
@@ -69,7 +68,6 @@ it("callStudio", async () => {
             matchPhone: user2.phone,
             matchUserId: user2.id,
             photo: "self_no_photo",
-            nextDays: nextWeek,
             video: false,
         }
     });
@@ -86,7 +84,6 @@ it("callStudio", async () => {
             matchUserId: user1.id,
             nextMatchName: user3.firstName,
             nextMatchDate: "Thursday",
-            nextDays: nextWeek,
             photo: "self_no_photo",
             video: false,
         }
@@ -96,7 +93,7 @@ it("callStudio", async () => {
 it("callStudio - userA photo", async () => {
     user1.photo = "photoUrl";
     firestore.getUsersForMatches.mockReturnValue({ [user1.id]: user1, [user2.id]: user2 });
-    await callStudio("reveal_request", m1, firestore, false, "Wednesday");
+    await callStudio("reveal_request", m1, firestore, false);
     expect(mockCreate).toHaveBeenCalledTimes(2);
     expect(mockCreate.mock.calls[0][0].parameters.photo).toEqual("other_no_photo");
     expect(mockCreate.mock.calls[1][0].parameters.photo).toEqual("self_no_photo");
@@ -105,7 +102,7 @@ it("callStudio - userA photo", async () => {
 it("callStudio - userB photo", async () => {
     user2.photo = "photoUrl";
     firestore.getUsersForMatches.mockReturnValue({ [user1.id]: user1, [user2.id]: user2 });
-    await callStudio("reveal_request", m1, firestore, false, "Wednesday");
+    await callStudio("reveal_request", m1, firestore, false);
     expect(mockCreate).toHaveBeenCalledTimes(2);
     expect(mockCreate.mock.calls[0][0].parameters.photo).toEqual("self_no_photo");
     expect(mockCreate.mock.calls[1][0].parameters.photo).toEqual("other_no_photo");
@@ -115,7 +112,7 @@ it("callStudio - both photo", async () => {
     user1.photo = "photoUrl";
     user2.photo = "photoUrl";
     firestore.getUsersForMatches.mockReturnValue({ [user1.id]: user1, [user2.id]: user2 });
-    await callStudio("reveal_request", m1, firestore, false, "Wednesday");
+    await callStudio("reveal_request", m1, firestore, false);
     expect(mockCreate).toHaveBeenCalledTimes(2);
     expect(mockCreate.mock.calls[0][0].parameters.photo).toEqual("both_photo");
     expect(mockCreate.mock.calls[1][0].parameters.photo).toEqual("both_photo");
@@ -174,35 +171,4 @@ it("saveReveal N, other Y next match", async () => {
         notifyUserId: user2.id,
         mode: NotifyRevealMode.REVEAL_OTHER_NO,
     });
-});
-
-it("getNextDays", async () => {
-    const tue = match(user1.id, user2.id, "2020-09-22T20:00:00-04:00");
-    const wed = match(user1.id, user2.id, "2020-09-23T20:00:00-04:00");
-    const thu = match(user3.id, user2.id, "2020-09-24T20:00:00-04:00");
-    const fri = match(user3.id, user2.id, "2020-09-25T20:00:00-04:00");
-    const sat = match(user3.id, user2.id, "2020-09-26T20:00:00-04:00");
-    const sun = match(user3.id, user2.id, "2020-09-27T20:00:00-04:00");
-
-    // if today is Tuesday: available latest match days are Tuesday, Wednesday, Thursday (other phone dates)
-    expect(getNextDays("Tuesday", tue, tue)).toEqual("Wednesday, Thursday, Friday")
-    expect(getNextDays("Tuesday", tue, wed)).toEqual("Thursday, Friday, Saturday")
-    expect(getNextDays("Tuesday", tue, thu)).toEqual("Wednesday, Friday, Saturday")
-    expect(getNextDays("Tuesday", wed, thu)).toEqual("Friday, Saturday, Sunday")
-
-    expect(getNextDays("Wednesday", wed, wed)).toEqual("Thursday, Friday, Saturday")
-    expect(getNextDays("Wednesday", wed, fri)).toEqual("Thursday, Saturday, Sunday")
-    expect(getNextDays("Wednesday", wed, sat)).toEqual("Thursday, Friday, Sunday")
-    expect(getNextDays("Wednesday", wed, sun)).toEqual("Thursday, Friday, Saturday")
-    expect(getNextDays("Wednesday", thu, fri)).toEqual("Saturday, Sunday")
-    expect(getNextDays("Wednesday", thu, sat)).toEqual("Friday, Sunday")
-    expect(getNextDays("Wednesday", thu, sun)).toEqual("Friday, Saturday")
-
-    expect(getNextDays("Thursday", thu, thu)).toEqual("Friday, Saturday, Sunday")
-    expect(getNextDays("Thursday", thu, fri)).toEqual("Saturday, Sunday")
-    expect(getNextDays("Thursday", thu, sat)).toEqual("Friday, Sunday")
-    expect(getNextDays("Thursday", thu, sun)).toEqual("Friday, Saturday")
-    expect(getNextDays("Thursday", fri, sat)).toEqual("Sunday")
-    expect(getNextDays("Thursday", fri, sun)).toEqual("Saturday")
-    expect(getNextDays("Thursday", sat, sun)).toEqual("Friday")
 });
