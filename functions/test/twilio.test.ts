@@ -1,10 +1,10 @@
 import * as test from "firebase-functions-test";
+// WARNING: this must come first or else imported modules may not see this config value on load
+test().mockConfig({ twilio: { auth_token: "token" } });
 import * as uuid from "uuid";
 import { IMatch, IUser, NotifyRevealMode } from "../src/firestore";
 import { callStudio, saveRevealHelper, TWILIO_NUMBER } from "../src/twilio";
 import { firestore, match, user } from "./mock";
-// WARNING: this must come first or else imported modules may not see this config value on load
-test().mockConfig({ twilio: { auth_token: "token" } });
 
 const mockCreate = jest.fn();
 jest.mock("twilio", () => {
