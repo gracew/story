@@ -415,7 +415,6 @@ export const revealRequestVideo = functions.pubsub
   .onRun(async (context) => {
     const createdAt = moment().utc().startOf("hour");
     createdAt.subtract(1, "hour");
-    const today = moment().tz("America/Los_Angeles").format("dddd");
     await admin.firestore().runTransaction(async (txn) => {
       const matches = await txn.get(
         admin
@@ -437,7 +436,6 @@ export const revealRequestVideo = functions.pubsub
             doc.data() as IMatch,
             new Firestore(),
             true,
-            today
           );
           txn.update(doc.ref, "interactions.revealRequested", true);
         })
@@ -516,8 +514,7 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
   } catch (err) {
     console.log(err);
   }
-  const today = moment().tz("America/Los_Angeles").format("dddd");
-  await callStudio("reveal_request", match, new Firestore(), false, today);
+  await callStudio("reveal_request", match, new Firestore(), false);
 }
 
 export const notifyRevealJobs = functions.firestore

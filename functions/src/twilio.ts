@@ -78,7 +78,6 @@ export async function callStudio(
   match: IMatch,
   firestore: Firestore,
   video: boolean,
-  today: string
 ) {
   console.log(`executing '${mode}' for match ${match.id}`);
   const allUsersById = await firestore.getUsersForMatches([match]);
@@ -88,11 +87,6 @@ export async function callStudio(
     nextMatchesByUserId[id] = await firestore.nextMatchForUser(id);
   }
 
-  const nextDays = getNextDays(
-    today,
-    nextMatchesByUserId[match.user_a_id],
-    nextMatchesByUserId[match.user_b_id]
-  );
   const userAId = match.user_a_id;
   const userA = allUsersById[match.user_a_id];
   const userB = allUsersById[match.user_b_id];
@@ -120,7 +114,6 @@ export async function callStudio(
           firestore,
           nextMatchesByUserId[userAId]
         )),
-        nextDays,
         video,
       },
     });
@@ -150,7 +143,6 @@ export async function callStudio(
           firestore,
           nextMatchesByUserId[userBId]
         )),
-        nextDays,
         video,
       },
     });
@@ -227,52 +219,6 @@ export async function saveRevealHelper(
   console.error(new Error(`unexpected combination for match ${match.id}, user ${revealingUser.id}, reveal ${reveal}, otherReveal ${otherReveal}`))
   return {};
 }
-
-export function getNextDays(
-  today: string,
-  nextMatchRevealing?: IMatch,
-  nextMatchOther?: IMatch
-) {
-  const nextMatchDays = new Set();
-  if (nextMatchRevealing) {
-    nextMatchDays.add(
-      moment(nextMatchRevealing.created_at.toDate())
-        .tz("America/Los_Angeles")
-        .format("dddd")
-    );
-  }
-  if (nextMatchOther) {
-    nextMatchDays.add(
-      moment(nextMatchOther.created_at.toDate())
-        .tz("America/Los_Angeles")
-        .format("dddd")
-    );
-  }
-
-  const potentialNextDays = [
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-  ];
-  let availableNextDays: string[];
-  if (today === "Tuesday") {
-    availableNextDays = potentialNextDays.filter(
-      (day) => !nextMatchDays.has(day)
-    );
-  } else if (today === "Wednesday") {
-    availableNextDays = potentialNextDays
-      .slice(1)
-      .filter((day) => !nextMatchDays.has(day));
-  } else {
-    availableNextDays = potentialNextDays
-      .slice(2)
-      .filter((day) => !nextMatchDays.has(day));
-  }
-  return availableNextDays.slice(0, 3).join(", ");
-}
-
 export interface NextMatchNameDate {
   nextMatchName: string;
   nextMatchDate: string;
