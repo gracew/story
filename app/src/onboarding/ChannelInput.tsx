@@ -67,7 +67,7 @@ function ChannelInput(props: ChannelInputProps) {
         >Other</Radio>
       </StoryRadioGroup>
 
-      {props.value?.option && f &&
+      {f &&
         <div>
           <h3>{f.question}</h3>
           {f.description}
