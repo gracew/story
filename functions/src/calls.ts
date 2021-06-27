@@ -27,6 +27,10 @@ import {
   validateRequest
 } from "./twilio";
 
+const SCREEN_URL = "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2FscreenCall.xml?alt=media";
+const INTRO_URL = "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_2021-06-26_beep.mp3?alt=media";
+const OUTRO_URL = "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_video_grace.mp3?alt=media";
+
 /**
  * Sends reminder texts to either phone or video matches happening in the next hour (phone or video matches only happen
  * at :00 or :30)
@@ -508,7 +512,7 @@ async function playCallOutro(match: IMatch, conferenceSid: string) {
     );
     await client
       .conferences(conferenceSid)
-      .update({ announceUrl: getOutroUrl(match), announceMethod: "GET" });
+      .update({ announceUrl: OUTRO_URL, announceMethod: "GET" });
     await util.promisify(setTimeout)(31_000);
     await client.conferences(conferenceSid).update({ status: "completed" });
   } catch (err) {
@@ -583,7 +587,7 @@ export async function callUserHelper(userId: string) {
   }
 
   await client.calls.create({
-    url: getScreenUrl(match),
+    url: SCREEN_URL,
     method: "GET",
     to: user.get("phone"),
     from: "+12036338466",
@@ -641,7 +645,7 @@ export const conferenceStatusWebhook = functions.https.onRequest(
       await matchDoc.ref.update({ ongoing: true, twilioSid: conferenceSid });
       await client
         .conferences(conferenceSid)
-        .update({ announceUrl: getIntroUrl(match), announceMethod: "GET" });
+        .update({ announceUrl: INTRO_URL, announceMethod: "GET" });
       await util.promisify(setTimeout)(26_000);
       await Promise.all(
         participants.map((participant) =>
@@ -662,24 +666,6 @@ export const conferenceStatusWebhook = functions.https.onRequest(
     response.end();
   }
 );
-
-function getScreenUrl(match: IMatch) {
-  return match.recordingOverride
-    ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2FscreenCall2.xml?alt=media"
-    : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2FscreenCall.xml?alt=media";
-}
-
-function getIntroUrl(match: IMatch) {
-  return match.recordingOverride
-    ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_video_beep.mp3?alt=media"
-    : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_text_beep_grace.mp3?alt=media";
-}
-
-function getOutroUrl(match: IMatch) {
-  return match.recordingOverride
-    ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_video.mp3?alt=media"
-    : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_video_grace.mp3?alt=media";
-}
 
 export const call5MinWarning = functions.pubsub
   .schedule("15,45 * * * *")
