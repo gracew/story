@@ -13,7 +13,7 @@ import {
   phoneReminderTenMinutes,
   revealNoReply,
   videoLink,
-  videoReminderOneHour,
+  videoReminderOneHour
 } from "./smsCopy";
 import {
   callStudio,
@@ -24,12 +24,15 @@ import {
   saveRevealHelper,
   sendSms,
   TWILIO_NUMBER,
-  validateRequest,
+  validateRequest
 } from "./twilio";
 
 const VOICE_FROM_NUMBER = "+12036338466";
 // TODO: this is wrong
 const GRACE_PHONE_NUMBER = "+19375551212";
+const SCREEN_URL = "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2FscreenCall.xml?alt=media";
+const INTRO_URL = "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_2021-06-26_beep.mp3?alt=media";
+const OUTRO_URL = "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_video_grace.mp3?alt=media";
 
 /**
  * Sends reminder texts to either phone or video matches happening in the next hour (phone or video matches only happen
@@ -421,7 +424,6 @@ export const revealRequestVideo = functions.pubsub
   .onRun(async (context) => {
     const createdAt = moment().utc().startOf("hour");
     createdAt.subtract(1, "hour");
-    const today = moment().tz("America/Los_Angeles").format("dddd");
     await admin.firestore().runTransaction(async (txn) => {
       const matches = await txn.get(
         admin
@@ -443,7 +445,6 @@ export const revealRequestVideo = functions.pubsub
             doc.data() as IMatch,
             new Firestore(),
             true,
-            today
           );
           txn.update(doc.ref, "interactions.revealRequested", true);
         })
@@ -544,7 +545,7 @@ async function specialInterviewVoiceCallEnding(match: IMatch) {
         // !!! WARNING !!!
         // !!! WARNING !!!
         // INCOMPLETE: this needs to be the feedback request audio URL, not the regular outro one!!!!
-        announceUrl: getOutroUrl(match),
+        announceUrl: OUTRO_URL,
         // !!! WARNING !!!
         // !!! WARNING !!!
         announceMethod: "GET",
@@ -567,7 +568,7 @@ async function specialInterviewVoiceCallEnding(match: IMatch) {
     async () => {
       // play the regular outro only to them (the other user won't hear it)
       await participantNotToInterview.update({
-        announceUrl: getOutroUrl(match),
+        announceUrl: OUTRO_URL,
         announceMethod: "GET",
       });
       // sleep while it's playing
@@ -582,7 +583,7 @@ async function regularVoiceCallEnding(match: IMatch) {
   const conference = twilioClient.conferences(match.twilioSid!);
   // play outro voice message
   await conference.update({
-    announceUrl: getOutroUrl(match),
+    announceUrl: OUTRO_URL,
     announceMethod: "GET",
   });
   // sleep while it's playing
@@ -606,8 +607,7 @@ async function muteAllParticipants(conferenceSid: string) {
 }
 
 async function triggerEndOfCallTexts(match: IMatch) {
-  const today = moment().tz("America/Los_Angeles").format("dddd");
-  await callStudio("reveal_request", match, new Firestore(), false, today);
+  await callStudio("reveal_request", match, new Firestore(), false);
 }
 
 export const notifyRevealJobs = functions.firestore
@@ -676,7 +676,7 @@ export async function callUserHelper(userId: string) {
   }
 
   await twilioClient.calls.create({
-    url: getScreenUrl(match),
+    url: SCREEN_URL,
     method: "GET",
     to: user.get("phone"),
     from: VOICE_FROM_NUMBER,
@@ -734,7 +734,7 @@ export const conferenceStatusWebhook = functions.https.onRequest(
       await matchDoc.ref.update({ ongoing: true, twilioSid: conferenceSid });
       await twilioClient
         .conferences(conferenceSid)
-        .update({ announceUrl: getIntroUrl(match), announceMethod: "GET" });
+        .update({ announceUrl: INTRO_URL, announceMethod: "GET" });
       await util.promisify(setTimeout)(26_000);
       await Promise.all(
         participants.map((participant) =>
@@ -755,24 +755,6 @@ export const conferenceStatusWebhook = functions.https.onRequest(
     response.end();
   }
 );
-
-function getScreenUrl(match: IMatch) {
-  return match.recordingOverride
-    ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2FscreenCall2.xml?alt=media"
-    : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2FscreenCall.xml?alt=media";
-}
-
-function getIntroUrl(match: IMatch) {
-  return match.recordingOverride
-    ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_video_beep.mp3?alt=media"
-    : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_20min_text_beep_grace.mp3?alt=media";
-}
-
-function getOutroUrl(match: IMatch) {
-  return match.recordingOverride
-    ? "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_video.mp3?alt=media"
-    : "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_video_grace.mp3?alt=media";
-}
 
 export const call5MinWarning = functions.pubsub
   .schedule("15,45 * * * *")
@@ -897,8 +879,8 @@ export async function notifyIncomingTextHelper(phone: string, message: string) {
   const fullName = userQuery.empty
     ? "Unknown user"
     : userQuery.docs[0].get("firstName") +
-      " " +
-      userQuery.docs[0].get("lastName");
+    " " +
+    userQuery.docs[0].get("lastName");
   return fetch(functions.config().slack.webhook_url, {
     method: "post",
     body: JSON.stringify({
