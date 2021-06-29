@@ -28,11 +28,11 @@ import {
 } from "./twilio";
 
 const VOICE_FROM_NUMBER = "+12036338466";
-// TODO: this is wrong
-const GRACE_PHONE_NUMBER = "+19375551212";
+const INTERVIEW_PHONE_NUMBER = functions.config().twilio.notify_phone;
 const SCREEN_URL = "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2FscreenCall.xml?alt=media";
 const INTRO_URL = "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_intro_2021-06-26_beep.mp3?alt=media";
 const OUTRO_URL = "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_video_grace.mp3?alt=media";
+const INTERVIEW_OUTRO_URL = "https://firebasestorage.googleapis.com/v0/b/speakeasy-prod.appspot.com/o/callSounds%2Fstory_outro_user_interview.mp3?alt=media";
 
 /**
  * Sends reminder texts to either phone or video matches happening in the next hour (phone or video matches only happen
@@ -542,22 +542,17 @@ async function specialInterviewVoiceCallEnding(match: IMatch) {
     async () => {
       // play the feedback request audio recording
       await participantToInterview.update({
-        // !!! WARNING !!!
-        // !!! WARNING !!!
-        // INCOMPLETE: this needs to be the feedback request audio URL, not the regular outro one!!!!
-        announceUrl: OUTRO_URL,
-        // !!! WARNING !!!
-        // !!! WARNING !!!
+        announceUrl: INTERVIEW_OUTRO_URL,
         announceMethod: "GET",
       });
 
       // sleep while it's playing for the amount of time
-      await util.promisify(setTimeout)(18_000);
+      await util.promisify(setTimeout)(20_000);
 
       // add grace to the conference
       await conference.participants.create({
         from: VOICE_FROM_NUMBER,
-        to: GRACE_PHONE_NUMBER,
+        to: INTERVIEW_PHONE_NUMBER,
         muted: false,
       });
       await participantToInterview.update({ muted: false });
@@ -596,14 +591,7 @@ async function muteAllParticipants(conferenceSid: string) {
   const participants = await twilioClient
     .conferences(conferenceSid)
     .participants.list();
-  await Promise.all(
-    participants.map((participant) =>
-      twilioClient
-        .conferences(conferenceSid)
-        .participants(participant.callSid)
-        .update({ muted: true })
-    )
-  );
+  await Promise.all(participants.map((participant) => participant.update({ muted: true })));
 }
 
 async function triggerEndOfCallTexts(match: IMatch) {
