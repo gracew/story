@@ -537,41 +537,44 @@ async function specialInterviewVoiceCallEnding(match: IMatch) {
     (participant) => participant.label === match.interviewUserId
   );
 
-  return Promise.all([
-    // for participant to interview
-    async () => {
-      // play the feedback request audio recording
-      await participantToInterview.update({
-        announceUrl: INTERVIEW_OUTRO_URL,
-        announceMethod: "GET",
-      });
+  async function handleParticipantToInterview() {
+    // play the feedback request audio recording
+    await participantToInterview.update({
+      announceUrl: INTERVIEW_OUTRO_URL,
+      announceMethod: "GET",
+    });
 
-      // sleep while it's playing for the amount of time
-      await util.promisify(setTimeout)(20_000);
+    // sleep while it's playing for the amount of time
+    await util.promisify(setTimeout)(20_000);
 
-      // add grace to the conference
-      await conference.participants.create({
-        from: VOICE_FROM_NUMBER,
-        to: INTERVIEW_PHONE_NUMBER,
-        muted: false,
-      });
-      await participantToInterview.update({ muted: false });
+    await participantToInterview.update({ hold: true, holdUrl: "http://twimlets.com/holdmusic?Bucket=com.twilio.music.guitars" });
 
-      // we're done here, the conference will end when these users disconnect
-    },
-    // for participant not to interview
-    async () => {
-      // play the regular outro only to them (the other user won't hear it)
-      await participantNotToInterview.update({
-        announceUrl: OUTRO_URL,
-        announceMethod: "GET",
-      });
-      // sleep while it's playing
-      await util.promisify(setTimeout)(31_000);
-      // kick them off the call
-      await participantNotToInterview.remove();
-    },
-  ]);
+    await util.promisify(setTimeout)(10_000);
+
+    // add grace to the conference
+    await conference.participants.create({
+      from: VOICE_FROM_NUMBER,
+      to: INTERVIEW_PHONE_NUMBER,
+      muted: false,
+    });
+    await participantToInterview.update({ hold: false, muted: false });
+
+    // we're done here, the conference will end when these users disconnect
+  }
+
+  async function handleParticipantNotToInterview() {
+    // play the regular outro only to them (the other user won't hear it)
+    await participantNotToInterview.update({
+      announceUrl: OUTRO_URL,
+      announceMethod: "GET",
+    });
+    // sleep while it's playing
+    await util.promisify(setTimeout)(30_000);
+    // kick them off the call
+    await participantNotToInterview.remove();
+  }
+
+  return Promise.all([handleParticipantToInterview(), handleParticipantNotToInterview()]);
 }
 
 async function regularVoiceCallEnding(match: IMatch) {
@@ -715,23 +718,24 @@ export const conferenceStatusWebhook = functions.https.onRequest(
           ]);
         }
         response.end();
-        return;
+      } else if (participants.length == 2 &&
+        participants.some(p => p.label === match.user_a_id) &&
+        participants.some(p => p.label === match.user_b_id)) {
+        // both participants have joined, save off the conferenceSid and play intro message
+        await matchDoc.ref.update({ ongoing: true, twilioSid: conferenceSid });
+        await twilioClient
+          .conferences(conferenceSid)
+          .update({ announceUrl: INTRO_URL, announceMethod: "GET" });
+        await util.promisify(setTimeout)(26_000);
+        await Promise.all(
+          participants.map((participant) =>
+            twilioClient
+              .conferences(conferenceSid)
+              .participants(participant.callSid)
+              .update({ muted: false })
+          )
+        );
       }
-
-      // both participants have joined, save off the conferenceSid and play intro message
-      await matchDoc.ref.update({ ongoing: true, twilioSid: conferenceSid });
-      await twilioClient
-        .conferences(conferenceSid)
-        .update({ announceUrl: INTRO_URL, announceMethod: "GET" });
-      await util.promisify(setTimeout)(26_000);
-      await Promise.all(
-        participants.map((participant) =>
-          twilioClient
-            .conferences(conferenceSid)
-            .participants(participant.callSid)
-            .update({ muted: false })
-        )
-      );
     } else if (request.body.StatusCallbackEvent === "conference-end") {
       // the last participant has left the conference
       await admin
