@@ -62,7 +62,7 @@ const RescheduleModal: FunctionComponent<ModalProps & RescheduleModalProps> = (p
     }
 
     {selectedDay && <Radio.Group className="reschedule-options">
-      {(timesByDay[selectedDay] || []).map(option => {
+      {(timesByDay[selectedDay] || []).sort().map(option => {
         const formattedOption = moment(option).format("ha");
         return <Radio.Button key={formattedOption} value={option} onClick={() => setSelectedOption(option)}>
           {formattedOption}
